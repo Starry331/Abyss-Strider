@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>深渊行者 | Abyss Strider</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- UI Layer -->
+        <div id="ui-layer">
+            <!-- HUD -->
+            <div id="hud" class="hidden">
+                <div id="player-bars">
+                    <div id="health-bar-container">
+                        <div id="health-bar-fill"></div>
+                        <span id="health-text">HP: 100/100</span>
+                    </div>
+                    <div id="shield-bar-container" class="hidden">
+                        <div id="shield-bar-fill"></div>
+                        <span id="shield-text">护盾: 0</span>
+                    </div>
+                </div>
+                <div id="score-display">分数: 0</div>
+                <div id="level-display">深暗地牢</div>
+                
+                <!-- 赐福/Buff显示区域 -->
+                <div id="buff-display"></div>
+
+                <!-- Boss HP Bar -->
+                <div id="boss-hp-container" class="hidden">
+                    <div id="boss-name">Boss Name</div>
+                    <div id="boss-hp-bar">
+                        <div id="boss-hp-fill"></div>
+                        <span id="boss-hp-text">HP: 100%</span>
+                    </div>
+                </div>
+
+                <div id="weapon-display">
+                    <span id="weapon-icon">🗡️</span>
+                    <span id="weapon-name">长剑</span>
+                </div>
+            </div>
+
+            <!-- Main Menu -->
+            <div id="main-menu">
+                <!-- 动态背景粒子 -->
+                <div id="menu-particles"></div>
+                
+                <!-- 游戏LOGO区域 -->
+                <div id="game-logo">
+                    <div id="logo-icon">⚔️</div>
+                    <div id="logo-glow"></div>
+                </div>
+                
+                <!-- 关卡轮播区域 -->
+                <div id="level-showcase">
+                    <canvas id="level-preview-canvas"></canvas>
+                    <div id="level-showcase-info">
+                        <div id="level-showcase-name">深暗地牢</div>
+                        <div id="level-showcase-desc">危险的地下迷宫</div>
+                    </div>
+                    <div id="level-showcase-dots">
+                        <span class="dot active" data-level="0"></span>
+                        <span class="dot" data-level="1"></span>
+                        <span class="dot" data-level="2"></span>
+                        <span class="dot" data-level="3"></span>
+                        <span class="dot" data-level="4"></span>
+                    </div>
+                </div>
+                
+                <!-- 游戏标题 -->
+                <div id="menu-title-area">
+                    <div id="menu-subtitle">Abyss Strider</div>
+                    <h1 id="menu-title">
+                        <span class="title-char">深</span>
+                        <span class="title-char">渊</span>
+                        <span class="title-char">行</span>
+                        <span class="title-char">者</span>
+                    </h1>
+                    <div id="menu-tagline">深入深渊 · 击败Boss · 成为行者</div>
+                </div>
+                
+                <!-- 主菜单按钮 -->
+                <div id="menu-buttons">
+                    <button id="btn-start" class="menu-btn primary">
+                        <span class="btn-icon">⚔️</span>
+                        <span class="btn-text">开始冒险</span>
+                    </button>
+                    <button id="btn-continue" class="menu-btn" disabled>
+                        <span class="btn-icon">📜</span>
+                        <span class="btn-text">继续游戏</span>
+                    </button>
+                </div>
+                
+                <!-- 副菜单按钮 -->
+                <div id="menu-buttons-secondary">
+                    <button id="btn-tutorial" class="menu-btn-small">📖 教程</button>
+                    <button id="btn-achievements" class="menu-btn-small">🏆 成就</button>
+                    <button id="btn-credits" class="menu-btn-small">⭐ 制作</button>
+                </div>
+                
+                <!-- 版本信息 -->
+                <div id="menu-footer">
+                    <span>v1.0 © 2025 @Starry</span>
+                </div>
+            </div>
+
+            <!-- Tutorial Overlay -->
+            <div id="tutorial-overlay" class="hidden">
+                <h2>🎮 游戏教程</h2>
+                <div class="tutorial-content">
+                    <div class="tutorial-section">
+                        <h3>⌨️ 键盘操作</h3>
+                        <div class="tutorial-item"><span class="key">W A S D</span> 移动角色</div>
+                        <div class="tutorial-item"><span class="key">J</span> 格挡攻击</div>
+                        <div class="tutorial-item"><span class="key">K</span> 翻滚闪避</div>
+                        <div class="tutorial-item"><span class="key">Q / Tab</span> 切换武器</div>
+                    </div>
+                    <div class="tutorial-section">
+                        <h3>📱 手机操作</h3>
+                        <div class="tutorial-item"><span class="key">摇杆</span> 移动角色</div>
+                        <div class="tutorial-item"><span class="key">格挡</span> 格挡按钮</div>
+                        <div class="tutorial-item"><span class="key">翻滚</span> 翻滚按钮</div>
+                        <div class="tutorial-item"><span class="key">切换</span> 切换武器</div>
+                    </div>
+                    <div class="tutorial-section">
+                        <h3>🎯 游戏目标</h3>
+                        <div class="tutorial-item">击败每层的Boss进入下一层</div>
+                        <div class="tutorial-item">收集赐福和构筑强化角色</div>
+                        <div class="tutorial-item">挑战全部5层深渊！</div>
+                    </div>
+                </div>
+                <button id="btn-close-tutorial" class="menu-btn">
+                    <span class="btn-icon">✓</span>
+                    <span class="btn-text">我知道了</span>
+                </button>
+            </div>
+
+            <!-- Credits Overlay -->
+            <div id="credits-overlay" class="hidden">
+                <h2>⭐ 开发人员 ⭐</h2>
+                <div class="credits-content">
+                    <div class="credits-section">
+                        <div class="credits-role">程序设计</div>
+                        <div class="credits-name">@Starry</div>
+                    </div>
+                    <div class="credits-section">
+                        <div class="credits-role">游戏设计</div>
+                        <div class="credits-name">@Starry</div>
+                    </div>
+                    <div class="credits-section">
+                        <div class="credits-role">美术设计</div>
+                        <div class="credits-name">@Starry</div>
+                    </div>
+                    <div class="credits-section">
+                        <div class="credits-role">音效设计</div>
+                        <div class="credits-name">@Starry</div>
+                    </div>
+                    <div class="credits-divider"></div>
+                    <div class="credits-thanks">感谢您的游玩！</div>
+                </div>
+                <button id="btn-close-credits" class="menu-btn">
+                    <span class="btn-icon">✓</span>
+                    <span class="btn-text">返回</span>
+                </button>
+            </div>
+
+            <!-- Boss Warning -->
+            <div id="boss-warning" class="hidden">
+                <h1>警告！Boss 即将出现！</h1>
+            </div>
+
+            <!-- Blessing Selection -->
+            <div id="blessing-menu" class="hidden">
+                <h2>赐福选择</h2>
+                <div id="blessing-options">
+                    <!-- Options injected via JS -->
+                </div>
+            </div>
+
+            <!-- Build Selection Panel -->
+            <div id="build-panel" class="hidden">
+                <h2>🎯 武器强化</h2>
+                <p class="build-subtitle">选择一项强化</p>
+                <div id="build-choices">
+                    <!-- Build cards injected via JS -->
+                </div>
+            </div>
+
+            <!-- Weapon Upgrade Panel (关卡过渡时) -->
+            <div id="weapon-upgrade-panel" class="hidden">
+                <h2>⬆️ 武器升级</h2>
+                <p class="upgrade-subtitle">选择一个武器进行升级</p>
+                <div id="weapon-upgrade-choices">
+                    <!-- Weapon cards injected via JS -->
+                </div>
+            </div>
+
+            <!-- 暂停菜单 -->
+            <div id="pause-menu" class="hidden">
+                <h2>⏸️ 游戏暂停</h2>
+                <div class="pause-buttons">
+                    <button id="btn-resume" class="menu-btn">
+                        <span class="btn-icon">▶️</span>
+                        <span class="btn-text">继续游戏</span>
+                    </button>
+                    <button id="btn-restart" class="menu-btn">
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">重新开始</span>
+                    </button>
+                    <button id="btn-quit" class="menu-btn">
+                        <span class="btn-icon">🏠</span>
+                        <span class="btn-text">返回主菜单</span>
+                    </button>
+                </div>
+                <div class="pause-hint">按 ESC 继续游戏</div>
+            </div>
+
+            <!-- 胜利画面 -->
+            <div id="victory-screen" class="hidden">
+                <div class="victory-content">
+                    <div class="victory-title">🏆 VICTORY 🏆</div>
+                    <div class="victory-subtitle">恭喜通关深渊行者!</div>
+                    <div class="victory-thanks">感谢游玩 Abyss Strider</div>
+                    <div class="victory-score">最终分数: <span id="victory-score-value">0</span></div>
+                    <div class="achievement-unlock" id="victory-achievement">
+                        <div class="achievement-icon">🏆</div>
+                        <div class="achievement-info">
+                            <div class="achievement-title">成就解锁: 大师之征</div>
+                            <div class="achievement-desc">击败最终Boss，通关深渊行者</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 滚动开发者名单 -->
+                    <div id="credits-scroll" class="hidden">
+                        <div class="credits-scroll-content">
+                            <div class="credits-scroll-title">— 制作团队 —</div>
+                            <div class="credits-scroll-role">程序设计</div>
+                            <div class="credits-scroll-name">@Starry</div>
+                            <div class="credits-scroll-role">游戏设计</div>
+                            <div class="credits-scroll-name">@Starry</div>
+                            <div class="credits-scroll-role">美术设计</div>
+                            <div class="credits-scroll-name">@Starry</div>
+                            <div class="credits-scroll-role">音效设计</div>
+                            <div class="credits-scroll-name">@Starry</div>
+                            <div class="credits-scroll-divider"></div>
+                            <div class="credits-scroll-thanks">感谢您的游玩!</div>
+                            <div class="credits-scroll-game">深渊行者 Abyss Strider</div>
+                            <div class="credits-scroll-year">© 2025</div>
+                        </div>
+                    </div>
+                    
+                    <button id="btn-victory-menu" class="menu-btn victory-btn">
+                        <span class="btn-icon">🏠</span>
+                        <span class="btn-text">返回主菜单</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 成就页面 -->
+            <div id="achievement-overlay" class="hidden">
+                <h2>🏆 成就</h2>
+                <div class="achievement-list" id="achievement-list">
+                    <!-- 成就由JS动态生成 -->
+                </div>
+                <button id="btn-close-achievement" class="menu-btn">
+                    <span class="btn-icon">✓</span>
+                    <span class="btn-text">返回</span>
+                </button>
+            </div>
+
+            <!-- 触屏暂停按钮 -->
+            <button id="btn-pause-touch" class="hidden">⏸</button>
+
+            <!-- Mobile Controls -->
+            <div id="mobile-controls" class="hidden">
+                <div id="joystick-container">
+                    <div id="joystick-area">
+                        <div id="joystick-handle"></div>
+                    </div>
+                </div>
+                <div id="action-buttons">
+                    <button id="btn-mobile-block" class="action-btn">格挡</button>
+                    <button id="btn-mobile-roll" class="action-btn">翻滚</button>
+                    <button id="btn-mobile-switch" class="action-btn">切换</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>

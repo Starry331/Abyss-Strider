@@ -1,0 +1,259 @@
+export class Player {
+    constructor(x, y, inputManager) {
+        this.x = x;
+        this.y = y;
+        this.inputManager = inputManager;
+        this.speed = 200; // pixels per second
+        this.radius = 20;
+        this.color = '#3498db';
+
+        // Stats
+        this.maxHp = 100;
+        this.hp = 100;
+        this.maxShield = 0; // Shield system
+        this.shield = 0;
+        this.facing = { x: 1, y: 0 }; // Direction player is looking
+
+        // State Machine
+        this.state = 'IDLE'; // IDLE, RUN, ATTACK, BLOCK, ROLL, DEAD
+        this.stateTimer = 0;
+
+        // Combat Stats
+        this.blockReduction = 0.6; // 60% reduction
+        this.rollDuration = 0.3; // 0.3 seconds invincibility
+        this.rollSpeed = 500; // Increased for better feel
+        this.rollCooldown = 0.8;
+        this.rollCooldownTimer = 0;
+        this.invincible = false;
+
+        // Hit feedback
+        this.hitFlashTimer = 0;
+        this.invincibilityTimer = 0;
+
+        // Weapon
+        this.weaponSystem = null; // Injected later
+        // Buff handling
+        this.activeBuffs = {};
+        this.baseSpeed = this.speed;
+        this.damageMultiplier = 1;
+        this.maxHpBase = this.maxHp;
+    }
+
+    setWeaponSystem(ws) {
+        this.weaponSystem = ws;
+    }
+
+    update(deltaTime) {
+        if (this.state === 'DEAD') return;
+        // Update active buffs expiration
+        const now = performance.now();
+        for (const [type, buff] of Object.entries(this.activeBuffs)) {
+            if (now >= buff.expiresAt) {
+                this.removeBuff(type);
+            }
+        }
+
+        const input = this.inputManager.getInput();
+
+        // Cooldowns
+        if (this.rollCooldownTimer > 0) this.rollCooldownTimer -= deltaTime;
+
+        // State Logic
+        switch (this.state) {
+            case 'IDLE':
+            case 'RUN':
+                this.handleMovement(input, deltaTime);
+                this.handleActions(input);
+                break;
+            case 'BLOCK':
+                this.handleBlock(input, deltaTime);
+                break;
+            case 'ROLL':
+                this.handleRoll(deltaTime);
+                break;
+            case 'ATTACK':
+                // Handled by WeaponSystem usually, but if we lock movement:
+                // this.handleAttack(deltaTime);
+                // For now, allow moving while attacking or let weapon system decide?
+                // Requirement: "Weapons automatically attack... auto-aimed"
+                // Usually auto-attack implies we can move.
+                // But "While blocking, attacks are paused".
+                this.handleMovement(input, deltaTime);
+                this.handleActions(input);
+                break;
+        }
+
+        // Update Weapon System
+        if (this.weaponSystem) {
+            const isBlocking = this.state === 'BLOCK';
+            const isRolling = this.state === 'ROLL';
+            this.weaponSystem.update(deltaTime, this, input, isBlocking || isRolling);
+        }
+    }
+
+    handleMovement(input, deltaTime) {
+        if (input.move.x !== 0 || input.move.y !== 0) {
+            this.state = 'RUN';
+            this.x += input.move.x * this.speed * deltaTime;
+            this.y += input.move.y * this.speed * deltaTime;
+
+            // Update facing if moving
+            this.facing = { x: input.move.x, y: input.move.y };
+        } else {
+            this.state = 'IDLE';
+        }
+
+        // Keep in bounds (simple)
+        // TODO: Get level bounds
+    }
+
+    handleActions(input) {
+        // Block
+        if (input.block) {
+            this.state = 'BLOCK';
+            this.stateTimer = 0;
+            return;
+        }
+
+        // Roll
+        if (input.roll && this.rollCooldownTimer <= 0) {
+            this.state = 'ROLL';
+            this.stateTimer = 0;
+            this.invincible = true;
+            this.rollCooldownTimer = this.rollCooldown;
+
+            // Roll direction is current movement or facing
+            if (input.move.x === 0 && input.move.y === 0) {
+                this.rollDir = { ...this.facing };
+            } else {
+                this.rollDir = { x: input.move.x, y: input.move.y };
+            }
+            return;
+        }
+
+        // Switch Weapon (with debounce to prevent continuous switching)
+        if (input.switchWeapon && this.weaponSystem) {
+            if (!this.lastSwitchState) {
+                this.weaponSystem.switchWeapon();
+            }
+        }
+        this.lastSwitchState = input.switchWeapon;
+    }
+
+    handleBlock(input, deltaTime) {
+        if (!input.block) {
+            this.state = 'IDLE';
+            return;
+        }
+
+        // Max block duration? Requirement says "Block duration: 2 seconds while pressed/held"
+        this.stateTimer += deltaTime;
+        if (this.stateTimer > 2.0) {
+            // Force cooldown or break block?
+            // For prototype, maybe just stop blocking or visual feedback?
+            // Let's force exit block
+            this.state = 'IDLE';
+        }
+    }
+
+    handleRoll(deltaTime) {
+        this.stateTimer += deltaTime;
+
+        // Move fast
+        this.x += this.rollDir.x * this.rollSpeed * deltaTime;
+        this.y += this.rollDir.y * this.rollSpeed * deltaTime;
+
+        if (this.stateTimer >= this.rollDuration) {
+            this.state = 'IDLE';
+            this.invincible = false;
+        }
+    }
+
+    takeDamage(amount) {
+        // Invincibility from roll or recent hit
+        if (this.invincible || this.invincibilityTimer > 0) return;
+
+        // Validate damage amount to prevent NaN
+        if (typeof amount !== 'number' || isNaN(amount)) {
+            console.error('Invalid damage amount:', amount);
+            return;
+        }
+
+        let finalDamage = Math.max(0, amount); // Ensure non-negative
+
+        // Block reduction
+        if (this.state === 'BLOCK') {
+            finalDamage *= (1 - this.blockReduction);
+        }
+
+        // Shield absorption
+        if (this.shield > 0) {
+            if (finalDamage <= this.shield) {
+                this.shield -= finalDamage;
+                finalDamage = 0;
+            } else {
+                finalDamage -= this.shield;
+                this.shield = 0;
+            }
+        }
+
+        // Apply damage to HP
+        this.hp = Math.max(0, this.hp - finalDamage);
+
+        // Hit feedback
+        this.hitFlashTimer = 0.15; // 150ms red flash
+        this.invincibilityTimer = 0.2; // 200ms invincibility frames
+
+        if (this.hp <= 0) {
+            this.hp = 0;
+            this.die();
+        }
+
+        // Update UI
+        this.updateHealthUI();
+        console.log(`Player took ${finalDamage.toFixed(1)} damage. HP: ${this.hp}/${this.maxHp}, Shield: ${this.shield}/${this.maxShield}`);
+    }
+
+    updateHealthUI() {
+        const hpBar = document.getElementById('health-bar-fill');
+        const hpText = document.getElementById('health-text');
+        const hpPercent = Math.max(0, Math.min(100, (this.hp / this.maxHp) * 100));
+
+        if (hpBar) hpBar.style.width = `${hpPercent}%`;
+        if (hpText) hpText.innerText = `血条 HP: ${Math.ceil(this.hp)}/${this.maxHp}`;
+
+        // TODO: Add shield UI update
+    }
+        // Fallback to simple rendering
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y + this.radius, this.radius, this.radius * 0.4, 0, 0, Math.PI * 2);
+ctx.fill();
+
+// Body
+ctx.fillStyle = this.color;
+if (this.state === 'BLOCK') ctx.fillStyle = '#f39c12';
+if (this.invincible) ctx.globalAlpha = 0.5;
+
+ctx.beginPath();
+ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+ctx.fill();
+
+ctx.globalAlpha = 1.0;
+
+// Facing Indicator
+ctx.strokeStyle = '#fff';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(this.x, this.y);
+ctx.lineTo(this.x + this.facing.x * 30, this.y + this.facing.y * 30);
+ctx.stroke();
+    }
+
+// Weapon
+if (this.weaponSystem) {
+    this.weaponSystem.draw(ctx, this);
+}
+}
+}
