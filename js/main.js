@@ -533,11 +533,31 @@ const gameScene = {
         // 返回主菜单按钮
         const btnVictoryMenu = document.getElementById('btn-victory-menu');
         if (btnVictoryMenu) {
-            btnVictoryMenu.onclick = () => {
-                victoryScreen.classList.add('hidden');
-                if (creditsScroll) creditsScroll.classList.add('hidden');
+            // 移除旧的事件监听器
+            const newBtn = btnVictoryMenu.cloneNode(true);
+            btnVictoryMenu.parentNode.replaceChild(newBtn, btnVictoryMenu);
+            
+            const handleReturn = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Victory menu button clicked');
+                
+                // 隐藏胜利画面
+                const vs = document.getElementById('victory-screen');
+                const cs = document.getElementById('credits-scroll');
+                if (vs) vs.classList.add('hidden');
+                if (cs) cs.classList.add('hidden');
+                
+                // 显示HUD（会在菜单中隐藏）
+                const hud = document.getElementById('hud');
+                if (hud) hud.classList.remove('hidden');
+                
+                // 切换到菜单
                 sceneManager.switchTo('menu');
             };
+            
+            newBtn.addEventListener('click', handleReturn);
+            newBtn.addEventListener('touchend', handleReturn);
         }
     },
     

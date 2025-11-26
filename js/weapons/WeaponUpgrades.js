@@ -40,8 +40,8 @@ export class WeaponUpgrades {
                     { level: 2, name: '双刃', description: '伤害+10%', slashCount: 1, damage: 8, range: 58, cooldownMult: 1.0, bleed: false, lifesteal: 0 },
                     { level: 3, name: '锋刃', description: '范围+5%', slashCount: 1, damage: 8, range: 60, cooldownMult: 1.0, bleed: false, lifesteal: 0 },
                     { level: 4, name: '血刃', description: '双斩+流血', slashCount: 2, damage: 8, range: 60, cooldownMult: 1.12, bleed: true, lifesteal: 0 },
-                    { level: 5, name: '影刃', description: '三斩', slashCount: 3, damage: 9, range: 58, cooldownMult: 1.22, bleed: true, lifesteal: 0 },
-                    { level: 6, name: '死神刃', description: '四斩+吸血', slashCount: 4, damage: 10, range: 58, cooldownMult: 1.35, bleed: true, lifesteal: 0.02 }
+                    { level: 5, name: '影刃', description: '双斩强化', slashCount: 2, damage: 9, range: 56, cooldownMult: 1.35, bleed: true, lifesteal: 0 },
+                    { level: 6, name: '死神刃', description: '三斩+吸血', slashCount: 3, damage: 9, range: 55, cooldownMult: 1.5, bleed: true, lifesteal: 0.015 }
                 ]
             }
         };
