@@ -69,10 +69,13 @@ export class CombatSystem {
                             e.takeDamage(finalDamage);
                             hitAnyEnemy = true;
                             
-                            // 吸血效果
-                            if (p.lifesteal && p.lifesteal > 0 && p.player) {
-                                const healAmount = finalDamage * p.lifesteal;
-                                p.player.hp = Math.min(p.player.maxHp, p.player.hp + healAmount);
+                            // 吸血效果 (武器吸血 + 玩家限时buff吸血)
+                            if (p.player) {
+                                const totalLifesteal = (p.lifesteal || 0) + (p.player.lifesteal || 0);
+                                if (totalLifesteal > 0) {
+                                    const healAmount = finalDamage * totalLifesteal;
+                                    p.player.hp = Math.min(p.player.maxHp, p.player.hp + healAmount);
+                                }
                             }
                             // 每击回血
                             if (p.manaSteal && p.manaSteal > 0 && p.player) {
@@ -100,10 +103,13 @@ export class CombatSystem {
                             const finalDamage = isCrit ? p.damage * (p.critMultiplier || 2) : p.damage;
                             e.takeDamage(finalDamage);
                             
-                            // 吸血效果
-                            if (p.lifesteal && p.lifesteal > 0 && p.player) {
-                                const healAmount = finalDamage * p.lifesteal;
-                                p.player.hp = Math.min(p.player.maxHp, p.player.hp + healAmount);
+                            // 吸血效果 (武器吸血 + 玩家限时buff吸血)
+                            if (p.player) {
+                                const totalLifesteal = (p.lifesteal || 0) + (p.player.lifesteal || 0);
+                                if (totalLifesteal > 0) {
+                                    const healAmount = finalDamage * totalLifesteal;
+                                    p.player.hp = Math.min(p.player.maxHp, p.player.hp + healAmount);
+                                }
                             }
                             // 每击回血
                             if (p.manaSteal && p.manaSteal > 0 && p.player) {
