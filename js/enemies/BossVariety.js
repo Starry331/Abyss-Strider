@@ -2258,7 +2258,7 @@ class PaladinBoss extends BaseBoss {
         this.color = '#ffd700';
         this.damage = 32;  // 降低基础伤害 40->32
         this.critChance = 0.30;  // 30%暴击率
-        this.critMultiplier = 2.2;  // 220%暴击伤害(120%额外)
+        this.critMultiplier = 1.2;  // 120%暴击伤害
         this.telegraphDuration = 0.8;  // 稍微延长前摇
         this.skills = ['SWORD_THRUST', 'DIVINE_DASH', 'BLADE_STORM', 'CROSS_SLASH', 'SWORD_RAIN', 'BLADE_BARRIER', 'JUDGEMENT_BLADE', 'RADIANT_SLASH', 'HOLY_BLADE', 'DIVINE_WINGS'];
         this.phase2Skills = [...this.skills, 'FINAL_JUDGEMENT', 'ANGELIC_WRATH', 'HOLY_APOCALYPSE'];
