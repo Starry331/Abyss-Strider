@@ -26,8 +26,8 @@ export class WeaponSystem {
                 cnName: '长剑',
                 type: 'MELEE',
                 damage: 16,           // 基础伤害（构筑倍率基准）
-                range: 80,            // 基础范围
-                cooldown: 0.5,        // 攻击间隔
+                range: 95,            // 基础范围（比双刀远）
+                cooldown: 0.65,       // 攻击间隔（比双刀慢）
                 color: '#ecf0f1',
                 arc: Math.PI / 2,
                 knockback: 50,
