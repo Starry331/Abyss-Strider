@@ -2236,6 +2236,77 @@ class ZeusBoss extends BaseBoss {
                     });
                 }, 800);
                 break;
+                
+            case 'LIGHTNING_SPEAR':
+                // 雷电之矛 - 快速直线穿刺
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        const spearAngle = angle + (i - 1) * 0.15;
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(spearAngle) * 500, vy: Math.sin(spearAngle) * 500,
+                            radius: 8, damage: 20, owner: 'enemy', life: 1.5, rotation: spearAngle,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) {
+                                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                                ctx.fillStyle = '#ffff00'; ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 15;
+                                ctx.beginPath(); ctx.moveTo(25, 0); ctx.lineTo(-15, -6); ctx.lineTo(-15, 6); ctx.closePath(); ctx.fill();
+                                ctx.shadowBlur = 0; ctx.restore();
+                            }
+                        });
+                    }, i * 100);
+                }
+                break;
+                
+            case 'STORM_VORTEX':
+                // 风暴漩涡 - 旋转吸引
+                this.combatSystem.spawnProjectile({
+                    x: this.player.x, y: this.player.y, radius: 150, damage: 0, owner: 'enemy', life: 2.5, maxLife: 2.5, player: this.player,
+                    update(dt) {
+                        this.life -= dt;
+                        const dx = this.x - this.player.x, dy = this.y - this.player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist > 10) { this.player.x += (dx / dist) * 80 * dt; this.player.y += (dy / dist) * 80 * dt; }
+                        if (this.life <= 0) this.markedForDeletion = true;
+                    },
+                    draw(ctx) {
+                        const alpha = this.life / this.maxLife;
+                        const time = Date.now() / 1000;
+                        for (let r = 0; r < 3; r++) {
+                            ctx.strokeStyle = `rgba(0, 200, 255, ${alpha * (0.6 - r * 0.15)})`;
+                            ctx.lineWidth = 3 - r;
+                            ctx.setLineDash([8, 4]);
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius - r * 30, time * 4 + r, time * 4 + r + Math.PI * 1.5); ctx.stroke();
+                        }
+                        ctx.setLineDash([]);
+                    }
+                });
+                break;
+                
+            case 'HEAVEN_FALL':
+                // 天堂陨落 - 全屏雷柱
+                if (this.player.screenShake) { this.player.screenShake.intensity = 25; this.player.screenShake.duration = 3; }
+                for (let wave = 0; wave < 5; wave++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 8; i++) {
+                            const fx = 100 + Math.random() * 800;
+                            const fy = 100 + Math.random() * 500;
+                            this.combatSystem.spawnProjectile({
+                                x: fx, y: fy - 500, targetY: fy, radius: 45, damage: 25, owner: 'enemy', life: 0.4, maxLife: 0.4,
+                                update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) {
+                                    const alpha = this.life / this.maxLife;
+                                    ctx.strokeStyle = `rgba(255, 255, 0, ${alpha})`; ctx.lineWidth = 8;
+                                    ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 30;
+                                    ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x + (Math.random() - 0.5) * 30, this.targetY); ctx.stroke();
+                                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
+                                    ctx.beginPath(); ctx.arc(this.x, this.targetY, this.radius * alpha, 0, Math.PI * 2); ctx.fill();
+                                    ctx.shadowBlur = 0;
+                                }
+                            });
+                        }
+                    }, wave * 500);
+                }
+                break;
         }
     }
 
@@ -2522,27 +2593,47 @@ class ZeusBoss extends BaseBoss {
 }
 
 // ============================================
-// Level 5: 神圣骑士 (Paladin Boss)
-// 风格：神圣综合，8个技能 (最高难度)
+// Level 5: 圣剑王·亚瑟 (Final Boss)
+// 风格：武士剑圣，持有Excalibur，快速突进+剑技
 // ============================================
 class PaladinBoss extends BaseBoss {
     constructor(x, y, player, combatSystem) {
         super(x, y, player, combatSystem);
         this.level = 5;
-        this.name = '圣光大天使·米迦勒';
-        this.maxHp = 1650;  // 微调血量
+        this.name = '圣剑王·亚瑟';
+        this.maxHp = 2200;  // 最终Boss强化血量
         this.hp = this.maxHp;
-        this.radius = 60;
+        this.radius = 55;
         this.color = '#ffd700';
-        this.damage = 30;
-        this.critChance = 0.30;  // 30%暴击率
-        this.critMultiplier = 1.2;  // 120%暴击伤害
-        this.telegraphDuration = 0.7;  // 施法加速
-        this.attackCooldown = 1.2;
-        this.skills = ['SWORD_THRUST', 'DIVINE_DASH', 'BLADE_STORM', 'CROSS_SLASH', 'SWORD_RAIN', 'BLADE_BARRIER', 'JUDGEMENT_BLADE', 'RADIANT_SLASH', 'HOLY_BLADE', 'DIVINE_WINGS', 'HOLY_SHIELD'];
-        this.phase2Skills = [...this.skills, 'FINAL_JUDGEMENT', 'ANGELIC_WRATH', 'HOLY_APOCALYPSE', 'DIVINE_STORM'];
-        this.wingSpan = 0; // 翅膀动画
-        this.haloAngle = 0; // 光环旋转
+        this.damage = 35;
+        this.critChance = 0.35;  // 35%暴击率
+        this.critMultiplier = 1.5;  // 150%暴击伤害
+        this.telegraphDuration = 0.65;  // 快速前摇
+        this.attackCooldown = 1.0;  // 更快攻击
+        // 剑技为主的技能
+        this.skills = [
+            'SWIFT_SLASH',      // 迅斩
+            'DASH_STRIKE',      // 突进斩
+            'EXCALIBUR_THRUST', // 圣剑突刺
+            'BLADE_DANCE',      // 剑舞
+            'CROSS_SLASH',      // 十字斩
+            'FLASH_STEP',       // 闪步
+            'COUNTER_STANCE',   // 架势反击
+            'SWORD_RAIN',       // 剑雨
+            'BLADE_BARRIER'     // 剑阵
+        ];
+        this.phase2Skills = [
+            ...this.skills,
+            'EXCALIBUR_JUDGMENT', // 圣剑审判
+            'THOUSAND_CUTS',      // 千刃乱舞
+            'BLINK_ASSAULT',      // 瞬闪连斩
+            'KINGS_WRATH',        // 王者之怒
+            'AVALON_SHIELD'       // 阿瓦隆护盾
+        ];
+        this.swordAngle = 0;    // 剑角度动画
+        this.dashTrail = [];    // 冲刺残影
+        this.isBlinking = false; // 闪现状态
+        this.comboCount = 0;    // 连击计数
     }
     
     // 计算暴击伤害
@@ -2831,6 +2922,260 @@ class PaladinBoss extends BaseBoss {
                     }, wave * 400);
                 }
                 break;
+                
+            // ===== 新增武士剑技 =====
+            case 'SWIFT_SLASH':
+                // 迅斩 - 极快的三连斩
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        const slashAngle = angle + (i - 1) * 0.4;
+                        const critResult = boss.calcDamage(18);
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(slashAngle) * 600, vy: Math.sin(slashAngle) * 600,
+                            radius: 15, damage: critResult.damage, owner: 'enemy', rotation: slashAngle, life: 0.8, isCrit: critResult.isCrit,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) {
+                                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                                ctx.fillStyle = this.isCrit ? '#ffd700' : '#c0c0c0'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 20;
+                                ctx.beginPath(); ctx.moveTo(35, 0); ctx.lineTo(-10, -12); ctx.lineTo(-10, 12); ctx.closePath(); ctx.fill();
+                                ctx.shadowBlur = 0; ctx.restore();
+                            }
+                        });
+                    }, i * 80);
+                }
+                break;
+                
+            case 'DASH_STRIKE':
+                // 突进斩 - 快速冲刺攻击
+                const dashTarget = { ...this.dashTarget };
+                this.dashTrail = [];
+                for (let i = 0; i < 8; i++) {
+                    setTimeout(() => {
+                        this.dashTrail.push({ x: this.x, y: this.y, life: 0.4 });
+                        this.x += (dashTarget.x - this.x) / (8 - i);
+                        this.y += (dashTarget.y - this.y) / (8 - i);
+                        const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                        if (dist < 60) { this.player.takeDamage(boss.calcDamage(22).damage); }
+                    }, i * 35);
+                }
+                // 终点挥砍
+                setTimeout(() => {
+                    for (let a = 0; a < 6; a++) {
+                        const sa = (Math.PI * 2 / 6) * a;
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(sa) * 350, vy: Math.sin(sa) * 350,
+                            radius: 12, damage: 15, owner: 'enemy', rotation: sa, life: 0.6,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#ffd700'); }
+                        });
+                    }
+                }, 300);
+                break;
+                
+            case 'EXCALIBUR_THRUST':
+                // 圣剑突刺 - 强力单体突刺
+                const thrustCrit = boss.calcDamage(35);
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, vx: Math.cos(angle) * 700, vy: Math.sin(angle) * 700,
+                    radius: 25, damage: thrustCrit.damage, owner: 'enemy', rotation: angle, life: 1.2, isCrit: thrustCrit.isCrit,
+                    update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                        const grad = ctx.createLinearGradient(-20, 0, 50, 0);
+                        grad.addColorStop(0, 'rgba(255, 215, 0, 0.3)');
+                        grad.addColorStop(0.5, this.isCrit ? '#ffffff' : '#ffd700');
+                        grad.addColorStop(1, 'rgba(255, 255, 255, 0.8)');
+                        ctx.fillStyle = grad; ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 30;
+                        ctx.beginPath(); ctx.moveTo(50, 0); ctx.lineTo(-20, -15); ctx.lineTo(-10, 0); ctx.lineTo(-20, 15); ctx.closePath(); ctx.fill();
+                        ctx.shadowBlur = 0; ctx.restore();
+                    }
+                });
+                break;
+                
+            case 'BLADE_DANCE':
+                // 剑舞 - 原地旋转斩击
+                for (let wave = 0; wave < 4; wave++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 12; i++) {
+                            const da = (Math.PI * 2 / 12) * i + wave * 0.15;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x + Math.cos(da) * 40, y: this.y + Math.sin(da) * 40,
+                                vx: Math.cos(da) * (250 + wave * 50), vy: Math.sin(da) * (250 + wave * 50),
+                                radius: 10, damage: 12, owner: 'enemy', rotation: da, life: 0.7,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#c0c0c0'); }
+                            });
+                        }
+                    }, wave * 150);
+                }
+                break;
+                
+            case 'FLASH_STEP':
+                // 闪步 - 瞬移到玩家身后并攻击
+                this.isBlinking = true;
+                const behindAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                const newX = this.player.x + Math.cos(behindAngle) * 80;
+                const newY = this.player.y + Math.sin(behindAngle) * 80;
+                // 残影
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: this.radius, damage: 0, owner: 'enemy', life: 0.4, maxLife: 0.4,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { ctx.fillStyle = `rgba(255, 215, 0, ${this.life / this.maxLife * 0.5})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                });
+                this.x = newX; this.y = newY;
+                this.isBlinking = false;
+                // 背后斩击
+                setTimeout(() => {
+                    for (let i = -2; i <= 2; i++) {
+                        const ba = behindAngle + Math.PI + i * 0.3;
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(ba) * 450, vy: Math.sin(ba) * 450,
+                            radius: 14, damage: 20, owner: 'enemy', rotation: ba, life: 0.6,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#ffd700'); }
+                        });
+                    }
+                }, 100);
+                break;
+                
+            case 'COUNTER_STANCE':
+                // 架势反击 - 短暂无敌后反击
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 80, damage: 0, owner: 'enemy', life: 1.0, maxLife: 1.0, boss: this,
+                    update(dt) {
+                        this.x = this.boss.x; this.y = this.boss.y;
+                        this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
+                    },
+                    draw(ctx) {
+                        const alpha = 0.3 + Math.sin(Date.now() / 100) * 0.2;
+                        ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`; ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = 'rgba(255, 215, 0, 0.3)'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚔ 架势 ⚔', this.x, this.y - this.radius - 10);
+                    }
+                });
+                // 反击
+                setTimeout(() => {
+                    const counterAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                    for (let i = 0; i < 8; i++) {
+                        const ca = counterAngle + (i - 3.5) * 0.2;
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(ca) * 550, vy: Math.sin(ca) * 550,
+                            radius: 16, damage: 25, owner: 'enemy', rotation: ca, life: 0.8,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#ffffff'); }
+                        });
+                    }
+                }, 1000);
+                break;
+                
+            // ===== Phase 2 强力技能 =====
+            case 'EXCALIBUR_JUDGMENT':
+                // 圣剑审判 - 巨大光柱
+                if (this.player.screenShake) { this.player.screenShake.intensity = 20; this.player.screenShake.duration = 2; }
+                this.combatSystem.spawnProjectile({
+                    x: this.player.x, y: this.player.y, radius: 80, damage: 0, owner: 'enemy', life: 1.5, maxLife: 1.5, targetX: this.player.x, targetY: this.player.y,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const progress = 1 - this.life / this.maxLife;
+                        ctx.fillStyle = `rgba(255, 215, 0, ${0.3 + progress * 0.4})`;
+                        ctx.beginPath(); ctx.arc(this.targetX, this.targetY, this.radius * (1 - progress * 0.3), 0, Math.PI * 2); ctx.fill();
+                        // 光柱
+                        if (progress > 0.7) {
+                            ctx.fillStyle = `rgba(255, 255, 255, ${(progress - 0.7) * 3})`;
+                            ctx.fillRect(this.targetX - 30, 0, 60, 800);
+                        }
+                    }
+                });
+                setTimeout(() => {
+                    const dist = Math.sqrt((this.player.x - this.dashTarget.x) ** 2 + (this.player.y - this.dashTarget.y) ** 2);
+                    if (dist < 100) this.player.takeDamage(45);
+                }, 1500);
+                break;
+                
+            case 'THOUSAND_CUTS':
+                // 千刃乱舞 - 大量剑气
+                for (let wave = 0; wave < 6; wave++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 16; i++) {
+                            const ca = (Math.PI * 2 / 16) * i + wave * 0.2;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, vx: Math.cos(ca) * (300 + wave * 30), vy: Math.sin(ca) * (300 + wave * 30),
+                                radius: 8, damage: 10, owner: 'enemy', rotation: ca, life: 1.0,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#c0c0c0'); }
+                            });
+                        }
+                    }, wave * 120);
+                }
+                break;
+                
+            case 'BLINK_ASSAULT':
+                // 瞬闪连斩 - 多次闪现攻击
+                for (let blink = 0; blink < 5; blink++) {
+                    setTimeout(() => {
+                        // 闪现到随机位置
+                        const blinkAngle = Math.random() * Math.PI * 2;
+                        const blinkDist = 100 + Math.random() * 100;
+                        const bx = this.player.x + Math.cos(blinkAngle) * blinkDist;
+                        const by = this.player.y + Math.sin(blinkAngle) * blinkDist;
+                        // 残影
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, radius: 40, damage: 0, owner: 'enemy', life: 0.3, maxLife: 0.3,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.fillStyle = `rgba(255, 215, 0, ${this.life / this.maxLife * 0.6})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                        });
+                        this.x = bx; this.y = by;
+                        // 攻击
+                        const atkAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(atkAngle) * 600, vy: Math.sin(atkAngle) * 600,
+                            radius: 18, damage: 18, owner: 'enemy', rotation: atkAngle, life: 0.5,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#ffd700'); }
+                        });
+                    }, blink * 250);
+                }
+                break;
+                
+            case 'KINGS_WRATH':
+                // 王者之怒 - 全方位剑气爆发
+                if (this.player.screenShake) { this.player.screenShake.intensity = 15; this.player.screenShake.duration = 2; }
+                for (let ring = 0; ring < 3; ring++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 24; i++) {
+                            const wa = (Math.PI * 2 / 24) * i + ring * 0.13;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, vx: Math.cos(wa) * (400 + ring * 80), vy: Math.sin(wa) * (400 + ring * 80),
+                                radius: 12, damage: 15, owner: 'enemy', rotation: wa, life: 1.2,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, ring === 2 ? '#ffd700' : '#c0c0c0'); }
+                            });
+                        }
+                    }, ring * 200);
+                }
+                break;
+                
+            case 'AVALON_SHIELD':
+                // 阿瓦隆护盾 - 短暂护盾+反弹
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 100, damage: 0, owner: 'enemy', life: 2.0, maxLife: 2.0, boss: this,
+                    update(dt) {
+                        this.x = this.boss.x; this.y = this.boss.y;
+                        this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
+                    },
+                    draw(ctx) {
+                        const time = Date.now() / 1000;
+                        ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + Math.sin(time * 8) * 0.3})`;
+                        ctx.lineWidth = 6;
+                        ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 20;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = 'rgba(255, 255, 200, 0.15)';
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                });
+                break;
         }
     }
 
@@ -2839,152 +3184,238 @@ class PaladinBoss extends BaseBoss {
     draw(ctx) {
         const time = Date.now() / 1000;
         const isRage = this.phase === 2;
-        const wingFlap = Math.sin(time * 4) * 0.15;
+        this.swordAngle = Math.sin(time * 3) * 0.2;
         
-        // ===== 神圣光芒背景 =====
-        const glowSize = isRage ? 3.0 : 2.2;
-        const holyGlow = ctx.createRadialGradient(this.x, this.y, this.radius * 0.3, this.x, this.y, this.radius * glowSize);
-        holyGlow.addColorStop(0, isRage ? 'rgba(255, 255, 200, 0.6)' : 'rgba(255, 255, 255, 0.3)');
-        holyGlow.addColorStop(0.4, isRage ? 'rgba(255, 215, 0, 0.3)' : 'rgba(200, 200, 255, 0.15)');
-        holyGlow.addColorStop(1, 'transparent');
-        ctx.fillStyle = holyGlow;
+        // ===== 王者气场光环 =====
+        const glowSize = isRage ? 2.8 : 2.0;
+        const kingsAura = ctx.createRadialGradient(this.x, this.y, this.radius * 0.2, this.x, this.y, this.radius * glowSize);
+        kingsAura.addColorStop(0, isRage ? 'rgba(255, 215, 0, 0.5)' : 'rgba(200, 200, 220, 0.25)');
+        kingsAura.addColorStop(0.5, isRage ? 'rgba(255, 180, 0, 0.2)' : 'rgba(150, 150, 180, 0.1)');
+        kingsAura.addColorStop(1, 'transparent');
+        ctx.fillStyle = kingsAura;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius * glowSize, 0, Math.PI * 2);
         ctx.fill();
         
-        // ===== 神圣光环（头顶）=====
-        ctx.strokeStyle = isRage ? '#ffd700' : '#e0e0e0';
-        ctx.lineWidth = 4;
-        ctx.shadowColor = '#ffd700';
-        ctx.shadowBlur = 20;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y - 75, 25, 8, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-        
-        // ===== 六翼天使之翼 =====
-        const wingColors = isRage ? ['#ffffff', '#fff8dc', '#ffd700'] : ['#e0e0e0', '#c0c0c0', '#a0a0a0'];
-        for (let pair = 0; pair < 3; pair++) {
-            const wingScale = 1 - pair * 0.15;
-            const wingY = this.y - 5 + pair * 12;
-            const flapOffset = Math.sin(time * 5 + pair * 0.5) * (10 - pair * 2);
-            ctx.fillStyle = wingColors[pair];
-            ctx.shadowColor = isRage ? '#ffd700' : '#ffffff';
-            ctx.shadowBlur = 12 - pair * 3;
-            // 左翅
+        // ===== 残影轨迹 =====
+        this.dashTrail = this.dashTrail.filter(t => { t.life -= 0.016; return t.life > 0; });
+        this.dashTrail.forEach(trail => {
+            ctx.fillStyle = `rgba(255, 215, 0, ${trail.life})`;
             ctx.beginPath();
-            ctx.moveTo(this.x - 15, wingY);
-            const leftWingEnd = -90 * wingScale - flapOffset;
-            ctx.quadraticCurveTo(this.x - 50 * wingScale, wingY - 50 * wingScale + flapOffset, this.x + leftWingEnd, wingY - 20);
-            ctx.quadraticCurveTo(this.x - 40 * wingScale, wingY + 15, this.x - 15, wingY);
+            ctx.arc(trail.x, trail.y, this.radius * 0.8, 0, Math.PI * 2);
             ctx.fill();
-            // 右翅
-            ctx.beginPath();
-            ctx.moveTo(this.x + 15, wingY);
-            const rightWingEnd = 90 * wingScale + flapOffset;
-            ctx.quadraticCurveTo(this.x + 50 * wingScale, wingY - 50 * wingScale + flapOffset, this.x + rightWingEnd, wingY - 20);
-            ctx.quadraticCurveTo(this.x + 40 * wingScale, wingY + 15, this.x + 15, wingY);
-            ctx.fill();
-        }
-        ctx.shadowBlur = 0;
+        });
         
-        // ===== 圣甲身躯 =====
-        const bodyGrad = ctx.createRadialGradient(this.x - 10, this.y - 10, 0, this.x, this.y, this.radius);
-        bodyGrad.addColorStop(0, '#ffffff');
-        bodyGrad.addColorStop(0.3, isRage ? '#ffd700' : '#e8e8e8');
-        bodyGrad.addColorStop(0.7, isRage ? '#daa520' : '#c0c0c0');
-        bodyGrad.addColorStop(1, isRage ? '#b8860b' : '#909090');
-        ctx.fillStyle = bodyGrad;
-        ctx.shadowColor = isRage ? '#ffd700' : '#ffffff';
-        ctx.shadowBlur = isRage ? 35 : 18;
+        // ===== 王者披风 =====
+        ctx.fillStyle = isRage ? '#8b0000' : '#191970';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y, this.radius * 0.9, this.radius * 0.8, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        
-        // 圣甲纹饰
-        ctx.strokeStyle = isRage ? '#fff' : '#ffd700';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y - 35);
-        ctx.lineTo(this.x, this.y + 25);
-        ctx.moveTo(this.x - 20, this.y - 10);
-        ctx.lineTo(this.x + 20, this.y - 10);
-        ctx.stroke();
-        
-        // ===== 天使面容 =====
-        const faceGrad = ctx.createRadialGradient(this.x, this.y - 35, 0, this.x, this.y - 30, 25);
-        faceGrad.addColorStop(0, '#fff5ee');
-        faceGrad.addColorStop(1, isRage ? '#ffe4b5' : '#deb887');
-        ctx.fillStyle = faceGrad;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y - 35, 22, 20, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // 神圣之眼
-        ctx.fillStyle = isRage ? '#00bfff' : '#4169e1';
-        ctx.shadowColor = isRage ? '#00ffff' : '#4169e1';
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.ellipse(this.x - 8, this.y - 38, 5, 4, 0, 0, Math.PI * 2);
-        ctx.ellipse(this.x + 8, this.y - 38, 5, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(this.x - 8, this.y - 38, 2, 0, Math.PI * 2);
-        ctx.arc(this.x + 8, this.y - 38, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        
-        // ===== 圣光之剑（右手）=====
-        ctx.save();
-        ctx.translate(this.x + 55, this.y - 10);
-        ctx.rotate(0.3 + Math.sin(time * 2) * 0.1);
-        // 剑身
-        const swordGrad = ctx.createLinearGradient(0, -50, 0, 30);
-        swordGrad.addColorStop(0, '#ffffff');
-        swordGrad.addColorStop(0.5, isRage ? '#ffd700' : '#c0c0c0');
-        swordGrad.addColorStop(1, isRage ? '#ffaa00' : '#808080');
-        ctx.fillStyle = swordGrad;
-        ctx.shadowColor = isRage ? '#ffd700' : '#fff';
-        ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.moveTo(0, -55);
-        ctx.lineTo(6, -10);
-        ctx.lineTo(6, 25);
-        ctx.lineTo(-6, 25);
-        ctx.lineTo(-6, -10);
+        ctx.moveTo(this.x - 25, this.y - 10);
+        ctx.quadraticCurveTo(this.x - 50 + Math.sin(time * 3) * 10, this.y + 30, this.x - 35, this.y + 60);
+        ctx.lineTo(this.x + 35, this.y + 60);
+        ctx.quadraticCurveTo(this.x + 50 + Math.sin(time * 3 + 1) * 10, this.y + 30, this.x + 25, this.y - 10);
         ctx.closePath();
         ctx.fill();
-        // 剑格
+        // 披风金边
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // ===== 骑士铠甲身躯 =====
+        const armorGrad = ctx.createRadialGradient(this.x - 10, this.y - 10, 0, this.x, this.y, this.radius);
+        armorGrad.addColorStop(0, '#e8e8e8');
+        armorGrad.addColorStop(0.3, isRage ? '#c0c0c0' : '#a8a8a8');
+        armorGrad.addColorStop(0.7, isRage ? '#909090' : '#707070');
+        armorGrad.addColorStop(1, isRage ? '#606060' : '#404040');
+        ctx.fillStyle = armorGrad;
+        ctx.shadowColor = isRage ? '#ffd700' : '#fff';
+        ctx.shadowBlur = isRage ? 25 : 10;
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y, this.radius * 0.85, this.radius * 0.75, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // 铠甲纹饰 - 龙纹
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(this.x - 15, this.y - 20);
+        ctx.quadraticCurveTo(this.x, this.y - 30, this.x + 15, this.y - 20);
+        ctx.quadraticCurveTo(this.x + 10, this.y, this.x, this.y + 15);
+        ctx.quadraticCurveTo(this.x - 10, this.y, this.x - 15, this.y - 20);
+        ctx.stroke();
+        
+        // ===== 王者头盔 =====
+        const helmetGrad = ctx.createRadialGradient(this.x, this.y - 40, 0, this.x, this.y - 35, 30);
+        helmetGrad.addColorStop(0, '#d0d0d0');
+        helmetGrad.addColorStop(0.5, '#808080');
+        helmetGrad.addColorStop(1, '#404040');
+        ctx.fillStyle = helmetGrad;
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y - 38, 25, 22, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 面罩
+        ctx.fillStyle = '#202020';
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y - 35, 18, 12, 0, 0.3, Math.PI - 0.3);
+        ctx.fill();
+        // 头盔装饰
         ctx.fillStyle = '#ffd700';
-        ctx.fillRect(-12, 25, 24, 6);
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y - 60);
+        ctx.lineTo(this.x - 8, this.y - 48);
+        ctx.lineTo(this.x + 8, this.y - 48);
+        ctx.closePath();
+        ctx.fill();
+        // 王冠
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 42, 22, Math.PI + 0.3, -0.3);
+        ctx.stroke();
+        
+        // 发光眼睛（透过面罩）
+        ctx.fillStyle = isRage ? '#ff4444' : '#4488ff';
+        ctx.shadowColor = isRage ? '#ff0000' : '#0066ff';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.ellipse(this.x - 8, this.y - 38, 4, 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 8, this.y - 38, 4, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // ===== Excalibur 圣剑 =====
+        ctx.save();
+        ctx.translate(this.x + 45, this.y - 15);
+        ctx.rotate(-0.5 + this.swordAngle);
+        
+        // 剑身发光效果
+        ctx.shadowColor = isRage ? '#ffd700' : '#88ccff';
+        ctx.shadowBlur = isRage ? 35 : 20;
+        
+        // 剑身 - Excalibur特效
+        const excaliburGrad = ctx.createLinearGradient(0, -80, 0, 20);
+        excaliburGrad.addColorStop(0, '#ffffff');
+        excaliburGrad.addColorStop(0.3, isRage ? '#ffd700' : '#88ccff');
+        excaliburGrad.addColorStop(0.6, isRage ? '#ffaa00' : '#4488ff');
+        excaliburGrad.addColorStop(1, '#ffffff');
+        ctx.fillStyle = excaliburGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, -85);  // 剑尖
+        ctx.lineTo(8, -60);
+        ctx.lineTo(8, 15);
+        ctx.lineTo(-8, 15);
+        ctx.lineTo(-8, -60);
+        ctx.closePath();
+        ctx.fill();
+        
+        // 剑身中线发光
+        ctx.strokeStyle = isRage ? '#ffffff' : '#aaddff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -80);
+        ctx.lineTo(0, 10);
+        ctx.stroke();
+        
+        // 华丽剑格
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.moveTo(-20, 15);
+        ctx.lineTo(-15, 22);
+        ctx.lineTo(15, 22);
+        ctx.lineTo(20, 15);
+        ctx.lineTo(15, 18);
+        ctx.lineTo(-15, 18);
+        ctx.closePath();
+        ctx.fill();
+        // 剑格宝石
+        ctx.fillStyle = isRage ? '#ff0000' : '#0066ff';
+        ctx.beginPath();
+        ctx.arc(0, 18, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
         // 剑柄
-        ctx.fillStyle = '#8b4513';
-        ctx.fillRect(-4, 31, 8, 18);
+        ctx.fillStyle = '#4a2810';
+        ctx.fillRect(-5, 22, 10, 25);
+        // 剑柄缠绕
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.moveTo(-5, 26 + i * 6);
+            ctx.lineTo(5, 29 + i * 6);
+            ctx.stroke();
+        }
+        // 剑首
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(0, 50, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
         ctx.shadowBlur = 0;
         ctx.restore();
         
-        // ===== Phase 2 神圣符文环 =====
+        // ===== 盾牌（左手）=====
+        ctx.save();
+        ctx.translate(this.x - 50, this.y);
+        ctx.rotate(-0.3);
+        // 盾牌主体
+        const shieldGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 35);
+        shieldGrad.addColorStop(0, '#c0c0c0');
+        shieldGrad.addColorStop(0.5, '#808080');
+        shieldGrad.addColorStop(1, '#404040');
+        ctx.fillStyle = shieldGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, -35);
+        ctx.lineTo(25, -15);
+        ctx.lineTo(25, 15);
+        ctx.lineTo(0, 40);
+        ctx.lineTo(-25, 15);
+        ctx.lineTo(-25, -15);
+        ctx.closePath();
+        ctx.fill();
+        // 盾牌边框
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        // 龙纹徽章
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(0, 0, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = isRage ? '#8b0000' : '#191970';
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        // ===== Phase 2 王者威压 =====
         if (isRage) {
-            ctx.strokeStyle = `rgba(255, 215, 0, ${0.8 + Math.sin(time * 5) * 0.2})`;
-            ctx.lineWidth = 3;
-            ctx.setLineDash([10, 5]);
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius + 35, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            // 旋转十字符文
-            for (let i = 0; i < 8; i++) {
-                const ra = (Math.PI * 2 / 8) * i + time * 0.8;
-                const rx = this.x + Math.cos(ra) * (this.radius + 35);
-                const ry = this.y + Math.sin(ra) * (this.radius + 35);
-                ctx.strokeStyle = '#ffd700';
-                ctx.lineWidth = 2;
+            // 旋转剑气环
+            for (let ring = 0; ring < 2; ring++) {
+                ctx.strokeStyle = `rgba(255, 215, 0, ${0.5 - ring * 0.2 + Math.sin(time * 6) * 0.2})`;
+                ctx.lineWidth = 3 - ring;
+                ctx.setLineDash([12, 6]);
                 ctx.beginPath();
-                ctx.moveTo(rx, ry - 6); ctx.lineTo(rx, ry + 6);
-                ctx.moveTo(rx - 4, ry); ctx.lineTo(rx + 4, ry);
+                ctx.arc(this.x, this.y, this.radius + 30 + ring * 15, 0, Math.PI * 2);
                 ctx.stroke();
+            }
+            ctx.setLineDash([]);
+            // 旋转剑影
+            for (let i = 0; i < 6; i++) {
+                const sa = (Math.PI * 2 / 6) * i + time * 1.5;
+                const sx = this.x + Math.cos(sa) * (this.radius + 40);
+                const sy = this.y + Math.sin(sa) * (this.radius + 40);
+                ctx.save();
+                ctx.translate(sx, sy);
+                ctx.rotate(sa + Math.PI / 2);
+                ctx.fillStyle = `rgba(255, 215, 0, ${0.4 + Math.sin(time * 4 + i) * 0.2})`;
+                ctx.beginPath();
+                ctx.moveTo(0, -15);
+                ctx.lineTo(4, 10);
+                ctx.lineTo(-4, 10);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
             }
         }
 
@@ -2993,28 +3424,178 @@ class PaladinBoss extends BaseBoss {
 
     drawSkillIndicator(ctx) {
         const angle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+        
+        // 通用突进箭头绘制函数
+        const drawDashArrow = (targetX, targetY, color) => {
+            const dist = Math.sqrt((targetX - this.x) ** 2 + (targetY - this.y) ** 2);
+            // 路径线
+            ctx.strokeStyle = `rgba(${color}, 0.5)`;
+            ctx.lineWidth = 8;
+            ctx.setLineDash([15, 10]);
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(targetX, targetY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            // 箭头
+            ctx.fillStyle = `rgba(${color}, 0.7)`;
+            ctx.save();
+            ctx.translate(targetX, targetY);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(20, 0);
+            ctx.lineTo(-15, -15);
+            ctx.lineTo(-5, 0);
+            ctx.lineTo(-15, 15);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            // 警告文字
+            ctx.fillStyle = `rgba(${color}, 0.8)`;
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚔ 突进 ⚔', (this.x + targetX) / 2, (this.y + targetY) / 2 - 20);
+        };
+        
         switch (this.currentSkill) {
-            case 'DIVINE_DASH':
-                this.drawDashIndicator(ctx, this.dashTarget.x, this.dashTarget.y, '192, 192, 192'); break;
-            case 'SWORD_THRUST': case 'JUDGEMENT_BLADE':
-                ctx.fillStyle = 'rgba(192, 192, 192, 0.4)'; ctx.beginPath(); ctx.moveTo(this.x, this.y);
-                ctx.arc(this.x, this.y, 350, angle - 0.15, angle + 0.15); ctx.closePath(); ctx.fill(); break;
-            case 'CROSS_SLASH': case 'RADIANT_SLASH':
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)'; ctx.beginPath(); ctx.moveTo(this.x, this.y);
-                ctx.arc(this.x, this.y, 300, angle - 0.5, angle + 0.5); ctx.closePath(); ctx.fill(); break;
+            // ===== 突进类技能 - 显示方向箭头 =====
+            case 'DASH_STRIKE': case 'DIVINE_DASH':
+                drawDashArrow(this.dashTarget.x, this.dashTarget.y, '255, 215, 0');
+                break;
+                
+            case 'EXCALIBUR_THRUST':
+                // 圣剑突刺 - 直线预警
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x + Math.cos(angle - 0.1) * 400, this.y + Math.sin(angle - 0.1) * 400);
+                ctx.lineTo(this.x + Math.cos(angle + 0.1) * 400, this.y + Math.sin(angle + 0.1) * 400);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚔ Excalibur ⚔', this.x, this.y - this.radius - 30);
+                break;
+                
+            case 'FLASH_STEP':
+                // 闪步 - 玩家身后预警
+                const behindX = this.player.x + Math.cos(angle) * 80;
+                const behindY = this.player.y + Math.sin(angle) * 80;
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+                ctx.beginPath();
+                ctx.arc(behindX, behindY, 50, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(behindX, behindY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = 'rgba(255, 100, 100, 0.8)';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚡ 闪现 ⚡', behindX, behindY - 60);
+                break;
+                
+            case 'BLINK_ASSAULT':
+                // 瞬闪连斩 - 多点预警
+                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 180, '255, 100, 100');
+                ctx.fillStyle = 'rgba(255, 50, 50, 0.8)';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚡⚔ 瞬闪连斩 ⚔⚡', this.player.x, this.player.y - 100);
+                break;
+                
+            // ===== 扇形/锥形技能 =====
+            case 'SWIFT_SLASH':
+                ctx.fillStyle = 'rgba(192, 192, 192, 0.4)';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.arc(this.x, this.y, 300, angle - 0.5, angle + 0.5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('迅斩', this.x + Math.cos(angle) * 100, this.y + Math.sin(angle) * 100);
+                break;
+                
+            case 'CROSS_SLASH':
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.arc(this.x, this.y, 300, angle - 0.5, angle + 0.5);
+                ctx.closePath();
+                ctx.fill();
+                break;
+                
+            // ===== 范围技能 =====
+            case 'BLADE_DANCE': case 'BLADE_STORM': case 'BLADE_BARRIER':
+                this.drawAOEIndicator(ctx, this.x, this.y, 180, '192, 192, 192');
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.5)';
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚔ 剑舞 ⚔', this.x, this.y - this.radius - 25);
+                break;
+                
             case 'SWORD_RAIN':
-                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 150, '192, 192, 192'); break;
-            case 'BLADE_STORM': case 'BLADE_BARRIER': case 'FINAL_JUDGEMENT':
-                this.drawAOEIndicator(ctx, this.x, this.y, 200, '192, 192, 192'); break;
-            case 'HOLY_BLADE':
-                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 100, '255, 255, 255');
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.5)'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-                ctx.fillText('⚔ 追踪 ⚔', this.player.x, this.player.y - 60); break;
-            case 'ANGELIC_WRATH':
-                this.drawAOEIndicator(ctx, this.x, this.y, 200, '255, 215, 0');
-                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 120, '192, 192, 192');
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.5)'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
-                ctx.fillText('⚔⚔⚔', this.x, this.y - this.radius - 25); break;
+                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 150, '192, 192, 192');
+                ctx.fillStyle = 'rgba(200, 200, 200, 0.6)';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('剑雨', this.player.x, this.player.y - 80);
+                break;
+                
+            case 'COUNTER_STANCE':
+                this.drawAOEIndicator(ctx, this.x, this.y, 80, '255, 200, 100');
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚔ 架势 ⚔', this.x, this.y - this.radius - 30);
+                break;
+                
+            // ===== Phase 2 大招 =====
+            case 'EXCALIBUR_JUDGMENT':
+                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 100, '255, 255, 0');
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚔ 圣剑审判 ⚔', this.player.x, this.player.y - 120);
+                // 光柱预警
+                ctx.fillStyle = 'rgba(255, 255, 200, 0.2)';
+                ctx.fillRect(this.player.x - 35, 0, 70, 800);
+                break;
+                
+            case 'THOUSAND_CUTS':
+                this.drawAOEIndicator(ctx, this.x, this.y, 250, '255, 215, 0');
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
+                ctx.font = 'bold 22px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('千刃乱舞', this.x, this.y - this.radius - 30);
+                break;
+                
+            case 'KINGS_WRATH':
+                this.drawAOEIndicator(ctx, this.x, this.y, 300, '255, 100, 0');
+                ctx.fillStyle = 'rgba(255, 50, 0, 0.8)';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚔ 王者之怒 ⚔', this.x, this.y - this.radius - 35);
+                break;
+                
+            case 'AVALON_SHIELD':
+                this.drawAOEIndicator(ctx, this.x, this.y, 100, '100, 200, 255');
+                ctx.fillStyle = 'rgba(100, 200, 255, 0.7)';
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('阿瓦隆', this.x, this.y - this.radius - 25);
+                break;
+                
+            default:
+                this.drawAOEIndicator(ctx, this.x, this.y, 120, '192, 192, 192');
+                break;
         }
     }
 }

@@ -81,7 +81,7 @@ export class BossManager {
                 2: '冰霜巨龙',
                 3: '地狱三头魔犬·刻耳柏洛斯',
                 4: '天穹之王·宙斯',
-                5: '圣光大天使·米迦勒'
+                5: '圣剑王·亚瑟'
             };
             nameEl.innerText = bossNames[this.activeBoss.level] || 'Boss';
         }
