@@ -92,38 +92,38 @@ export class BuildSystem {
         ];
     }
     
-    // 长剑构筑 - 重击流派
+    // 长剑构筑 - 重击流派 (数值已下调)
     createLongswordBuilds() {
         return [
             // 普通 - 强化基础属性
-            { id: 'ls_dmg1', name: '锋利刀刃', desc: '伤害 +25%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'damage', 1.25) },
-            { id: 'ls_speed1', name: '快速挥砍', desc: '攻速 +20%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'cooldown', 0.8) },
-            { id: 'ls_range1', name: '剑刃延伸', desc: '范围 +35%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'range', 1.35) },
-            { id: 'ls_arc1', name: '横扫千军', desc: '弧度 +30%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'arc', 1.3) },
-            { id: 'ls_knock1', name: '重击', desc: '击退 +50%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'knockback', 1.5) },
-            { id: 'ls_def1', name: '铁壁', desc: '减伤 +15%', rarity: 'common', apply: () => { this.player.damageReduction = (this.player.damageReduction || 0) + 0.15; } },
+            { id: 'ls_dmg1', name: '锋利刀刃', desc: '伤害 +20%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'damage', 1.20) },
+            { id: 'ls_speed1', name: '快速挥砍', desc: '攻速 +10%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'cooldown', 0.9) },
+            { id: 'ls_range1', name: '剑刃延伸', desc: '范围 +15%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'range', 1.15) },
+            { id: 'ls_arc1', name: '横扫千军', desc: '弧度 +20%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'arc', 1.2) },
+            { id: 'ls_knock1', name: '重击', desc: '击退 +40%', rarity: 'common', apply: () => this.modifyWeaponStat('Longsword', 'knockback', 1.4) },
+            { id: 'ls_def1', name: '铁壁', desc: '减伤 +12%', rarity: 'common', apply: () => { this.player.damageReduction = (this.player.damageReduction || 0) + 0.12; } },
             // 稀有 - 特殊效果
-            { id: 'ls_dmg2', name: '利刃精通', desc: '伤害 +45%', rarity: 'rare', visual: 'sharp', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 1.45); this.evolveWeapon('Longsword', 'rare'); } },
-            { id: 'ls_crit', name: '致命一击', desc: '35%暴击,2.8倍', rarity: 'rare', visual: 'crit', apply: () => { this.enableCrit('Longsword', 0.35, 2.8); this.evolveWeapon('Longsword', 'rare'); } },
-            { id: 'ls_whirlwind', name: '旋风斩', desc: '范围+70%,弧度+50%', rarity: 'rare', visual: 'whirl', apply: () => { this.modifyWeaponStat('Longsword', 'range', 1.7); this.modifyWeaponStat('Longsword', 'arc', 1.5); this.evolveWeapon('Longsword', 'rare'); } },
-            { id: 'ls_charge', name: '冲锋斩', desc: '攻击时前冲+伤害30%', rarity: 'rare', visual: 'charge', apply: () => { this.enableCharge('Longsword'); this.modifyWeaponStat('Longsword', 'damage', 1.3); this.evolveWeapon('Longsword', 'rare'); } },
+            { id: 'ls_dmg2', name: '利刃精通', desc: '伤害 +35%', rarity: 'rare', visual: 'sharp', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 1.35); this.evolveWeapon('Longsword', 'rare'); } },
+            { id: 'ls_crit', name: '致命一击', desc: '30%暴击,2.5倍', rarity: 'rare', visual: 'crit', apply: () => { this.enableCrit('Longsword', 0.30, 2.5); this.evolveWeapon('Longsword', 'rare'); } },
+            { id: 'ls_whirlwind', name: '旋风斩', desc: '范围+30%,弧度+25%', rarity: 'rare', visual: 'whirl', apply: () => { this.modifyWeaponStat('Longsword', 'range', 1.3); this.modifyWeaponStat('Longsword', 'arc', 1.25); this.evolveWeapon('Longsword', 'rare'); } },
+            { id: 'ls_charge', name: '冲锋斩', desc: '攻击时前冲+伤害20%', rarity: 'rare', visual: 'charge', apply: () => { this.enableCharge('Longsword'); this.modifyWeaponStat('Longsword', 'damage', 1.2); this.evolveWeapon('Longsword', 'rare'); } },
             // 史诗 - 强力组合
-            { id: 'ls_lifesteal', name: '生命窃取', desc: '10%吸血+HP50', rarity: 'epic', visual: 'vamp', apply: () => { this.enableLifesteal('Longsword', 0.10); this.player.maxHp += 50; this.player.hp += 50; this.evolveWeapon('Longsword', 'epic'); } },
-            { id: 'ls_stun', name: '重击眩晕', desc: '40%眩晕+伤害35%', rarity: 'epic', visual: 'stun', apply: () => { this.enableStun('Longsword', 0.4); this.modifyWeaponStat('Longsword', 'damage', 1.35); this.evolveWeapon('Longsword', 'epic'); } },
-            { id: 'ls_cleave', name: '贯穿斩击', desc: '无视护甲+击退翻倍', rarity: 'epic', visual: 'cleave', apply: () => { this.enableArmorPen('Longsword', 1.0); this.modifyWeaponStat('Longsword', 'knockback', 2.0); this.evolveWeapon('Longsword', 'epic'); } },
-            { id: 'ls_holy', name: '圣光斩', desc: '伤害+40%+每击回8HP', rarity: 'epic', visual: 'holy', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 1.4); this.enableManaSteal('Longsword', 8); this.evolveWeapon('Longsword', 'epic'); } },
+            { id: 'ls_lifesteal', name: '生命窃取', desc: '8%吸血+HP40', rarity: 'epic', visual: 'vamp', apply: () => { this.enableLifesteal('Longsword', 0.08); this.player.maxHp += 40; this.player.hp += 40; this.evolveWeapon('Longsword', 'epic'); } },
+            { id: 'ls_stun', name: '重击眩晕', desc: '30%眩晕+伤害25%', rarity: 'epic', visual: 'stun', apply: () => { this.enableStun('Longsword', 0.3); this.modifyWeaponStat('Longsword', 'damage', 1.25); this.evolveWeapon('Longsword', 'epic'); } },
+            { id: 'ls_cleave', name: '贯穿斩击', desc: '无视护甲+击退+50%', rarity: 'epic', visual: 'cleave', apply: () => { this.enableArmorPen('Longsword', 1.0); this.modifyWeaponStat('Longsword', 'knockback', 1.5); this.evolveWeapon('Longsword', 'epic'); } },
+            { id: 'ls_holy', name: '圣光斩', desc: '伤害+30%+每击回5HP', rarity: 'epic', visual: 'holy', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 1.3); this.enableManaSteal('Longsword', 5); this.evolveWeapon('Longsword', 'epic'); } },
             // 传说 - 毁灭性
-            { id: 'ls_exec', name: '处刑者', desc: '低血+150%伤害+HP100', rarity: 'legendary', visual: 'exec', apply: () => { this.enableExecute('Longsword', 1.5); this.player.maxHp += 100; this.player.hp += 100; this.evolveWeapon('Longsword', 'legendary'); } },
-            { id: 'ls_crit2', name: '暴击大师', desc: '60%暴击,4倍+攻速30%', rarity: 'legendary', visual: 'master', apply: () => { this.enableCrit('Longsword', 0.6, 4.0); this.modifyWeaponStat('Longsword', 'cooldown', 0.7); this.evolveWeapon('Longsword', 'legendary'); } },
-            { id: 'ls_wave', name: '剑气波动', desc: '发射剑气+伤害60%', rarity: 'legendary', visual: 'wave', apply: () => { this.enableSwordWave('Longsword'); this.modifyWeaponStat('Longsword', 'damage', 1.6); this.evolveWeapon('Longsword', 'legendary'); } },
+            { id: 'ls_exec', name: '处刑者', desc: '低血+100%伤害+HP80', rarity: 'legendary', visual: 'exec', apply: () => { this.enableExecute('Longsword', 1.0); this.player.maxHp += 80; this.player.hp += 80; this.evolveWeapon('Longsword', 'legendary'); } },
+            { id: 'ls_crit2', name: '暴击大师', desc: '50%暴击,3倍+攻速15%', rarity: 'legendary', visual: 'master', apply: () => { this.enableCrit('Longsword', 0.5, 3.0); this.modifyWeaponStat('Longsword', 'cooldown', 0.85); this.evolveWeapon('Longsword', 'legendary'); } },
+            { id: 'ls_wave', name: '剑气波动', desc: '发射剑气+伤害45%', rarity: 'legendary', visual: 'wave', apply: () => { this.enableSwordWave('Longsword'); this.modifyWeaponStat('Longsword', 'damage', 1.45); this.evolveWeapon('Longsword', 'legendary'); } },
             // 传说 - 新增
-            { id: 'ls_thunder', name: '雷霆之怒', desc: '连锁闪电+伤害45%+范围30%', rarity: 'legendary', visual: 'thunder', apply: () => { this.enableChainLightning('Longsword'); this.modifyWeaponStat('Longsword', 'damage', 1.45); this.modifyWeaponStat('Longsword', 'range', 1.3); this.evolveWeapon('Longsword', 'legendary'); } },
-            { id: 'ls_blood', name: '血刃狂战', desc: '低血暴击+100%,暴伤+150%', rarity: 'legendary', visual: 'blood', apply: () => { this.enableFury('Longsword', 0); this.enableCrit('Longsword', 1.0, 3.5); this.evolveWeapon('Longsword', 'legendary'); } },
-            { id: 'ls_frost', name: '霜寒之刃', desc: '冰冻50%+减速+范围50%', rarity: 'legendary', visual: 'frost', apply: () => { this.enableFreeze('Longsword', 0.5); this.modifyWeaponStat('Longsword', 'range', 1.5); this.evolveWeapon('Longsword', 'legendary'); } },
+            { id: 'ls_thunder', name: '雷霆之怒', desc: '连锁闪电+伤害35%+范围15%', rarity: 'legendary', visual: 'thunder', apply: () => { this.enableChainLightning('Longsword'); this.modifyWeaponStat('Longsword', 'damage', 1.35); this.modifyWeaponStat('Longsword', 'range', 1.15); this.evolveWeapon('Longsword', 'legendary'); } },
+            { id: 'ls_blood', name: '血刃狂战', desc: '低血暴击+80%,暴伤+100%', rarity: 'legendary', visual: 'blood', apply: () => { this.enableFury('Longsword', 0); this.enableCrit('Longsword', 0.8, 3.0); this.evolveWeapon('Longsword', 'legendary'); } },
+            { id: 'ls_frost', name: '霜寒之刃', desc: '冰冻40%+减速+范围25%', rarity: 'legendary', visual: 'frost', apply: () => { this.enableFreeze('Longsword', 0.4); this.modifyWeaponStat('Longsword', 'range', 1.25); this.evolveWeapon('Longsword', 'legendary'); } },
             // 神话 - 究极形态
-            { id: 'ls_god', name: '剑圣', desc: '伤害+200%,攻速+120%,12%吸血', rarity: 'mythic', visual: 'god', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 3.0); this.modifyWeaponStat('Longsword', 'cooldown', 0.45); this.enableLifesteal('Longsword', 0.12); this.evolveWeapon('Longsword', 'mythic', 'holy'); } },
-            { id: 'ls_demon', name: '魔剑·堕落', desc: '伤害+250%,每击吸取生命', rarity: 'mythic', visual: 'demon', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 3.5); this.enableLifeDrain('Longsword'); this.evolveWeapon('Longsword', 'mythic', 'shadow'); } },
-            { id: 'ls_paladin', name: '圣骑士', desc: '伤害+180%,减伤40%,回血5/s', rarity: 'mythic', visual: 'paladin', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 2.8); this.player.damageReduction = (this.player.damageReduction || 0) + 0.4; this.enableRegeneration(5); this.evolveWeapon('Longsword', 'mythic', 'holy'); } },
+            { id: 'ls_god', name: '剑圣', desc: '伤害+150%,攻速+50%,10%吸血', rarity: 'mythic', visual: 'god', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 2.5); this.modifyWeaponStat('Longsword', 'cooldown', 0.65); this.enableLifesteal('Longsword', 0.10); this.evolveWeapon('Longsword', 'mythic', 'holy'); } },
+            { id: 'ls_demon', name: '魔剑·堕落', desc: '伤害+180%,每击吸取生命', rarity: 'mythic', visual: 'demon', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 2.8); this.enableLifeDrain('Longsword'); this.evolveWeapon('Longsword', 'mythic', 'shadow'); } },
+            { id: 'ls_paladin', name: '圣骑士', desc: '伤害+120%,减伤30%,回血4/s', rarity: 'mythic', visual: 'paladin', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 2.2); this.player.damageReduction = (this.player.damageReduction || 0) + 0.3; this.enableRegeneration(4); this.evolveWeapon('Longsword', 'mythic', 'holy'); } },
         ];
     }
     
