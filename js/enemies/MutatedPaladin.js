@@ -6,9 +6,9 @@ export class MutatedPaladinBoss {
     constructor(x, y, player, combatSystem) {
         this.x = x; this.y = y; this.player = player; this.combatSystem = combatSystem;
         this.level = 5; this.name = '堕落骑士·莫德雷德'; this.isMutated = true;
-        this.maxHp = Math.round(3200 * 1.5); this.hp = this.maxHp; // 4800 HP
+        this.maxHp = Math.round(3000 * 1.3); this.hp = this.maxHp; // 3900 HP
         this.radius = 60; this.color = '#330033'; this.damage = 45;
-        this.critChance = 0.45; this.critMultiplier = 1.8;
+        this.critChance = 0.38; this.critMultiplier = 1.6;
         this.telegraphDuration = 0.5; this.attackCooldown = 0.75;
         this.state = 'IDLE'; this.timer = 0; this.currentSkill = null; this.phase = 1;
         this.dashTarget = { x: 0, y: 0 }; this.dashTrail = [];

@@ -2614,13 +2614,13 @@ class PaladinBoss extends BaseBoss {
         super(x, y, player, combatSystem);
         this.level = 5;
         this.name = '圣剑王·亚瑟';
-        this.maxHp = 3200;  // 最终Boss血量大幅提升
+        this.maxHp = 3000;  // 最终Boss血量
         this.hp = this.maxHp;
         this.radius = 55;
         this.color = '#ffd700';
         this.damage = 40;
-        this.critChance = 0.40;  // 40%暴击率
-        this.critMultiplier = 1.6;  // 160%暴击伤害
+        this.critChance = 0.35;  // 35%暴击率
+        this.critMultiplier = 1.5;  // 150%暴击伤害
         this.telegraphDuration = 0.55;  // 更快前摇
         this.attackCooldown = 0.85;  // 更快攻击
         // 剑技为主的技能
