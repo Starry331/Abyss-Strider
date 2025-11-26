@@ -1567,4 +1567,46 @@ button:disabled {
         max-width: 90%;
         padding: 30px;
     }
+    
+    /* ===== 构筑/赐福/武器选择触屏适配 ===== */
+    #build-selection, #blessing-selection, #weapon-upgrade-selection {
+        padding: 15px;
+        overflow-y: auto;
+        max-height: 100vh;
+    }
+    
+    #build-choices {
+        flex-direction: column;
+        gap: 15px;
+        padding-bottom: 80px;
+    }
+    
+    .build-card {
+        width: 90%;
+        max-width: 320px;
+        padding: 20px;
+        margin: 0 auto;
+    }
+    
+    .build-icon {
+        font-size: 48px;
+    }
+    
+    .build-name {
+        font-size: 20px;
+    }
+    
+    .build-desc {
+        font-size: 14px;
+    }
+    
+    .build-title {
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
+    
+    .build-subtitle {
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
 }

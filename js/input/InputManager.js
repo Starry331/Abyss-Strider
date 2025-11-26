@@ -29,6 +29,27 @@ export class InputManager {
             this.keys[e.code] = false;
             this.updateInputState();
         });
+        
+        // 页面失焦时重置所有输入状态，防止切换页面后方向失控
+        window.addEventListener('blur', () => this.resetAllInput());
+        window.addEventListener('visibilitychange', () => {
+            if (document.hidden) this.resetAllInput();
+        });
+    }
+    
+    // 重置所有输入状态
+    resetAllInput() {
+        this.keys = {};
+        this.touchState.joystick = { x: 0, y: 0, active: false };
+        this.touchState.buttons = { block: false, roll: false, switch: false };
+        this.input.move = { x: 0, y: 0 };
+        this.input.block = false;
+        this.input.roll = false;
+        this.input.switchWeapon = false;
+        this.input.attack = false;
+        // 重置摇杆视觉
+        const handle = document.getElementById('joystick-handle');
+        if (handle) handle.style.transform = 'translate(-50%, -50%)';
     }
 
     initTouch() {
@@ -123,43 +144,57 @@ export class InputManager {
     }
 
     updateInputState() {
-        // Reset transient states if needed, or handle in update loop
-        // Here we combine keyboard and touch
+        // ===== 优化8向移动 =====
+        let kx = 0, ky = 0;  // 键盘输入
+        let tx = 0, ty = 0;  // 触屏输入
 
-        // Movement
-        let x = 0;
-        let y = 0;
+        // 键盘WASD输入
+        if (this.keys['KeyW'] || this.keys['ArrowUp']) ky -= 1;
+        if (this.keys['KeyS'] || this.keys['ArrowDown']) ky += 1;
+        if (this.keys['KeyA'] || this.keys['ArrowLeft']) kx -= 1;
+        if (this.keys['KeyD'] || this.keys['ArrowRight']) kx += 1;
 
-        if (this.keys['KeyW']) y -= 1;
-        if (this.keys['KeyS']) y += 1;
-        if (this.keys['KeyA']) x -= 1;
-        if (this.keys['KeyD']) x += 1;
-
-        // Normalize keyboard vector
-        if (x !== 0 || y !== 0) {
-            const len = Math.sqrt(x * x + y * y);
-            x /= len;
-            y /= len;
+        // 键盘对角移动标准化(保证8向等速)
+        if (kx !== 0 && ky !== 0) {
+            const diag = 0.7071; // 1/sqrt(2)
+            kx *= diag;
+            ky *= diag;
         }
 
-        // Add touch input
-        x += this.touchState.joystick.x;
-        y += this.touchState.joystick.y;
+        // 触屏摇杆输入
+        tx = this.touchState.joystick.x;
+        ty = this.touchState.joystick.y;
 
-        // Clamp
-        if (Math.abs(x) > 1) x = Math.sign(x);
-        if (Math.abs(y) > 1) y = Math.sign(y);
+        // 合并输入，优先使用幅度更大的
+        let x, y;
+        const kLen = Math.sqrt(kx * kx + ky * ky);
+        const tLen = Math.sqrt(tx * tx + ty * ty);
+        
+        if (kLen > 0.1 && kLen >= tLen) {
+            x = kx;
+            y = ky;
+        } else if (tLen > 0.1) {
+            x = tx;
+            y = ty;
+        } else {
+            x = 0;
+            y = 0;
+        }
+
+        // 最终标准化，确保最大速度为1
+        const finalLen = Math.sqrt(x * x + y * y);
+        if (finalLen > 1) {
+            x /= finalLen;
+            y /= finalLen;
+        }
 
         this.input.move.x = x;
         this.input.move.y = y;
 
         // Actions
-        this.input.block = this.keys['KeyJ'] || this.touchState.buttons.block;
-        this.input.roll = this.keys['KeyK'] || this.touchState.buttons.roll;
-
-        // Weapon switch is a trigger, usually handled as a single press event
-        // For continuous polling, we just check state. Logic elsewhere handles "just pressed"
-        this.input.switchWeapon = this.keys['KeyQ'] || this.touchState.buttons.switch;
+        this.input.block = this.keys['KeyJ'] || this.keys['Space'] || this.touchState.buttons.block;
+        this.input.roll = this.keys['KeyK'] || this.keys['ShiftLeft'] || this.keys['ShiftRight'] || this.touchState.buttons.roll;
+        this.input.switchWeapon = this.keys['KeyQ'] || this.keys['Tab'] || this.touchState.buttons.switch;
     }
 
     getInput() {

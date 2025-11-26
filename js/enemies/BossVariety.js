@@ -2601,7 +2601,7 @@ class PaladinBoss extends BaseBoss {
         super(x, y, player, combatSystem);
         this.level = 5;
         this.name = '圣剑王·亚瑟';
-        this.maxHp = 2200;  // 最终Boss强化血量
+        this.maxHp = 2000;  // 最终Boss血量
         this.hp = this.maxHp;
         this.radius = 55;
         this.color = '#ffd700';
