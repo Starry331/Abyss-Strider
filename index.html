@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>深渊行者 | Abyss Strider</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -278,8 +278,8 @@
             <!-- 触屏暂停按钮 -->
             <button id="btn-pause-touch" class="hidden">⏸</button>
 
-            <!-- Mobile Controls -->
-            <div id="mobile-controls" class="hidden">
+            <!-- Mobile Controls (CSS媒体查询控制显示) -->
+            <div id="mobile-controls">
                 <div id="joystick-container">
                     <div id="joystick-area">
                         <div id="joystick-handle"></div>

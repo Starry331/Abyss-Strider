@@ -21,6 +21,8 @@ export class InputManager {
 
     initKeyboard() {
         window.addEventListener('keydown', (e) => {
+            // 防止空格键滚动页面
+            if (e.code === 'Space') e.preventDefault();
             this.keys[e.code] = true;
             this.updateInputState();
         });
@@ -149,10 +151,10 @@ export class InputManager {
         let tx = 0, ty = 0;  // 触屏输入
 
         // 键盘WASD输入
-        if (this.keys['KeyW'] || this.keys['ArrowUp']) ky -= 1;
-        if (this.keys['KeyS'] || this.keys['ArrowDown']) ky += 1;
-        if (this.keys['KeyA'] || this.keys['ArrowLeft']) kx -= 1;
-        if (this.keys['KeyD'] || this.keys['ArrowRight']) kx += 1;
+        if (this.keys['KeyW']) ky -= 1;
+        if (this.keys['KeyS']) ky += 1;
+        if (this.keys['KeyA']) kx -= 1;
+        if (this.keys['KeyD']) kx += 1;
 
         // 键盘对角移动标准化(保证8向等速)
         if (kx !== 0 && ky !== 0) {
@@ -191,10 +193,10 @@ export class InputManager {
         this.input.move.x = x;
         this.input.move.y = y;
 
-        // Actions
-        this.input.block = this.keys['KeyJ'] || this.keys['Space'] || this.touchState.buttons.block;
-        this.input.roll = this.keys['KeyK'] || this.keys['ShiftLeft'] || this.keys['ShiftRight'] || this.touchState.buttons.roll;
-        this.input.switchWeapon = this.keys['KeyQ'] || this.keys['Tab'] || this.touchState.buttons.switch;
+        // Actions (仅J/K/Q键盘 + 触屏按钮)
+        this.input.block = this.keys['KeyJ'] || this.touchState.buttons.block;
+        this.input.roll = this.keys['KeyK'] || this.touchState.buttons.roll;
+        this.input.switchWeapon = this.keys['KeyQ'] || this.touchState.buttons.switch;
     }
 
     getInput() {
