@@ -82,9 +82,13 @@ export class BuildSystem {
             { id: 'staff_meteor', name: '陨石雨', desc: '落石+HP+50', rarity: 'legendary', visual: 'meteor', apply: () => { this.enableMeteorShower('Staff'); this.player.maxHp += 50; this.player.hp += 50; this.evolveWeapon('Staff', 'legendary'); } },
             { id: 'staff_proj2', name: '弹幕大师', desc: '+3投射+伤害30%', rarity: 'legendary', visual: 'barrage', apply: () => { this.addProjectileCount('Staff', 3); this.modifyWeaponStat('Staff', 'damage', 1.3); this.evolveWeapon('Staff', 'legendary'); } },
             { id: 'staff_nova', name: '新星爆发', desc: 'AOE+80%+2投射', rarity: 'legendary', visual: 'nova', apply: () => { this.modifyWeaponStat('Staff', 'aoeRadius', 1.8); this.addProjectileCount('Staff', 2); this.evolveWeapon('Staff', 'legendary'); } },
+            // 传说 - 新增
+            { id: 'staff_arcane', name: '奥术风暴', desc: '连锁+穿透+伤害40%', rarity: 'legendary', visual: 'arcane', apply: () => { this.enableChainLightning('Staff'); this.enablePierce('Staff'); this.modifyWeaponStat('Staff', 'damage', 1.4); this.evolveWeapon('Staff', 'legendary'); } },
+            { id: 'staff_void', name: '虚空之眼', desc: 'AOE+60%+攻速40%+HP80', rarity: 'legendary', visual: 'void', apply: () => { this.modifyWeaponStat('Staff', 'aoeRadius', 1.6); this.modifyWeaponStat('Staff', 'cooldown', 0.6); this.player.maxHp += 80; this.player.hp += 80; this.evolveWeapon('Staff', 'legendary'); } },
             // 神话(金) - 形态变化
             { id: 'staff_god', name: '元素主宰', desc: '伤害+100%,AOE+100%,+5投射', rarity: 'mythic', visual: 'elemental', apply: () => { this.modifyWeaponStat('Staff', 'damage', 2.0); this.modifyWeaponStat('Staff', 'aoeRadius', 2.0); this.addProjectileCount('Staff', 5); this.evolveWeapon('Staff', 'mythic', 'elemental'); } },
             { id: 'staff_time', name: '时空法杖', desc: '攻速+100%,减速60%,穿透', rarity: 'mythic', visual: 'time', apply: () => { this.modifyWeaponStat('Staff', 'cooldown', 0.5); this.enableFreeze('Staff', 0.6); this.enablePierce('Staff'); this.evolveWeapon('Staff', 'mythic', 'time'); } },
+            { id: 'staff_chaos', name: '混沌法师', desc: '+4投射,燃烧,冰冻,连锁', rarity: 'mythic', visual: 'chaos', apply: () => { this.addProjectileCount('Staff', 4); this.enableBurn('Staff'); this.enableFreeze('Staff'); this.enableChainLightning('Staff'); this.evolveWeapon('Staff', 'mythic', 'chaos'); } },
         ];
     }
     
@@ -104,7 +108,7 @@ export class BuildSystem {
             { id: 'ls_whirlwind', name: '旋风斩', desc: '范围+70%,弧度+50%', rarity: 'rare', visual: 'whirl', apply: () => { this.modifyWeaponStat('Longsword', 'range', 1.7); this.modifyWeaponStat('Longsword', 'arc', 1.5); this.evolveWeapon('Longsword', 'rare'); } },
             { id: 'ls_charge', name: '冲锋斩', desc: '攻击时前冲+伤害30%', rarity: 'rare', visual: 'charge', apply: () => { this.enableCharge('Longsword'); this.modifyWeaponStat('Longsword', 'damage', 1.3); this.evolveWeapon('Longsword', 'rare'); } },
             // 史诗 - 强力组合
-            { id: 'ls_lifesteal', name: '生命窃取', desc: '30%吸血+HP50', rarity: 'epic', visual: 'vamp', apply: () => { this.enableLifesteal('Longsword', 0.3); this.player.maxHp += 50; this.player.hp += 50; this.evolveWeapon('Longsword', 'epic'); } },
+            { id: 'ls_lifesteal', name: '生命窃取', desc: '10%吸血+HP50', rarity: 'epic', visual: 'vamp', apply: () => { this.enableLifesteal('Longsword', 0.10); this.player.maxHp += 50; this.player.hp += 50; this.evolveWeapon('Longsword', 'epic'); } },
             { id: 'ls_stun', name: '重击眩晕', desc: '40%眩晕+伤害35%', rarity: 'epic', visual: 'stun', apply: () => { this.enableStun('Longsword', 0.4); this.modifyWeaponStat('Longsword', 'damage', 1.35); this.evolveWeapon('Longsword', 'epic'); } },
             { id: 'ls_cleave', name: '贯穿斩击', desc: '无视护甲+击退翻倍', rarity: 'epic', visual: 'cleave', apply: () => { this.enableArmorPen('Longsword', 1.0); this.modifyWeaponStat('Longsword', 'knockback', 2.0); this.evolveWeapon('Longsword', 'epic'); } },
             { id: 'ls_holy', name: '圣光斩', desc: '伤害+40%+每击回8HP', rarity: 'epic', visual: 'holy', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 1.4); this.enableManaSteal('Longsword', 8); this.evolveWeapon('Longsword', 'epic'); } },
@@ -112,9 +116,14 @@ export class BuildSystem {
             { id: 'ls_exec', name: '处刑者', desc: '低血+150%伤害+HP100', rarity: 'legendary', visual: 'exec', apply: () => { this.enableExecute('Longsword', 1.5); this.player.maxHp += 100; this.player.hp += 100; this.evolveWeapon('Longsword', 'legendary'); } },
             { id: 'ls_crit2', name: '暴击大师', desc: '60%暴击,4倍+攻速30%', rarity: 'legendary', visual: 'master', apply: () => { this.enableCrit('Longsword', 0.6, 4.0); this.modifyWeaponStat('Longsword', 'cooldown', 0.7); this.evolveWeapon('Longsword', 'legendary'); } },
             { id: 'ls_wave', name: '剑气波动', desc: '发射剑气+伤害60%', rarity: 'legendary', visual: 'wave', apply: () => { this.enableSwordWave('Longsword'); this.modifyWeaponStat('Longsword', 'damage', 1.6); this.evolveWeapon('Longsword', 'legendary'); } },
+            // 传说 - 新增
+            { id: 'ls_thunder', name: '雷霆之怒', desc: '连锁闪电+伤害45%+范围30%', rarity: 'legendary', visual: 'thunder', apply: () => { this.enableChainLightning('Longsword'); this.modifyWeaponStat('Longsword', 'damage', 1.45); this.modifyWeaponStat('Longsword', 'range', 1.3); this.evolveWeapon('Longsword', 'legendary'); } },
+            { id: 'ls_blood', name: '血刃狂战', desc: '低血暴击+100%,暴伤+150%', rarity: 'legendary', visual: 'blood', apply: () => { this.enableFury('Longsword', 0); this.enableCrit('Longsword', 1.0, 3.5); this.evolveWeapon('Longsword', 'legendary'); } },
+            { id: 'ls_frost', name: '霜寒之刃', desc: '冰冻50%+减速+范围50%', rarity: 'legendary', visual: 'frost', apply: () => { this.enableFreeze('Longsword', 0.5); this.modifyWeaponStat('Longsword', 'range', 1.5); this.evolveWeapon('Longsword', 'legendary'); } },
             // 神话 - 究极形态
-            { id: 'ls_god', name: '剑圣', desc: '伤害+200%,攻速+120%,35%吸血', rarity: 'mythic', visual: 'god', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 3.0); this.modifyWeaponStat('Longsword', 'cooldown', 0.45); this.enableLifesteal('Longsword', 0.35); this.evolveWeapon('Longsword', 'mythic', 'holy'); } },
+            { id: 'ls_god', name: '剑圣', desc: '伤害+200%,攻速+120%,12%吸血', rarity: 'mythic', visual: 'god', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 3.0); this.modifyWeaponStat('Longsword', 'cooldown', 0.45); this.enableLifesteal('Longsword', 0.12); this.evolveWeapon('Longsword', 'mythic', 'holy'); } },
             { id: 'ls_demon', name: '魔剑·堕落', desc: '伤害+250%,每击吸取生命', rarity: 'mythic', visual: 'demon', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 3.5); this.enableLifeDrain('Longsword'); this.evolveWeapon('Longsword', 'mythic', 'shadow'); } },
+            { id: 'ls_paladin', name: '圣骑士', desc: '伤害+180%,减伤40%,回血5/s', rarity: 'mythic', visual: 'paladin', apply: () => { this.modifyWeaponStat('Longsword', 'damage', 2.8); this.player.damageReduction = (this.player.damageReduction || 0) + 0.4; this.enableRegeneration(5); this.evolveWeapon('Longsword', 'mythic', 'holy'); } },
         ];
     }
     
@@ -137,14 +146,19 @@ export class BuildSystem {
             { id: 'db_poison', name: '剧毒涂装', desc: '剧毒+移速15%', rarity: 'epic', visual: 'poison', apply: () => { this.enablePoison('Dual Blades'); this.player.speed *= 1.15; this.evolveWeapon('Dual Blades', 'epic'); } },
             { id: 'db_fury', name: '狂怒模式', desc: '低血+100%伤害+攻速30%', rarity: 'epic', visual: 'fury', apply: () => { this.enableFury('Dual Blades', 1.0); this.modifyWeaponStat('Dual Blades', 'cooldown', 0.7); this.evolveWeapon('Dual Blades', 'epic'); } },
             { id: 'db_phantom', name: '幻影斩', desc: '35%额外斩击+伤害20%', rarity: 'epic', visual: 'phantom', apply: () => { this.enablePhantom('Dual Blades', 0.35); this.modifyWeaponStat('Dual Blades', 'damage', 1.2); this.evolveWeapon('Dual Blades', 'epic'); } },
-            { id: 'db_leech', name: '生命汲取', desc: '15%吸血+HP25', rarity: 'epic', visual: 'leech', apply: () => { this.enableLifesteal('Dual Blades', 0.15); this.player.maxHp += 25; this.player.hp += 25; this.evolveWeapon('Dual Blades', 'epic'); } },
+            { id: 'db_leech', name: '生命汲取', desc: '5%吸血+HP25', rarity: 'epic', visual: 'leech', apply: () => { this.enableLifesteal('Dual Blades', 0.05); this.player.maxHp += 25; this.player.hp += 25; this.evolveWeapon('Dual Blades', 'epic'); } },
             // 传说
             { id: 'db_combo3', name: '连击大师', desc: '+4斩击+伤害40%', rarity: 'legendary', visual: 'combo', apply: () => { this.addSlashCount('Dual Blades', 4); this.modifyWeaponStat('Dual Blades', 'damage', 1.4); this.evolveWeapon('Dual Blades', 'legendary'); } },
             { id: 'db_shadow', name: '暗影步', desc: '无敌+闪避30%', rarity: 'legendary', visual: 'shadow', apply: () => { this.enableShadowStep('Dual Blades'); this.enableDodge('Dual Blades', 0.3); this.evolveWeapon('Dual Blades', 'legendary'); } },
             { id: 'db_storm', name: '刀锋风暴', desc: '攻速+60%+范围40%', rarity: 'legendary', visual: 'storm', apply: () => { this.modifyWeaponStat('Dual Blades', 'cooldown', 0.4); this.modifyWeaponStat('Dual Blades', 'range', 1.4); this.evolveWeapon('Dual Blades', 'legendary'); } },
+            // 传说 - 新增
+            { id: 'db_execute', name: '处决之刃', desc: '低血+200%伤害+流血', rarity: 'legendary', visual: 'execute', apply: () => { this.enableExecute('Dual Blades', 2.0); this.enableBleeding('Dual Blades'); this.evolveWeapon('Dual Blades', 'legendary'); } },
+            { id: 'db_wind', name: '疾风连斩', desc: '+3斩击+攻速50%+移速20%', rarity: 'legendary', visual: 'wind', apply: () => { this.addSlashCount('Dual Blades', 3); this.modifyWeaponStat('Dual Blades', 'cooldown', 0.5); this.player.speed *= 1.2; this.evolveWeapon('Dual Blades', 'legendary'); } },
+            { id: 'db_venom', name: '剧毒大师', desc: '剧毒强化+暴击30%+闪避20%', rarity: 'legendary', visual: 'venom', apply: () => { this.enablePoison('Dual Blades'); this.enableCrit('Dual Blades', 0.3, 2.5); this.enableDodge('Dual Blades', 0.2); this.evolveWeapon('Dual Blades', 'legendary'); } },
             // 神话
             { id: 'db_god', name: '刺客之魂', desc: '伤害+220%,闪避55%,剧毒', rarity: 'mythic', visual: 'assassin', apply: () => { this.modifyWeaponStat('Dual Blades', 'damage', 3.2); this.enableDodge('Dual Blades', 0.55); this.enablePoison('Dual Blades'); this.evolveWeapon('Dual Blades', 'mythic', 'assassin'); } },
             { id: 'db_reaper', name: '死神镰刀', desc: '+6斩击,50%暴击,4倍暴伤', rarity: 'mythic', visual: 'reaper', apply: () => { this.addSlashCount('Dual Blades', 6); this.enableCrit('Dual Blades', 0.5, 4.0); this.evolveWeapon('Dual Blades', 'mythic', 'berserker'); } },
+            { id: 'db_phantom_lord', name: '幻影领主', desc: '分身攻击+攻速80%+闪避40%', rarity: 'mythic', visual: 'phantom', apply: () => { this.enablePhantom('Dual Blades', 1.0); this.modifyWeaponStat('Dual Blades', 'cooldown', 0.2); this.enableDodge('Dual Blades', 0.4); this.evolveWeapon('Dual Blades', 'mythic', 'phantom'); } },
         ];
     }
     
@@ -165,7 +179,7 @@ export class BuildSystem {
             { id: 'uni_regen', name: '生命回复', desc: '每秒+3HP', rarity: 'rare', apply: () => { this.enableRegeneration(3); } },
             { id: 'uni_crit2', name: '锋锐', desc: '暴击率 +10%', rarity: 'rare', apply: () => { this.modifyAllWeaponsCrit(0.1, 0); } },
             { id: 'uni_critdmg1', name: '精准打击', desc: '暴击伤害 +30%', rarity: 'rare', apply: () => { this.modifyAllWeaponsCrit(0, 0.3); } },
-            { id: 'uni_lifesteal1', name: '吸血', desc: '吸血 +8%', rarity: 'rare', apply: () => { this.modifyAllWeaponsLifesteal(0.08); } },
+            { id: 'uni_lifesteal1', name: '吸血', desc: '吸血 +3%', rarity: 'rare', apply: () => { this.modifyAllWeaponsLifesteal(0.03); } },
             { id: 'uni_dmg2', name: '攻击精通', desc: '全武器伤害 +20%', rarity: 'rare', apply: () => { this.modifyAllWeaponsDamage(1.2); } },
             { id: 'uni_range1', name: '范围扩展', desc: '全武器范围 +20%', rarity: 'rare', apply: () => { this.modifyAllWeaponsRange(1.2); } },
             // 史诗 - 强力效果 (9张)
@@ -173,7 +187,7 @@ export class BuildSystem {
             { id: 'uni_crit3', name: '致命一击', desc: '暴击率 +15%', rarity: 'epic', apply: () => { this.modifyAllWeaponsCrit(0.15, 0); } },
             { id: 'uni_critdmg2', name: '毁灭打击', desc: '暴击伤害 +60%', rarity: 'epic', apply: () => { this.modifyAllWeaponsCrit(0, 0.6); } },
             { id: 'uni_crit_combo', name: '暴击专精', desc: '暴击+10%,暴伤+40%', rarity: 'epic', apply: () => { this.modifyAllWeaponsCrit(0.1, 0.4); } },
-            { id: 'uni_lifesteal2', name: '血族', desc: '吸血 +15%', rarity: 'epic', apply: () => { this.modifyAllWeaponsLifesteal(0.15); } },
+            { id: 'uni_lifesteal2', name: '血族', desc: '吸血 +5%', rarity: 'epic', apply: () => { this.modifyAllWeaponsLifesteal(0.05); } },
             { id: 'uni_magnet', name: '磁力吸引', desc: '拾取范围 +150%', rarity: 'epic', apply: () => { this.player.magnetRange = (this.player.magnetRange || 100) * 2.5; } },
             { id: 'uni_allpower', name: '全能战士', desc: '伤害+15%,HP+50', rarity: 'epic', apply: () => { this.modifyAllWeaponsDamage(1.15); this.player.maxHp += 50; this.player.hp += 50; } },
             { id: 'uni_berserker', name: '狂战士', desc: '伤害+25%,减伤-10%', rarity: 'epic', apply: () => { this.modifyAllWeaponsDamage(1.25); this.player.damageReduction = (this.player.damageReduction || 0) - 0.1; } },
@@ -184,13 +198,13 @@ export class BuildSystem {
             { id: 'uni_crit4', name: '绝杀', desc: '暴击率 +25%', rarity: 'legendary', apply: () => { this.modifyAllWeaponsCrit(0.25, 0); } },
             { id: 'uni_critdmg3', name: '暴击大师', desc: '暴击伤害 +100%', rarity: 'legendary', apply: () => { this.modifyAllWeaponsCrit(0, 1.0); } },
             { id: 'uni_crit_master', name: '致命专家', desc: '暴击+20%,暴伤+80%', rarity: 'legendary', apply: () => { this.modifyAllWeaponsCrit(0.2, 0.8); } },
-            { id: 'uni_lifesteal3', name: '血魔', desc: '吸血 +25%', rarity: 'legendary', apply: () => { this.modifyAllWeaponsLifesteal(0.25); } },
+            { id: 'uni_lifesteal3', name: '血魔', desc: '吸血 +8%', rarity: 'legendary', apply: () => { this.modifyAllWeaponsLifesteal(0.08); } },
             { id: 'uni_godslayer', name: '弑神者', desc: '伤害+50%,攻速+30%', rarity: 'legendary', apply: () => { this.modifyAllWeaponsDamage(1.5); this.modifyAllWeaponsSpeed(0.7); } },
             { id: 'uni_fortress', name: '不动堡垒', desc: 'HP+120,减伤+40%,移速-15%', rarity: 'legendary', apply: () => { this.player.maxHp += 120; this.player.hp += 120; this.player.damageReduction = (this.player.damageReduction || 0) + 0.4; this.player.speed *= 0.85; } },
             // 神话 - 究极效果 (5张)
             { id: 'uni_god', name: '不朽', desc: 'HP+300,减伤50%,每秒+15HP', rarity: 'mythic', apply: () => { this.player.maxHp += 300; this.player.hp += 300; this.player.damageReduction = (this.player.damageReduction || 0) + 0.5; this.enableRegeneration(15); } },
             { id: 'uni_crit_god', name: '暴击之神', desc: '暴击+40%,暴伤+150%', rarity: 'mythic', apply: () => { this.modifyAllWeaponsCrit(0.4, 1.5); } },
-            { id: 'uni_vamp_god', name: '血神', desc: '吸血40%,每击+5HP', rarity: 'mythic', apply: () => { this.modifyAllWeaponsLifesteal(0.4); this.modifyAllWeaponsManaSteal(5); } },
+            { id: 'uni_vamp_god', name: '血神', desc: '吸血12%,每击+3HP', rarity: 'mythic', apply: () => { this.modifyAllWeaponsLifesteal(0.12); this.modifyAllWeaponsManaSteal(3); } },
             { id: 'uni_war_god', name: '战神', desc: '伤害+80%,攻速+50%,暴击+15%', rarity: 'mythic', apply: () => { this.modifyAllWeaponsDamage(1.8); this.modifyAllWeaponsSpeed(0.5); this.modifyAllWeaponsCrit(0.15, 0); } },
             { id: 'uni_perfect', name: '完美形态', desc: '全属性+30%', rarity: 'mythic', apply: () => { this.modifyAllWeaponsDamage(1.3); this.modifyAllWeaponsSpeed(0.7); this.player.maxHp += 100; this.player.hp += 100; this.player.speed *= 1.3; } },
         ];

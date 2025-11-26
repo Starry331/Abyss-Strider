@@ -76,14 +76,14 @@ export class UIManager {
         { id: 'dmg2', cn: '锋锐', desc: '伤害 +20%', effect: 'damage', value: 0.2, rarity: 'rare' },
         { id: 'crit1', cn: '锐利', desc: '暴击率 +10%', effect: 'crit', value: 0.1, rarity: 'rare' },
         { id: 'def1', cn: '坚固', desc: '减伤 +10%', effect: 'defense', value: 0.1, rarity: 'rare' },
-        { id: 'lifesteal1', cn: '吸血', desc: '吸血 +8%', effect: 'lifesteal', value: 0.08, rarity: 'rare' },
+        { id: 'lifesteal1', cn: '吸血', desc: '吸血 +3%', effect: 'lifesteal', value: 0.03, rarity: 'rare' },
         // 史诗 (强力效果)
         { id: 'speed3', cn: '狂风', desc: '攻击速度 +18%', effect: 'speed', value: 0.18, rarity: 'epic' },
         { id: 'hp3', cn: '生命之泉', desc: '最大生命 +100', effect: 'hp', value: 100, rarity: 'epic' },
         { id: 'dmg3', cn: '毁灭', desc: '伤害 +35%', effect: 'damage', value: 0.35, rarity: 'epic' },
         { id: 'crit2', cn: '致命', desc: '暴击率 +20%', effect: 'crit', value: 0.2, rarity: 'epic' },
         { id: 'regen1', cn: '再生', desc: '每秒回复3点生命', effect: 'regen', value: 3, rarity: 'epic' },
-        { id: 'lifesteal2', cn: '鲜血渴望', desc: '吸血 +15%', effect: 'lifesteal', value: 0.15, rarity: 'epic' },
+        { id: 'lifesteal2', cn: '鲜血渴望', desc: '吸血 +5%', effect: 'lifesteal', value: 0.05, rarity: 'epic' },
         { id: 'combo1', cn: '连击', desc: '每击回复2点生命', effect: 'manaSteal', value: 2, rarity: 'epic' },
         // 传说 (极致效果)
         { id: 'speed4', cn: '闪电', desc: '攻击速度 +25%', effect: 'speed', value: 0.25, rarity: 'legendary' },
@@ -91,12 +91,12 @@ export class UIManager {
         { id: 'dmg4', cn: '湮灭', desc: '伤害 +50%', effect: 'damage', value: 0.5, rarity: 'legendary' },
         { id: 'critdmg', cn: '处决', desc: '暴击伤害 +100%', effect: 'critDamage', value: 1.0, rarity: 'legendary' },
         { id: 'regen2', cn: '生命源泉', desc: '每秒回复8点生命', effect: 'regen', value: 8, rarity: 'legendary' },
-        { id: 'lifesteal3', cn: '血族', desc: '吸血 +25%', effect: 'lifesteal', value: 0.25, rarity: 'legendary' },
+        { id: 'lifesteal3', cn: '血族', desc: '吸血 +8%', effect: 'lifesteal', value: 0.08, rarity: 'legendary' },
         // 神话 (究极效果)
         { id: 'god_atk', cn: '战神', desc: '攻速+40%，伤害+80%', effect: 'godAttack', value: 0.4, rarity: 'mythic' },
         { id: 'god_def', cn: '守护神', desc: '生命+300，减伤50%', effect: 'godDefense', value: 300, rarity: 'mythic' },
         { id: 'god_all', cn: '万神', desc: '全属性+30%', effect: 'godAll', value: 0.3, rarity: 'mythic' },
-        { id: 'god_vamp', cn: '血神', desc: '吸血40%，每击回5HP', effect: 'godVampire', value: 0.4, rarity: 'mythic' },
+        { id: 'god_vamp', cn: '血神', desc: '吸血12%，每击回3HP', effect: 'godVampire', value: 0.12, rarity: 'mythic' },
     ];
 
     rollRarity() {

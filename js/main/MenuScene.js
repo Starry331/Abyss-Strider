@@ -43,67 +43,80 @@ export class MenuScene {
 
         const btnStart = document.getElementById('btn-start');
         if (btnStart) {
-            this.startHandler = () => {
+            this.startHandler = (e) => {
+                e.preventDefault();
                 console.log("Start Button Clicked");
                 if (this.audioManager && this.audioManager.resume) this.audioManager.resume();
                 this.onStart();
             };
             btnStart.addEventListener('click', this.startHandler);
+            btnStart.addEventListener('touchend', this.startHandler);
         } else {
             console.error("Start Button Not Found!");
         }
 
         const btnContinue = document.getElementById('btn-continue');
         if (btnContinue) {
-            this.continueHandler = () => {
+            this.continueHandler = (e) => {
+                e.preventDefault();
                 console.log("Continue Button Clicked");
                 this.onContinue();
             };
             btnContinue.addEventListener('click', this.continueHandler);
+            btnContinue.addEventListener('touchend', this.continueHandler);
         }
 
         const btnTutorial = document.getElementById('btn-tutorial');
         if (btnTutorial) {
-            this.tutorialHandler = () => {
+            this.tutorialHandler = (e) => {
+                e.preventDefault();
                 console.log("Tutorial Button Clicked");
                 this.tutorialOverlay.classList.remove('hidden');
             };
             btnTutorial.addEventListener('click', this.tutorialHandler);
+            btnTutorial.addEventListener('touchend', this.tutorialHandler);
         }
 
         const btnCloseTutorial = document.getElementById('btn-close-tutorial');
         if (btnCloseTutorial) {
-            this.closeTutorialHandler = () => {
+            this.closeTutorialHandler = (e) => {
+                e.preventDefault();
                 console.log("Close Tutorial Clicked");
                 this.tutorialOverlay.classList.add('hidden');
             };
             btnCloseTutorial.addEventListener('click', this.closeTutorialHandler);
+            btnCloseTutorial.addEventListener('touchend', this.closeTutorialHandler);
         }
 
         // 开发人员按钮
         const creditsOverlay = document.getElementById('credits-overlay');
         const btnCredits = document.getElementById('btn-credits');
         if (btnCredits && creditsOverlay) {
-            this.creditsHandler = () => {
+            this.creditsHandler = (e) => {
+                e.preventDefault();
                 console.log("Credits Button Clicked");
                 creditsOverlay.classList.remove('hidden');
             };
             btnCredits.addEventListener('click', this.creditsHandler);
+            btnCredits.addEventListener('touchend', this.creditsHandler);
         }
 
         const btnCloseCredits = document.getElementById('btn-close-credits');
         if (btnCloseCredits && creditsOverlay) {
-            this.closeCreditsHandler = () => {
+            this.closeCreditsHandler = (e) => {
+                e.preventDefault();
                 creditsOverlay.classList.add('hidden');
             };
             btnCloseCredits.addEventListener('click', this.closeCreditsHandler);
+            btnCloseCredits.addEventListener('touchend', this.closeCreditsHandler);
         }
 
         // 成就按钮
         const btnAchievements = document.getElementById('btn-achievements');
         const achievementOverlay = document.getElementById('achievement-overlay');
         if (btnAchievements) {
-            this.achievementHandler = () => {
+            this.achievementHandler = (e) => {
+                e.preventDefault();
                 console.log("Achievements Button Clicked");
                 if (achievementOverlay) {
                     achievementOverlay.classList.remove('hidden');
@@ -114,23 +127,28 @@ export class MenuScene {
                 }
             };
             btnAchievements.addEventListener('click', this.achievementHandler);
+            btnAchievements.addEventListener('touchend', this.achievementHandler);
         }
 
         const btnCloseAchievement = document.getElementById('btn-close-achievement');
         if (btnCloseAchievement && achievementOverlay) {
-            this.closeAchievementHandler = () => {
+            this.closeAchievementHandler = (e) => {
+                e.preventDefault();
                 achievementOverlay.classList.add('hidden');
             };
             btnCloseAchievement.addEventListener('click', this.closeAchievementHandler);
+            btnCloseAchievement.addEventListener('touchend', this.closeAchievementHandler);
         }
 
         const btnLeaderboard = document.getElementById('btn-leaderboard');
         if (btnLeaderboard) {
-            this.leaderboardHandler = () => {
+            this.leaderboardHandler = (e) => {
+                e.preventDefault();
                 console.log("Leaderboard Button Clicked");
                 this.showLeaderboard();
             };
             btnLeaderboard.addEventListener('click', this.leaderboardHandler);
+            btnLeaderboard.addEventListener('touchend', this.leaderboardHandler);
         }
 
         // Check for save
@@ -144,26 +162,55 @@ export class MenuScene {
         const btnStart = document.getElementById('btn-start');
         if (btnStart && this.startHandler) {
             btnStart.removeEventListener('click', this.startHandler);
+            btnStart.removeEventListener('touchend', this.startHandler);
         }
 
         const btnContinue = document.getElementById('btn-continue');
         if (btnContinue && this.continueHandler) {
             btnContinue.removeEventListener('click', this.continueHandler);
+            btnContinue.removeEventListener('touchend', this.continueHandler);
         }
 
         const btnTutorial = document.getElementById('btn-tutorial');
         if (btnTutorial && this.tutorialHandler) {
             btnTutorial.removeEventListener('click', this.tutorialHandler);
+            btnTutorial.removeEventListener('touchend', this.tutorialHandler);
         }
 
         const btnCloseTutorial = document.getElementById('btn-close-tutorial');
         if (btnCloseTutorial && this.closeTutorialHandler) {
             btnCloseTutorial.removeEventListener('click', this.closeTutorialHandler);
+            btnCloseTutorial.removeEventListener('touchend', this.closeTutorialHandler);
         }
 
         const btnLeaderboard = document.getElementById('btn-leaderboard');
         if (btnLeaderboard && this.leaderboardHandler) {
             btnLeaderboard.removeEventListener('click', this.leaderboardHandler);
+            btnLeaderboard.removeEventListener('touchend', this.leaderboardHandler);
+        }
+        
+        const btnCredits = document.getElementById('btn-credits');
+        if (btnCredits && this.creditsHandler) {
+            btnCredits.removeEventListener('click', this.creditsHandler);
+            btnCredits.removeEventListener('touchend', this.creditsHandler);
+        }
+        
+        const btnCloseCredits = document.getElementById('btn-close-credits');
+        if (btnCloseCredits && this.closeCreditsHandler) {
+            btnCloseCredits.removeEventListener('click', this.closeCreditsHandler);
+            btnCloseCredits.removeEventListener('touchend', this.closeCreditsHandler);
+        }
+        
+        const btnAchievements = document.getElementById('btn-achievements');
+        if (btnAchievements && this.achievementHandler) {
+            btnAchievements.removeEventListener('click', this.achievementHandler);
+            btnAchievements.removeEventListener('touchend', this.achievementHandler);
+        }
+        
+        const btnCloseAchievement = document.getElementById('btn-close-achievement');
+        if (btnCloseAchievement && this.closeAchievementHandler) {
+            btnCloseAchievement.removeEventListener('click', this.closeAchievementHandler);
+            btnCloseAchievement.removeEventListener('touchend', this.closeAchievementHandler);
         }
     }
 

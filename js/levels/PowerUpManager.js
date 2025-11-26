@@ -19,7 +19,7 @@ export class PowerUpManager {
             // Rare buffs (25% drop rate)
             { type: 'ATTACK_SPEED', icon: '⚡', color: '#f39c12', duration: 15000, rarity: 'rare', desc: '+30%攻速' },
             { type: 'CRIT_CHANCE', icon: '💥', color: '#e67e22', duration: 20000, rarity: 'rare', desc: '+15%暴击率' },
-            { type: 'LIFESTEAL', icon: '💉', color: '#c0392b', duration: 18000, rarity: 'rare', desc: '+10%吸血' },
+            { type: 'LIFESTEAL', icon: '💉', color: '#c0392b', duration: 18000, rarity: 'rare', desc: '+5%吸血' },
 
             // Epic buffs (5% drop rate)
             { type: 'INVINCIBLE', icon: '✨', color: '#ffd700', duration: 5000, rarity: 'epic', desc: '5秒无敌' },
@@ -32,7 +32,7 @@ export class PowerUpManager {
         this.lastSpawn += deltaTime;
         if (this.lastSpawn >= this.spawnInterval) {
             this.lastSpawn = 0;
-            if (this.drops.length === 0 && Math.random() < 0.6) { // 60% chance
+            if (this.drops.length === 0 && Math.random() < 0.62) { // 62% chance
                 this.spawnDrop();
             }
         }

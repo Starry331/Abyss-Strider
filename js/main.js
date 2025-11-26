@@ -314,8 +314,8 @@ const gameScene = {
                     break;
                 case 'godVampire':
                     weapon.lifesteal = (weapon.lifesteal || 0) + value;
-                    weapon.manaSteal = (weapon.manaSteal || 0) + 5;
-                    console.log('血神: 吸血40%+每击回5HP');
+                    weapon.manaSteal = (weapon.manaSteal || 0) + 3;
+                    console.log('血神: 吸血12%+每击回3HP');
                     break;
             }
 
@@ -365,8 +365,13 @@ const gameScene = {
         const btnPauseTouch = document.getElementById('btn-pause-touch');
         if (btnPauseTouch) {
             btnPauseTouch.classList.remove('hidden');
-            this.pauseTouchHandler = () => this.togglePause();
+            this.pauseTouchHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.togglePause();
+            };
             btnPauseTouch.addEventListener('click', this.pauseTouchHandler);
+            btnPauseTouch.addEventListener('touchend', this.pauseTouchHandler);
         }
         
         // 暂停菜单按钮
@@ -375,12 +380,19 @@ const gameScene = {
         const btnQuit = document.getElementById('btn-quit');
         
         if (btnResume) {
-            this.resumeHandler = () => this.togglePause();
+            this.resumeHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.togglePause();
+            };
             btnResume.addEventListener('click', this.resumeHandler);
+            btnResume.addEventListener('touchend', this.resumeHandler);
         }
         
         if (btnRestart) {
-            this.restartHandler = () => {
+            this.restartHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 this.isPaused = false;
                 document.getElementById('pause-menu').classList.add('hidden');
                 saveSystem.clearRun();
@@ -389,10 +401,13 @@ const gameScene = {
                 sceneManager.switchTo('game');
             };
             btnRestart.addEventListener('click', this.restartHandler);
+            btnRestart.addEventListener('touchend', this.restartHandler);
         }
         
         if (btnQuit) {
-            this.quitHandler = () => {
+            this.quitHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 this.isPaused = false;
                 document.getElementById('pause-menu').classList.add('hidden');
                 uiManager.clearAllBuffs();
@@ -400,6 +415,7 @@ const gameScene = {
                 sceneManager.switchTo('menu');
             };
             btnQuit.addEventListener('click', this.quitHandler);
+            btnQuit.addEventListener('touchend', this.quitHandler);
         }
     },
 
@@ -414,8 +430,29 @@ const gameScene = {
         const btnPauseTouch = document.getElementById('btn-pause-touch');
         if (btnPauseTouch) {
             btnPauseTouch.classList.add('hidden');
-            if (this.pauseTouchHandler) btnPauseTouch.removeEventListener('click', this.pauseTouchHandler);
+            if (this.pauseTouchHandler) {
+                btnPauseTouch.removeEventListener('click', this.pauseTouchHandler);
+                btnPauseTouch.removeEventListener('touchend', this.pauseTouchHandler);
+            }
         }
+        
+        // 移除暂停菜单按钮事件
+        const btnResume = document.getElementById('btn-resume');
+        if (btnResume && this.resumeHandler) {
+            btnResume.removeEventListener('click', this.resumeHandler);
+            btnResume.removeEventListener('touchend', this.resumeHandler);
+        }
+        const btnRestart = document.getElementById('btn-restart');
+        if (btnRestart && this.restartHandler) {
+            btnRestart.removeEventListener('click', this.restartHandler);
+            btnRestart.removeEventListener('touchend', this.restartHandler);
+        }
+        const btnQuit = document.getElementById('btn-quit');
+        if (btnQuit && this.quitHandler) {
+            btnQuit.removeEventListener('click', this.quitHandler);
+            btnQuit.removeEventListener('touchend', this.quitHandler);
+        }
+        
         const pauseMenu = document.getElementById('pause-menu');
         if (pauseMenu) pauseMenu.classList.add('hidden');
         

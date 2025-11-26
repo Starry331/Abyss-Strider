@@ -643,6 +643,12 @@ canvas {
     max-width: 500px;
     box-shadow: 0 0 60px rgba(255,215,0,0.3), inset 0 0 30px rgba(0,0,0,0.5);
     z-index: 9999;
+    pointer-events: auto;
+}
+
+#tutorial-overlay button {
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 #tutorial-overlay h2 {
@@ -695,6 +701,8 @@ canvas {
 
 #tutorial-overlay .menu-btn {
     margin-top: 10px;
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 /* 更新预告样式 */
@@ -769,6 +777,12 @@ canvas {
     min-width: 350px;
     box-shadow: 0 0 80px rgba(255,215,0,0.4), inset 0 0 30px rgba(0,0,0,0.5);
     z-index: 9999;
+    pointer-events: auto;
+}
+
+#credits-overlay button {
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 #credits-overlay h2 {
@@ -914,6 +928,12 @@ button:disabled {
     z-index: 3000;
     min-width: 300px;
     box-shadow: 0 0 60px rgba(68,136,255,0.4);
+    pointer-events: auto;
+}
+
+#pause-menu button {
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 #pause-menu h2 {
@@ -938,8 +958,10 @@ button:disabled {
 /* 触屏暂停按钮 */
 #btn-pause-touch {
     position: absolute;
-    top: 15px;
+    top: 60px;
     left: 15px;
+    pointer-events: auto;
+    z-index: 600;
     width: 50px;
     height: 50px;
     border-radius: 12px;
@@ -974,7 +996,7 @@ button:disabled {
 /* Mobile Controls */
 #mobile-controls {
     position: absolute;
-    bottom: 20px;
+    bottom: 80px;
     left: 20px;
     right: 20px;
     height: 150px;
@@ -1036,6 +1058,7 @@ button:disabled {
     flex-direction: column;
     gap: 10px;
     align-items: flex-end;
+    margin-bottom: 60px;
 }
 
 .action-btn {
@@ -1404,6 +1427,12 @@ button:disabled {
     padding: 40px 20px;
     z-index: 9999;
     overflow-y: auto;
+    pointer-events: auto;
+}
+
+#achievement-overlay button {
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 #achievement-overlay h2 {
@@ -1476,4 +1505,66 @@ button:disabled {
     margin-top: auto;
     z-index: 10000;
     pointer-events: auto;
+}
+
+/* ==================== 移动端适配 ==================== */
+@media (hover: none) and (pointer: coarse) {
+    /* 主菜单整体上移 */
+    #main-menu {
+        padding-top: 10px;
+        padding-bottom: 100px;
+    }
+    
+    /* 关卡展示缩小 */
+    #level-showcase {
+        width: 280px;
+        height: 150px;
+        margin-bottom: 15px;
+    }
+    
+    /* 菜单按钮缩小间距 */
+    #menu-buttons {
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .menu-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    /* Logo缩小 */
+    #game-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 8px;
+    }
+    
+    #logo-icon {
+        font-size: 50px;
+    }
+    
+    /* 版本信息位置调整 */
+    #version-info {
+        margin-bottom: 60px;
+    }
+    
+    /* 暂停菜单适配 */
+    #pause-menu {
+        padding: 30px 40px;
+        min-width: 280px;
+    }
+    
+    /* 开发人员弹窗适配 */
+    #credits-overlay {
+        padding: 30px;
+        min-width: 300px;
+    }
+    
+    /* 教程弹窗适配 */
+    #tutorial-overlay {
+        min-width: 320px;
+        max-width: 90%;
+        padding: 30px;
+    }
 }

@@ -25,11 +25,11 @@ export class WeaponUpgrades {
                 icon: '🗡️',
                 tiers: [
                     { level: 1, name: '铁剑', description: '单次斩击', slashCount: 1, damage: 13, range: 75, arc: Math.PI / 2, cooldownMult: 1.0, shockwave: false },
-                    { level: 2, name: '钢剑', description: '伤害+10%', slashCount: 1, damage: 14, range: 78, arc: Math.PI / 2, cooldownMult: 1.0, shockwave: false },
-                    { level: 3, name: '利刃', description: '范围+8%', slashCount: 1, damage: 15, range: 85, arc: Math.PI / 1.9, cooldownMult: 1.05, shockwave: false },
-                    { level: 4, name: '双斩剑', description: '双重斩击', slashCount: 2, damage: 14, range: 88, arc: Math.PI / 1.8, cooldownMult: 1.2, shockwave: false },
-                    { level: 5, name: '重剑', description: '重击伤害', slashCount: 2, damage: 17, range: 92, arc: Math.PI / 1.7, cooldownMult: 1.3, shockwave: false },
-                    { level: 6, name: '圣剑', description: '三连斩+冲击波', slashCount: 3, damage: 18, range: 100, arc: Math.PI / 1.6, cooldownMult: 1.5, shockwave: true }
+                    { level: 2, name: '钢剑', description: '伤害+8%', slashCount: 1, damage: 13, range: 72, arc: Math.PI / 2, cooldownMult: 1.0, shockwave: false },
+                    { level: 3, name: '利刃', description: '范围+5%', slashCount: 1, damage: 14, range: 68, arc: Math.PI / 2.1, cooldownMult: 1.1, shockwave: false },
+                    { level: 4, name: '双斩剑', description: '双重斩击', slashCount: 2, damage: 13, range: 65, arc: Math.PI / 2.2, cooldownMult: 1.25, shockwave: false },
+                    { level: 5, name: '重剑', description: '重击伤害', slashCount: 2, damage: 15, range: 62, arc: Math.PI / 2.3, cooldownMult: 1.4, shockwave: false },
+                    { level: 6, name: '圣剑', description: '三连斩+冲击波', slashCount: 3, damage: 16, range: 60, arc: Math.PI / 2.4, cooldownMult: 1.6, shockwave: true }
                 ]
             },
             'Dual Blades': {
@@ -41,7 +41,7 @@ export class WeaponUpgrades {
                     { level: 3, name: '锋刃', description: '范围+5%', slashCount: 1, damage: 8, range: 60, cooldownMult: 1.0, bleed: false, lifesteal: 0 },
                     { level: 4, name: '血刃', description: '双斩+流血', slashCount: 2, damage: 8, range: 60, cooldownMult: 1.12, bleed: true, lifesteal: 0 },
                     { level: 5, name: '影刃', description: '三斩', slashCount: 3, damage: 9, range: 58, cooldownMult: 1.22, bleed: true, lifesteal: 0 },
-                    { level: 6, name: '死神刃', description: '四斩+吸血', slashCount: 4, damage: 10, range: 58, cooldownMult: 1.35, bleed: true, lifesteal: 0.04 }
+                    { level: 6, name: '死神刃', description: '四斩+吸血', slashCount: 4, damage: 10, range: 58, cooldownMult: 1.35, bleed: true, lifesteal: 0.02 }
                 ]
             }
         };

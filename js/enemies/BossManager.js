@@ -77,11 +77,11 @@ export class BossManager {
         // Set boss name based on level
         if (nameEl) {
             const bossNames = {
-                1: '险恶猴子 (Wicked Monkey)',
-                2: '冰霜巨龙 (Ice Dragon)',
-                3: '地狱三头龙 (Cerberus)',
-                4: '雷神宙斯 (Zeus)',
-                5: '圣骑士 (Paladin)'
+                1: '险恶猴王',
+                2: '冰霜巨龙',
+                3: '地狱三头魔犬',
+                4: '天穹之王·宙斯',
+                5: '圣光大天使·米迦勒'
             };
             nameEl.innerText = bossNames[this.activeBoss.level] || 'Boss';
         }

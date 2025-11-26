@@ -224,48 +224,52 @@ export class WeaponSystem {
             return;
         }
         
-        // Normal staff attack
+        // Normal staff attack - 从上方砸下的法球
         const count = upgrade.projectileCount;
+        
+        // Lv1-3使用更快的弹幕速度
+        const projectileSpeed = weapon.upgradeLevel <= 3 ? 550 : 400;
+        
+        // 计算最终伤害
+        const baseDamage = upgrade.damage;
+        const weaponDamageMult = weapon.damage / 13;
+        const playerDamageMult = player.damageMultiplier || 1;
+        const finalDamage = Math.round(baseDamage * weaponDamageMult * playerDamageMult);
+        const combatSystem = this.combatSystem;
 
-        // Calculate spread angles
-        const angles = [];
-        if (count === 1) {
-            angles.push(baseAngle);
-        } else if (count === 5) {
-            // Star pattern for level 5
-            for (let i = 0; i < 5; i++) {
-                angles.push(baseAngle + (Math.PI * 2 / 5) * i);
-            }
-        } else {
-            // Spread pattern for 2-3 projectiles
-            for (let i = 0; i < count; i++) {
-                const spread = (i - (count - 1) / 2) * 0.25;
-                angles.push(baseAngle + spread);
-            }
-        }
-
-        angles.forEach((angle, index) => {
+        // 生成目标位置（玩家面朝方向）
+        for (let i = 0; i < count; i++) {
             setTimeout(() => {
-                const targetX = player.x + Math.cos(angle) * weapon.range;
-                const targetY = player.y + Math.sin(angle) * weapon.range;
+                // 计算目标落点
+                let targetX, targetY;
+                if (count === 1) {
+                    targetX = player.x + Math.cos(baseAngle) * weapon.range;
+                    targetY = player.y + Math.sin(baseAngle) * weapon.range;
+                } else if (count >= 5) {
+                    // 星形散布
+                    const starAngle = baseAngle + (Math.PI * 2 / count) * i;
+                    targetX = player.x + Math.cos(starAngle) * weapon.range;
+                    targetY = player.y + Math.sin(starAngle) * weapon.range;
+                } else {
+                    // 扇形散布
+                    const spread = (i - (count - 1) / 2) * 0.3;
+                    targetX = player.x + Math.cos(baseAngle + spread) * weapon.range;
+                    targetY = player.y + Math.sin(baseAngle + spread) * weapon.range;
+                }
                 
-                // Capture combatSystem reference for AOE explosion
-                const combatSystem = this.combatSystem;
-
-                // 计算最终伤害：升级基础伤害 × 武器伤害倍率
-                const baseDamage = upgrade.damage;
-                const damageMultiplier = weapon.damage / 13; // 13是法杖基础伤害
-                const finalDamage = Math.round(baseDamage * damageMultiplier);
+                // 从上方生成法球
+                const startX = targetX + (Math.random() - 0.5) * 30;
+                const startY = targetY - 180 - Math.random() * 40;
                 
                 this.combatSystem.spawnProjectile({
-                    x: player.x,
-                    y: player.y,
+                    x: startX,
+                    y: startY,
                     targetX: targetX,
                     targetY: targetY,
-                    vx: Math.cos(angle) * 400,
-                    vy: Math.sin(angle) * 400,
-                    radius: 8,
-                    color: '#e056fd',
+                    vx: 0,
+                    vy: projectileSpeed,
+                    radius: 10,
+                    color: '#9b59b6',
                     damage: finalDamage,
                     owner: 'player',
                     weaponType: 'Staff',
@@ -280,21 +284,34 @@ export class WeaponSystem {
                     life: 2.0,
                     trail: [],
                     hasExploded: false,
+                    fallProgress: 0,
                     update(dt) {
-                        this.x += this.vx * dt;
-                        this.y += this.vy * dt;
-                        this.life -= dt;
-                        if (this.life <= 0) {
-                            // Create AOE explosion on projectile end
+                        // 从上方砸下的运动
+                        this.fallProgress += dt * 3;
+                        
+                        // 计算当前位置 - 抛物线下落
+                        const progress = Math.min(this.fallProgress, 1);
+                        const easeProgress = 1 - Math.pow(1 - progress, 2); // ease-out
+                        
+                        this.y += this.vy * dt * (0.5 + progress * 0.5);
+                        
+                        // 检查是否到达目标
+                        if (this.y >= this.targetY) {
+                            // 到达目标，创建AOE爆炸
                             if (!this.hasExploded && this.aoeRadius > 0) {
                                 this.createAOEExplosion(combatSystem);
                                 this.hasExploded = true;
                             }
                             this.markedForDeletion = true;
                         }
+                        
+                        this.life -= dt;
+                        if (this.life <= 0) {
+                            this.markedForDeletion = true;
+                        }
 
-                        // Enhanced Trail effect
-                        this.trail.push({ x: this.x, y: this.y, life: 0.3 });
+                        // 轨迹效果
+                        this.trail.push({ x: this.x, y: this.y, life: 0.25 });
                         this.trail.forEach(p => p.life -= dt);
                         this.trail = this.trail.filter(p => p.life > 0);
                     },
@@ -391,97 +408,89 @@ export class WeaponSystem {
                         });
                     },
                     draw(ctx) {
-                        // Enhanced visual effects for staff projectile
+                        // 从上方砸下的法球特效
                         const time = Date.now() / 1000;
-                        const pulseAlpha = 0.8 + Math.sin(time * 10) * 0.2;
+                        const pulseAlpha = 0.8 + Math.sin(time * 15) * 0.2;
                         
-                        // Draw enhanced glow with pulsing effect
-                        ctx.shadowBlur = 15;
-                        ctx.shadowColor = this.color;
-                        
-                        // Outer energy ring
-                        ctx.strokeStyle = `rgba(224, 86, 253, ${pulseAlpha * 0.3})`;
-                        ctx.lineWidth = 3;
-                        ctx.beginPath();
-                        ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
-                        ctx.stroke();
-                        
-                        // Enhanced trail with gradient
-                        this.trail.forEach((pos, i) => {
-                            const alpha = pos.life / 0.3;
-                            const trailSize = this.radius * alpha * 0.8;
+                        // 绘制下落轨迹（向上的拖尾）
+                        this.trail.forEach((pos, idx) => {
+                            const alpha = pos.life / 0.25;
+                            const trailSize = this.radius * alpha * 0.6;
                             
-                            // Multilayer trail effect
-                            ctx.fillStyle = `rgba(147, 51, 234, ${alpha * 0.6})`;
+                            // 紫色拖尾
+                            ctx.fillStyle = `rgba(138, 43, 226, ${alpha * 0.5})`;
                             ctx.beginPath();
-                            ctx.arc(pos.x, pos.y, trailSize * 1.5, 0, Math.PI * 2);
+                            ctx.arc(pos.x, pos.y, trailSize * 1.2, 0, Math.PI * 2);
                             ctx.fill();
                             
-                            ctx.fillStyle = `rgba(224, 86, 253, ${alpha * 0.8})`;
+                            ctx.fillStyle = `rgba(186, 85, 211, ${alpha * 0.7})`;
                             ctx.beginPath();
-                            ctx.arc(pos.x, pos.y, trailSize, 0, Math.PI * 2);
-                            ctx.fill();
-                            
-                            // Inner bright core
-                            ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
-                            ctx.beginPath();
-                            ctx.arc(pos.x, pos.y, trailSize * 0.3, 0, Math.PI * 2);
+                            ctx.arc(pos.x, pos.y, trailSize * 0.8, 0, Math.PI * 2);
                             ctx.fill();
                         });
-
-                        // Draw main projectile with enhanced effects
-                        // Outer glow layer
+                        
+                        // 目标落点预警圈
+                        const warningAlpha = 0.3 + Math.sin(time * 8) * 0.15;
+                        ctx.strokeStyle = `rgba(255, 100, 100, ${warningAlpha})`;
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([5, 5]);
+                        ctx.beginPath();
+                        ctx.arc(this.targetX, this.targetY, this.aoeRadius || 30, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        // 法球主体 - 发光紫色球体
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = '#9b59b6';
+                        
+                        // 外层光晕
                         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 2);
                         gradient.addColorStop(0, `rgba(255, 255, 255, ${pulseAlpha})`);
-                        gradient.addColorStop(0.3, `rgba(224, 86, 253, ${pulseAlpha * 0.8})`);
-                        gradient.addColorStop(0.7, `rgba(147, 51, 234, ${pulseAlpha * 0.5})`);
-                        gradient.addColorStop(1, `rgba(147, 51, 234, 0)`);
+                        gradient.addColorStop(0.3, `rgba(186, 85, 211, ${pulseAlpha * 0.8})`);
+                        gradient.addColorStop(0.6, `rgba(138, 43, 226, ${pulseAlpha * 0.5})`);
+                        gradient.addColorStop(1, 'rgba(75, 0, 130, 0)');
                         
                         ctx.fillStyle = gradient;
                         ctx.beginPath();
                         ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
                         ctx.fill();
-
-                        // Main projectile body
-                        ctx.fillStyle = '#ffffff';
-                        ctx.shadowBlur = 20;
-                        ctx.shadowColor = '#ffffff';
+                        
+                        // 法球核心
+                        ctx.fillStyle = '#e0b0ff';
                         ctx.beginPath();
-                        ctx.arc(this.x, this.y, this.radius * 0.7, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        ctx.fillStyle = this.color;
-                        ctx.shadowBlur = 15;
-                        ctx.shadowColor = this.color;
-                        ctx.beginPath();
-                        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                        ctx.arc(this.x, this.y, this.radius * 0.8, 0, Math.PI * 2);
                         ctx.fill();
                         
-                        // Energy particles around projectile
-                        for (let i = 0; i < 6; i++) {
-                            const particleAngle = (Math.PI * 2 / 6) * i + time * 2;
-                            const particleDist = this.radius * 1.5 + Math.sin(time * 5 + i) * 3;
+                        // 白色高光
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.3, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // 能量粒子环绕
+                        for (let p = 0; p < 4; p++) {
+                            const particleAngle = (Math.PI * 2 / 4) * p + time * 4;
+                            const particleDist = this.radius * 1.3;
                             const px = this.x + Math.cos(particleAngle) * particleDist;
                             const py = this.y + Math.sin(particleAngle) * particleDist;
                             
-                            ctx.fillStyle = `rgba(255, 255, 255, ${pulseAlpha * 0.7})`;
+                            ctx.fillStyle = `rgba(255, 255, 255, ${pulseAlpha * 0.8})`;
                             ctx.beginPath();
                             ctx.arc(px, py, 2, 0, Math.PI * 2);
                             ctx.fill();
                         }
                         
                         ctx.shadowBlur = 0;
-                        ctx.globalAlpha = 1.0;
 
-                        // Chain lightning effect for level 5 - optimized
+                        // 连锁闪电效果
                         if (this.chainLightning) {
                             ctx.strokeStyle = '#ffff00';
                             ctx.lineWidth = 2;
                             ctx.shadowColor = '#ffff00';
                             ctx.shadowBlur = 5;
-                            for (let i = 0; i < 2; i++) {
+                            for (let j = 0; j < 3; j++) {
                                 const angle = Math.random() * Math.PI * 2;
-                                const dist = 10;
+                                const dist = 15;
                                 ctx.beginPath();
                                 ctx.moveTo(this.x, this.y);
                                 ctx.lineTo(this.x + Math.cos(angle) * dist, this.y + Math.sin(angle) * dist);
@@ -491,8 +500,8 @@ export class WeaponSystem {
                         }
                     }
                 });
-            }, index * 50); // Slight delay between projectiles
-        });
+            }, i * 60); // Slight delay between projectiles
+        }
     }
 
     attackLongsword(player, weapon, baseAngle) {
@@ -500,8 +509,9 @@ export class WeaponSystem {
 
         // 计算最终伤害和范围
         const baseDamage = upgrade.damage;
-        const damageMultiplier = weapon.damage / 16; // 16是长剑基础伤害
-        const finalDamage = Math.round(baseDamage * damageMultiplier);
+        const weaponDamageMult = weapon.damage / 16; // 16是长剑基础伤害
+        const playerDamageMult = player.damageMultiplier || 1;
+        const finalDamage = Math.round(baseDamage * weaponDamageMult * playerDamageMult);
         const finalRange = upgrade.range * (weapon.range / 80); // 80是长剑基础范围
 
         for (let i = 0; i < upgrade.slashCount; i++) {
@@ -675,8 +685,9 @@ export class WeaponSystem {
 
         // 计算最终伤害和范围
         const baseDamage = upgrade.damage;
-        const damageMultiplier = weapon.damage / 9; // 9是双刀基础伤害
-        const finalDamage = Math.round(baseDamage * damageMultiplier);
+        const weaponDamageMult = weapon.damage / 9; // 9是双刀基础伤害
+        const playerDamageMult = player.damageMultiplier || 1;
+        const finalDamage = Math.round(baseDamage * weaponDamageMult * playerDamageMult);
         const finalRange = upgrade.range * (weapon.range / 58); // 58是双刀基础范围
 
         if (upgrade.slashCount <= 2) {

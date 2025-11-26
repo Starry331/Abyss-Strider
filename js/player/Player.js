@@ -280,7 +280,7 @@ export class Player {
                 this.critMultiplier = 2.0;
                 break;
             case 'LIFESTEAL':
-                this.lifesteal = 0.1;
+                this.lifesteal = 0.05;
                 break;
             case 'INVINCIBLE':
                 this.invincible = true;
