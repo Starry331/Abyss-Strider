@@ -1009,33 +1009,22 @@ button:disabled {
     display: none;
     justify-content: space-between;
     align-items: flex-end;
-    pointer-events: none;
+    pointer-events: auto;
     z-index: 500;
 }
 
-#joystick-container {
+#joystick-container,
+#joystick-area,
+#action-buttons,
+.action-btn {
     pointer-events: auto;
 }
 
-#action-buttons {
-    pointer-events: auto;
-}
-
-/* Show on touch devices - 只在游戏进行时显示 */
+/* Show on touch devices */
 @media (hover: none) and (pointer: coarse) {
     #mobile-controls {
         display: flex;
     }
-    
-    /* 主菜单时隐藏移动控件 */
-    #main-menu:not(.hidden) ~ #mobile-controls {
-        display: none;
-    }
-}
-
-/* Alternative: Show when class 'show-mobile' is added */
-#mobile-controls.show-mobile {
-    display: flex !important;
 }
 
 #joystick-area {
