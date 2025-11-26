@@ -24,12 +24,12 @@ export class WeaponUpgrades {
                 name: '长剑',
                 icon: '🗡️',
                 tiers: [
-                    { level: 1, name: '铁剑', description: '单次斩击', slashCount: 1, damage: 13, range: 95, arc: Math.PI / 2, cooldownMult: 1.0, shockwave: false },
-                    { level: 2, name: '钢剑', description: '伤害+8%', slashCount: 1, damage: 13, range: 100, arc: Math.PI / 2, cooldownMult: 1.0, shockwave: false },
-                    { level: 3, name: '利刃', description: '范围+10%', slashCount: 1, damage: 14, range: 105, arc: Math.PI / 2.1, cooldownMult: 1.1, shockwave: false },
-                    { level: 4, name: '双斩剑', description: '双重斩击', slashCount: 2, damage: 13, range: 90, arc: Math.PI / 2.2, cooldownMult: 1.25, shockwave: false },
-                    { level: 5, name: '重剑', description: '重击伤害', slashCount: 2, damage: 15, range: 85, arc: Math.PI / 2.3, cooldownMult: 1.4, shockwave: false },
-                    { level: 6, name: '圣剑', description: '三连斩+冲击波', slashCount: 3, damage: 16, range: 80, arc: Math.PI / 2.4, cooldownMult: 1.6, shockwave: true }
+                    { level: 1, name: '铁剑', description: '单次斩击', slashCount: 1, damage: 13, range: 78, arc: Math.PI / 2, cooldownMult: 1.15, shockwave: false },
+                    { level: 2, name: '钢剑', description: '伤害+8%', slashCount: 1, damage: 13, range: 80, arc: Math.PI / 2, cooldownMult: 1.15, shockwave: false },
+                    { level: 3, name: '利刃', description: '范围+5%', slashCount: 1, damage: 14, range: 82, arc: Math.PI / 2.1, cooldownMult: 1.2, shockwave: false },
+                    { level: 4, name: '双斩剑', description: '双重斩击', slashCount: 2, damage: 13, range: 78, arc: Math.PI / 2.2, cooldownMult: 1.3, shockwave: false },
+                    { level: 5, name: '重剑', description: '重击伤害', slashCount: 2, damage: 15, range: 75, arc: Math.PI / 2.3, cooldownMult: 1.45, shockwave: false },
+                    { level: 6, name: '圣剑', description: '三连斩+冲击波', slashCount: 3, damage: 16, range: 72, arc: Math.PI / 2.4, cooldownMult: 1.65, shockwave: true }
                 ]
             },
             'Dual Blades': {
