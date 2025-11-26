@@ -10,12 +10,25 @@ export class BossManager {
 
         this.onBossSpawn = null;
         this.onBossDeath = null;
+        
+        // 异化Boss几率 (Lv1不异化)
+        this.mutationChances = {
+            1: 0,      // Lv1 无异化
+            2: 0.03,   // Lv2 3%
+            3: 0.04,   // Lv3 4%
+            4: 0.03,   // Lv4 3%
+            5: 0.10    // Lv5 10%
+        };
     }
 
     spawnBoss(level) {
         if (this.bossSpawned) return;
 
-        console.log(`Spawning Boss for Level ${level}`);
+        // 判定是否异化
+        const mutationChance = this.mutationChances[level] || 0;
+        const isMutated = Math.random() < mutationChance;
+        
+        console.log(`Spawning Boss for Level ${level}${isMutated ? ' (MUTATED!)' : ''}`);
         this.bossSpawned = true;
         this.uiManager.showBossWarning();
 
@@ -23,7 +36,8 @@ export class BossManager {
 
         // Delay actual spawn for warning duration
         setTimeout(() => {
-            this.activeBoss = BossVariety.createBoss(level, this.player.x + 300, this.player.y, this.player, this.combatSystem);
+            // 根据是否异化创建不同的Boss
+            this.activeBoss = BossVariety.createBoss(level, this.player.x + 300, this.player.y, this.player, this.combatSystem, isMutated);
             this.uiManager.hideBossWarning();
         }, 3000);
     }
@@ -74,7 +88,7 @@ export class BossManager {
         if (fillEl) fillEl.style.width = `${hpPercent}%`;
         if (textEl) textEl.innerText = `HP: ${Math.ceil(this.activeBoss.hp)}/${this.activeBoss.maxHp}`;
 
-        // Set boss name based on level
+        // Set boss name based on level and mutation status
         if (nameEl) {
             const bossNames = {
                 1: '险恶猴王',
@@ -83,7 +97,15 @@ export class BossManager {
                 4: '天穹之王·宙斯',
                 5: '圣剑王·亚瑟'
             };
-            nameEl.innerText = bossNames[this.activeBoss.level] || 'Boss';
+            const baseName = bossNames[this.activeBoss.level] || 'Boss';
+            
+            // 异化Boss特殊显示
+            if (this.activeBoss.isMutated) {
+                nameEl.innerHTML = `<span style="color: #ff3333; text-shadow: 0 0 10px #ff0000;">【异化】${baseName}</span>`;
+            } else {
+                nameEl.innerText = baseName;
+                nameEl.style.color = '';
+            }
         }
     }
 

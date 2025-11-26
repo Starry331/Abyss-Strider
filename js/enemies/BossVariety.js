@@ -4,8 +4,21 @@
  * 难度随关卡递增，技能数量递增
  */
 
+import { MutatedIceDragonBoss, MutatedCerberusBoss, MutatedZeusBoss } from './MutatedBosses.js';
+import { MutatedPaladinBoss } from './MutatedPaladin.js';
+
 export class BossVariety {
-    static createBoss(level, x, y, player, combatSystem) {
+    static createBoss(level, x, y, player, combatSystem, isMutated = false) {
+        // 异化Boss
+        if (isMutated && level >= 2) {
+            switch (level) {
+                case 2: return new MutatedIceDragonBoss(x, y, player, combatSystem);
+                case 3: return new MutatedCerberusBoss(x, y, player, combatSystem);
+                case 4: return new MutatedZeusBoss(x, y, player, combatSystem);
+                case 5: return new MutatedPaladinBoss(x, y, player, combatSystem);
+            }
+        }
+        // 普通Boss
         switch (level) {
             case 1: return new MonkeyBoss(x, y, player, combatSystem);
             case 2: return new IceDragonBoss(x, y, player, combatSystem);
