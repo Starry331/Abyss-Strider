@@ -12,9 +12,9 @@ export class WeaponUpgrades {
                 name: '法杖',
                 icon: '🪄',
                 tiers: [
-                    { level: 1, name: '学徒法杖', description: '单发魔法弹', projectileCount: 1, damage: 10, aoeRadius: 50, cooldownMult: 1.0, pierce: false, chainLightning: false },
-                    { level: 2, name: '魔法法杖', description: '伤害+10%', projectileCount: 1, damage: 11, aoeRadius: 55, cooldownMult: 1.0, pierce: false, chainLightning: false },
-                    { level: 3, name: '强化法杖', description: 'AOE+10%', projectileCount: 1, damage: 12, aoeRadius: 60, cooldownMult: 1.05, pierce: false, chainLightning: false },
+                    { level: 1, name: '学徒法杖', description: '单发魔法弹', projectileCount: 1, damage: 10, aoeRadius: 50, cooldownMult: 0.85, pierce: false, chainLightning: false },
+                    { level: 2, name: '魔法法杖', description: '伤害+10%', projectileCount: 1, damage: 11, aoeRadius: 55, cooldownMult: 0.80, pierce: false, chainLightning: false },
+                    { level: 3, name: '强化法杖', description: 'AOE+10%', projectileCount: 1, damage: 12, aoeRadius: 60, cooldownMult: 0.75, pierce: false, chainLightning: false },
                     { level: 4, name: '双发法杖', description: '2发弹', projectileCount: 2, damage: 11, aoeRadius: 60, cooldownMult: 1.15, pierce: false, chainLightning: false },
                     { level: 5, name: '穿透法杖', description: '穿透敌人', projectileCount: 2, damage: 12, aoeRadius: 65, cooldownMult: 1.25, pierce: true, chainLightning: false },
                     { level: 6, name: '奥术法杖', description: '3发+连锁', projectileCount: 3, damage: 13, aoeRadius: 70, cooldownMult: 1.4, pierce: true, chainLightning: true }
