@@ -335,33 +335,46 @@ export class WeaponSystem {
                             },
                             draw(ctx) {
                                 const alpha = this.life / this.maxLife;
-                                const expandScale = 1 + (1 - alpha) * 0.3;
+                                const time = Date.now() / 1000;
+                                const expandScale = 1 + (1 - alpha) * 0.5;
                                 
-                                // 简洁的AOE爆炸
                                 ctx.shadowColor = '#ba55d3';
-                                ctx.shadowBlur = 20;
+                                ctx.shadowBlur = 25;
                                 
-                                // 扩散圆圈
+                                // 外层扩散波纹 - 清晰边界
+                                ctx.strokeStyle = `rgba(200, 100, 255, ${alpha * 0.9})`;
+                                ctx.lineWidth = 4;
+                                ctx.beginPath();
+                                ctx.arc(this.x, this.y, this.radius * expandScale, 0, Math.PI * 2);
+                                ctx.stroke();
+                                
+                                // 内层填充渐变
                                 const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * expandScale);
-                                gradient.addColorStop(0, `rgba(255, 220, 255, ${alpha * 0.6})`);
-                                gradient.addColorStop(0.5, `rgba(186, 85, 211, ${alpha * 0.4})`);
+                                gradient.addColorStop(0, `rgba(255, 230, 255, ${alpha * 0.7})`);
+                                gradient.addColorStop(0.4, `rgba(200, 100, 255, ${alpha * 0.4})`);
                                 gradient.addColorStop(1, 'rgba(138, 43, 226, 0)');
                                 ctx.fillStyle = gradient;
                                 ctx.beginPath();
                                 ctx.arc(this.x, this.y, this.radius * expandScale, 0, Math.PI * 2);
                                 ctx.fill();
                                 
-                                // 边缘圈
-                                ctx.strokeStyle = `rgba(200, 150, 255, ${alpha * 0.8})`;
-                                ctx.lineWidth = 3;
-                                ctx.beginPath();
-                                ctx.arc(this.x, this.y, this.radius * expandScale, 0, Math.PI * 2);
-                                ctx.stroke();
+                                // 能量粒子向外扩散
+                                for (let i = 0; i < 8; i++) {
+                                    const particleAngle = (Math.PI * 2 / 8) * i + time * 4;
+                                    const particleDist = (1 - alpha) * this.radius * expandScale;
+                                    const px = this.x + Math.cos(particleAngle) * particleDist;
+                                    const py = this.y + Math.sin(particleAngle) * particleDist;
+                                    
+                                    ctx.fillStyle = `rgba(255, 200, 255, ${alpha * 0.9})`;
+                                    ctx.beginPath();
+                                    ctx.arc(px, py, 4 * alpha, 0, Math.PI * 2);
+                                    ctx.fill();
+                                }
                                 
-                                // 中心亮点
+                                // 中心闪光
                                 ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
                                 ctx.beginPath();
-                                ctx.arc(this.x, this.y, 6 * alpha, 0, Math.PI * 2);
+                                ctx.arc(this.x, this.y, 10 * alpha, 0, Math.PI * 2);
                                 ctx.fill();
                                 
                                 ctx.shadowBlur = 0;
@@ -369,72 +382,113 @@ export class WeaponSystem {
                         });
                     },
                     draw(ctx) {
-                        // 简洁清晰的法球特效
                         const time = Date.now() / 1000;
+                        const pulseAlpha = 0.8 + Math.sin(time * 12) * 0.2;
                         
-                        // 目标落点预警 - 简单圆圈
-                        const warningAlpha = 0.4 + Math.sin(time * 6) * 0.2;
-                        ctx.strokeStyle = `rgba(180, 100, 255, ${warningAlpha})`;
-                        ctx.lineWidth = 2;
+                        // ========== 目标落点预警圈 - 清晰边界 ==========
+                        const warningAlpha = 0.5 + Math.sin(time * 8) * 0.2;
+                        const aoeR = this.aoeRadius || 35;
+                        
+                        // 外圈 - 粗实线
+                        ctx.strokeStyle = `rgba(220, 120, 255, ${warningAlpha})`;
+                        ctx.lineWidth = 3;
                         ctx.beginPath();
-                        ctx.arc(this.targetX, this.targetY, this.aoeRadius || 30, 0, Math.PI * 2);
+                        ctx.arc(this.targetX, this.targetY, aoeR, 0, Math.PI * 2);
                         ctx.stroke();
                         
-                        // 落点填充
-                        ctx.fillStyle = `rgba(150, 80, 200, ${warningAlpha * 0.15})`;
+                        // 内圈填充
+                        const warnGrad = ctx.createRadialGradient(this.targetX, this.targetY, 0, this.targetX, this.targetY, aoeR);
+                        warnGrad.addColorStop(0, `rgba(200, 100, 255, ${warningAlpha * 0.25})`);
+                        warnGrad.addColorStop(1, `rgba(150, 50, 200, ${warningAlpha * 0.1})`);
+                        ctx.fillStyle = warnGrad;
                         ctx.beginPath();
-                        ctx.arc(this.targetX, this.targetY, this.aoeRadius || 30, 0, Math.PI * 2);
+                        ctx.arc(this.targetX, this.targetY, aoeR, 0, Math.PI * 2);
                         ctx.fill();
                         
-                        // 下落指示线
-                        ctx.strokeStyle = `rgba(200, 150, 255, ${warningAlpha * 0.5})`;
+                        // 十字瞄准线
+                        ctx.strokeStyle = `rgba(255, 200, 255, ${warningAlpha * 0.6})`;
                         ctx.lineWidth = 1;
-                        ctx.setLineDash([4, 4]);
                         ctx.beginPath();
-                        ctx.moveTo(this.x, this.y);
-                        ctx.lineTo(this.targetX, this.targetY);
+                        ctx.moveTo(this.targetX - aoeR * 0.6, this.targetY);
+                        ctx.lineTo(this.targetX + aoeR * 0.6, this.targetY);
+                        ctx.moveTo(this.targetX, this.targetY - aoeR * 0.6);
+                        ctx.lineTo(this.targetX, this.targetY + aoeR * 0.6);
                         ctx.stroke();
-                        ctx.setLineDash([]);
                         
-                        // 法球主体 - 简洁发光球
+                        // ========== 下落拖尾 - 清晰光带 ==========
+                        this.trail.forEach((pos, idx) => {
+                            const trailAlpha = pos.life / 0.25;
+                            const trailSize = this.radius * trailAlpha * 0.8;
+                            
+                            // 外层光晕
+                            ctx.fillStyle = `rgba(180, 100, 255, ${trailAlpha * 0.4})`;
+                            ctx.beginPath();
+                            ctx.arc(pos.x, pos.y, trailSize * 1.5, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // 内核
+                            ctx.fillStyle = `rgba(220, 180, 255, ${trailAlpha * 0.7})`;
+                            ctx.beginPath();
+                            ctx.arc(pos.x, pos.y, trailSize * 0.8, 0, Math.PI * 2);
+                            ctx.fill();
+                        });
+                        
+                        // ========== 法球主体 ==========
                         ctx.shadowColor = '#9b59b6';
-                        ctx.shadowBlur = 15;
+                        ctx.shadowBlur = 20;
                         
                         // 外层光晕
-                        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 1.5);
-                        gradient.addColorStop(0, '#ffffff');
-                        gradient.addColorStop(0.4, '#ba55d3');
-                        gradient.addColorStop(1, 'rgba(138, 43, 226, 0)');
+                        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 2);
+                        gradient.addColorStop(0, `rgba(255, 255, 255, ${pulseAlpha})`);
+                        gradient.addColorStop(0.25, `rgba(220, 150, 255, ${pulseAlpha * 0.9})`);
+                        gradient.addColorStop(0.5, `rgba(180, 80, 220, ${pulseAlpha * 0.6})`);
+                        gradient.addColorStop(1, 'rgba(100, 30, 150, 0)');
                         ctx.fillStyle = gradient;
                         ctx.beginPath();
-                        ctx.arc(this.x, this.y, this.radius * 1.5, 0, Math.PI * 2);
+                        ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
                         ctx.fill();
                         
-                        // 法球核心
-                        ctx.fillStyle = '#e0b0ff';
+                        // 法球核心 - 清晰边界
+                        ctx.fillStyle = '#e8c8ff';
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.lineWidth = 2;
                         ctx.beginPath();
-                        ctx.arc(this.x, this.y, this.radius * 0.7, 0, Math.PI * 2);
+                        ctx.arc(this.x, this.y, this.radius * 0.9, 0, Math.PI * 2);
                         ctx.fill();
+                        ctx.stroke();
                         
-                        // 高光点
+                        // 高光
                         ctx.fillStyle = '#ffffff';
                         ctx.beginPath();
-                        ctx.arc(this.x - 3, this.y - 3, 3, 0, Math.PI * 2);
+                        ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.35, 0, Math.PI * 2);
                         ctx.fill();
+                        
+                        // 环绕粒子
+                        for (let p = 0; p < 4; p++) {
+                            const pAngle = (Math.PI * 2 / 4) * p + time * 6;
+                            const pDist = this.radius * 1.4;
+                            const px = this.x + Math.cos(pAngle) * pDist;
+                            const py = this.y + Math.sin(pAngle) * pDist;
+                            
+                            ctx.fillStyle = `rgba(255, 220, 255, ${pulseAlpha})`;
+                            ctx.beginPath();
+                            ctx.arc(px, py, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
                         
                         ctx.shadowBlur = 0;
 
-                        // 连锁闪电效果（仅Lv6）
+                        // ========== 连锁闪电 (Lv6) ==========
                         if (this.chainLightning) {
                             ctx.strokeStyle = '#ffff00';
                             ctx.lineWidth = 2;
                             ctx.shadowColor = '#ffff00';
-                            ctx.shadowBlur = 8;
-                            for (let j = 0; j < 3; j++) {
-                                const angle = (Math.PI * 2 / 3) * j + time * 5;
+                            ctx.shadowBlur = 10;
+                            for (let j = 0; j < 4; j++) {
+                                const angle = (Math.PI * 2 / 4) * j + time * 8;
                                 ctx.beginPath();
                                 ctx.moveTo(this.x, this.y);
-                                ctx.lineTo(this.x + Math.cos(angle) * 18, this.y + Math.sin(angle) * 18);
+                                ctx.lineTo(this.x + Math.cos(angle) * 20, this.y + Math.sin(angle) * 20);
                                 ctx.stroke();
                             }
                             ctx.shadowBlur = 0;
