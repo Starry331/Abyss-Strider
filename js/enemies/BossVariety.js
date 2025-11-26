@@ -1307,16 +1307,17 @@ class CerberusBoss extends BaseBoss {
     constructor(x, y, player, combatSystem) {
         super(x, y, player, combatSystem);
         this.level = 3;
-        this.name = '地狱三头魔犬';
-        this.maxHp = 1000;  // 上调血量 850->1000
+        this.name = '地狱三头魔犬·刻耳柏洛斯';
+        this.maxHp = 950;  // 微调血量
         this.hp = this.maxHp;
-        this.radius = 65;
+        this.radius = 68;
         this.color = '#8b0000';
-        this.damage = 26;  // 伤害基准提升
-        this.telegraphDuration = 1.0;
-        this.attackCooldown = 1.4; // 攻击间隔缩短
-        this.skills = ['TRIPLE_FIRE', 'INFERNO_CHARGE', 'HELLFIRE', 'LAVA_POOL', 'BITE_RUSH', 'METEOR', 'SOUL_HOWL', 'HELLGATE'];
-        this.phase2Skills = [...this.skills, 'APOCALYPSE', 'CERBERUS_RAGE', 'DEMON_SUMMON'];
+        this.damage = 24;
+        this.telegraphDuration = 0.85; // 施法加速
+        this.attackCooldown = 1.2; // 攻击间隔缩短
+        this.skills = ['TRIPLE_FIRE', 'INFERNO_CHARGE', 'HELLFIRE', 'LAVA_POOL', 'BITE_RUSH', 'METEOR', 'SOUL_HOWL', 'HELLGATE', 'FLAME_VORTEX'];
+        this.phase2Skills = [...this.skills, 'APOCALYPSE', 'CERBERUS_RAGE', 'DEMON_SUMMON', 'INFERNO_BREATH'];
+        this.headAngles = [0, 0, 0]; // 三头动画
     }
 
     update(deltaTime) {
@@ -1612,6 +1613,57 @@ class CerberusBoss extends BaseBoss {
                     }, wave * 600);
                 }
                 break;
+                
+            case 'FLAME_VORTEX':
+                // 火焰漩涡 - 旋转火圈向外扩散
+                if (this.player.screenShake) { this.player.screenShake.intensity = 8; this.player.screenShake.duration = 1; }
+                for (let ring = 0; ring < 3; ring++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 12; i++) {
+                            const vortexAngle = (Math.PI * 2 / 12) * i + ring * 0.2;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, angle: vortexAngle, dist: 30, speed: 120 + ring * 40,
+                                radius: 12, damage: 12, owner: 'enemy', life: 2.5,
+                                update(dt) {
+                                    this.angle += dt * 3;
+                                    this.dist += this.speed * dt;
+                                    this.x = this.startX + Math.cos(this.angle) * this.dist;
+                                    this.y = this.startY + Math.sin(this.angle) * this.dist;
+                                    this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
+                                },
+                                startX: this.x, startY: this.y,
+                                draw(ctx) {
+                                    ctx.fillStyle = `rgba(255, 100, 0, ${this.life / 2.5})`;
+                                    ctx.shadowColor = '#ff4500'; ctx.shadowBlur = 15;
+                                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                                    ctx.shadowBlur = 0;
+                                }
+                            });
+                        }
+                    }, ring * 300);
+                }
+                break;
+                
+            case 'INFERNO_BREATH':
+                // 地狱吐息 - 三头同时喷射火焰
+                const breathAngles = [-0.5, 0, 0.5];
+                breathAngles.forEach((off, headIdx) => {
+                    for (let w = 0; w < 8; w++) {
+                        setTimeout(() => {
+                            for (let i = -2; i <= 2; i++) {
+                                const ba = angle + off + i * 0.08;
+                                this.combatSystem.spawnProjectile({
+                                    x: this.x + Math.cos(angle + off) * 40, y: this.y + Math.sin(angle + off) * 40,
+                                    vx: Math.cos(ba) * (350 + w * 20), vy: Math.sin(ba) * (350 + w * 20),
+                                    radius: 8, damage: 8, owner: 'enemy', life: 1.2,
+                                    update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                    draw(ctx) { ctx.fillStyle = `rgba(255, ${150 - w * 15}, 0, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                                });
+                            }
+                        }, w * 60 + headIdx * 100);
+                    }
+                });
+                break;
         }
     }
 
@@ -1765,15 +1817,18 @@ class CerberusBoss extends BaseBoss {
         switch (this.currentSkill) {
             case 'INFERNO_CHARGE': case 'BITE_RUSH': case 'CERBERUS_RAGE':
                 this.drawDashIndicator(ctx, this.dashTarget.x, this.dashTarget.y, '255, 69, 0'); break;
-            case 'HELLFIRE': case 'TRIPLE_FIRE':
-                ctx.fillStyle = 'rgba(255, 69, 0, 0.3)'; ctx.beginPath(); ctx.moveTo(this.x, this.y);
-                ctx.arc(this.x, this.y, 300, angle - 0.5, angle + 0.5); ctx.closePath(); ctx.fill(); break;
+            case 'HELLFIRE': case 'TRIPLE_FIRE': case 'INFERNO_BREATH':
+                this.drawConeIndicator(ctx, angle, 0.6, 280, '255, 100, 0'); break;
             case 'LAVA_POOL': case 'METEOR': case 'APOCALYPSE':
                 this.drawAOEIndicator(ctx, this.player.x, this.player.y, 175, '255, 69, 0'); break;
-            case 'SOUL_HOWL':
-                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 100, '0, 255, 0');
-                ctx.fillStyle = 'rgba(0, 255, 0, 0.5)'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
-                ctx.fillText('👁👁👁', this.x, this.y - this.radius - 20); break;
+            case 'FLAME_VORTEX':
+                this.drawAOEIndicator(ctx, this.x, this.y, 200, '255, 150, 0');
+                ctx.fillStyle = 'rgba(255, 100, 0, 0.5)'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('🔥 火焰漩涡 🔥', this.x, this.y - this.radius - 25); break;
+            case 'HELLGATE': case 'DEMON_SUMMON':
+                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 150, '139, 0, 0'); break;
+            default:
+                this.drawAOEIndicator(ctx, this.x, this.y, 120, '255, 69, 0'); break;
         }
     }
 }
@@ -1787,14 +1842,16 @@ class ZeusBoss extends BaseBoss {
         super(x, y, player, combatSystem);
         this.level = 4;
         this.name = '天穹之王·宙斯';
-        this.maxHp = 1300;  // 上调血量 1100->1300
+        this.maxHp = 1250;  // 微调血量
         this.hp = this.maxHp;
-        this.radius = 60;
+        this.radius = 62;
         this.color = '#ffd700';
-        this.damage = 32;  // 伤害基准提升
-        this.telegraphDuration = 0.85;
-        this.skills = ['LIGHTNING_BOLT', 'THUNDER_DASH', 'CHAIN_LIGHTNING', 'STORM_CLOUD', 'THUNDER_CLAP', 'LIGHTNING_FIELD', 'DIVINE_STRIKE', 'SKY_FURY', 'THUNDER_PRISON'];
-        this.phase2Skills = [...this.skills, 'OLYMPUS_WRATH', 'THUNDERGOD_AVATAR', 'DIVINE_JUDGEMENT'];
+        this.damage = 30;
+        this.telegraphDuration = 0.75; // 施法加速
+        this.attackCooldown = 1.3;
+        this.skills = ['LIGHTNING_BOLT', 'THUNDER_DASH', 'CHAIN_LIGHTNING', 'STORM_CLOUD', 'THUNDER_CLAP', 'LIGHTNING_FIELD', 'DIVINE_STRIKE', 'SKY_FURY', 'THUNDER_PRISON', 'ZEUS_BARRIER'];
+        this.phase2Skills = [...this.skills, 'OLYMPUS_WRATH', 'THUNDERGOD_AVATAR', 'DIVINE_JUDGEMENT', 'STORM_CALLER'];
+        this.lightningAura = 0; // 闪电光环动画
     }
 
     update(deltaTime) {
@@ -1809,7 +1866,8 @@ class ZeusBoss extends BaseBoss {
         switch (this.state) {
             case 'IDLE':
                 this.timer += deltaTime;
-                if (this.timer >= 1.6) {
+                this.lightningAura += deltaTime;
+                if (this.timer >= (this.attackCooldown || 1.3)) {
                     this.state = 'TELEGRAPH';
                     const pool = this.phase === 2 ? this.phase2Skills : this.skills;
                     this.currentSkill = pool[Math.floor(Math.random() * pool.length)];
@@ -1827,7 +1885,7 @@ class ZeusBoss extends BaseBoss {
                 break;
         }
 
-        if (this.hp < this.maxHp * 0.5 && this.phase === 1) { this.phase = 2; this.telegraphDuration = 0.8; }
+        if (this.hp < this.maxHp * 0.5 && this.phase === 1) { this.phase = 2; this.telegraphDuration = 0.65; this.attackCooldown = 1.1; }
     }
 
     executeAttack() {
@@ -2252,16 +2310,19 @@ class PaladinBoss extends BaseBoss {
         super(x, y, player, combatSystem);
         this.level = 5;
         this.name = '圣光大天使·米迦勒';
-        this.maxHp = 1700;  // 微调血量 1800->1700
+        this.maxHp = 1650;  // 微调血量
         this.hp = this.maxHp;
-        this.radius = 58;
+        this.radius = 60;
         this.color = '#ffd700';
-        this.damage = 32;  // 降低基础伤害 40->32
+        this.damage = 30;
         this.critChance = 0.30;  // 30%暴击率
         this.critMultiplier = 1.2;  // 120%暴击伤害
-        this.telegraphDuration = 0.8;  // 稍微延长前摇
-        this.skills = ['SWORD_THRUST', 'DIVINE_DASH', 'BLADE_STORM', 'CROSS_SLASH', 'SWORD_RAIN', 'BLADE_BARRIER', 'JUDGEMENT_BLADE', 'RADIANT_SLASH', 'HOLY_BLADE', 'DIVINE_WINGS'];
-        this.phase2Skills = [...this.skills, 'FINAL_JUDGEMENT', 'ANGELIC_WRATH', 'HOLY_APOCALYPSE'];
+        this.telegraphDuration = 0.7;  // 施法加速
+        this.attackCooldown = 1.2;
+        this.skills = ['SWORD_THRUST', 'DIVINE_DASH', 'BLADE_STORM', 'CROSS_SLASH', 'SWORD_RAIN', 'BLADE_BARRIER', 'JUDGEMENT_BLADE', 'RADIANT_SLASH', 'HOLY_BLADE', 'DIVINE_WINGS', 'HOLY_SHIELD'];
+        this.phase2Skills = [...this.skills, 'FINAL_JUDGEMENT', 'ANGELIC_WRATH', 'HOLY_APOCALYPSE', 'DIVINE_STORM'];
+        this.wingSpan = 0; // 翅膀动画
+        this.haloAngle = 0; // 光环旋转
     }
     
     // 计算暴击伤害
@@ -2285,7 +2346,9 @@ class PaladinBoss extends BaseBoss {
         switch (this.state) {
             case 'IDLE':
                 this.timer += deltaTime;
-                if (this.timer >= 1.5) {
+                this.wingSpan = Math.sin(Date.now() / 500) * 0.2;
+                this.haloAngle += deltaTime * 2;
+                if (this.timer >= (this.attackCooldown || 1.2)) {
                     this.state = 'TELEGRAPH';
                     const pool = this.phase === 2 ? this.phase2Skills : this.skills;
                     this.currentSkill = pool[Math.floor(Math.random() * pool.length)];
