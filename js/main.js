@@ -34,20 +34,16 @@ window.HalloweenRenderer = HalloweenRenderer;
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
-// Resize canvas to fill the window (使用visualViewport适配移动端)
+// Resize canvas to fill the window
 function resize() {
-    const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-    const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    canvas.width = vw;
-    canvas.height = vh;
-    // 确保canvas样式也正确
-    canvas.style.width = vw + 'px';
-    canvas.style.height = vh + 'px';
+    // 使用document尺寸确保完整覆盖
+    const width = document.documentElement.clientWidth || window.innerWidth;
+    const height = document.documentElement.clientHeight || window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
 }
 window.addEventListener('resize', resize);
-if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', resize);
-}
+window.addEventListener('orientationchange', () => setTimeout(resize, 100));
 resize();
 
 // ---------------------------
