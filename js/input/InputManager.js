@@ -193,9 +193,9 @@ export class InputManager {
         this.input.move.x = x;
         this.input.move.y = y;
 
-        // Actions (仅J/K/Q键盘 + 触屏按钮)
+        // Actions
         this.input.block = this.keys['KeyJ'] || this.touchState.buttons.block;
-        this.input.roll = this.keys['KeyK'] || this.touchState.buttons.roll;
+        this.input.roll = this.keys['KeyK'] || this.keys['Space'] || this.touchState.buttons.roll;
         this.input.switchWeapon = this.keys['KeyQ'] || this.touchState.buttons.switch;
     }
 
