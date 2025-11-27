@@ -115,9 +115,9 @@ export class EnemyManager {
     // 将普通怪物转化为精英怪
     makeElite(enemy) {
         enemy.isElite = true;
-        enemy.hp *= 3.2;         // 3.2倍血量
-        enemy.maxHp *= 3.2;
-        enemy.damage *= 1.8;     // 1.8倍伤害
+        enemy.hp *= 4.0;         // 4倍血量
+        enemy.maxHp *= 4.0;
+        enemy.damage *= 2.2;     // 2.2倍伤害
         enemy.scoreReward *= 5;  // 5倍积分
         enemy.radius *= 1.35;    // 体型变大
         enemy.speed *= 1.08;     // 略微加速
