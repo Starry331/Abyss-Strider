@@ -468,8 +468,12 @@ export class BossRushScene {
                 break;
             case 'weapon':
             case 'weapon1':
+                // 偶数关卡显示(1/2)，奇数关卡不显示
+                const isEvenLevel = this.currentDefeatedLevel % 2 === 0;
+                this.showWeaponUpgrade(isEvenLevel ? '武器升级 (1/2)' : '武器升级');
+                break;
             case 'weapon2':
-                this.showWeaponUpgrade('武器升级');
+                this.showWeaponUpgrade('武器升级 (2/2)');
                 break;
             case 'done':
                 this.isPaused = false;
@@ -809,7 +813,8 @@ export class BossRushScene {
             case 'lv5_blessing2':
                 this.rewardPhase = 'weapon1';
                 break;
-            // 正常奖励流程: build1 -> build2 -> blessing -> weapon -> done (武器下调为1次)
+            // 正常奖励流程: build1 -> build2 -> blessing -> weapon(1或2次) -> done
+            // 武器升级次数: 1-2-1-2-1-2 (奇数关卡1次，偶数关卡2次)
             case 'build1':
                 this.rewardPhase = 'build2';
                 break;
@@ -817,9 +822,17 @@ export class BossRushScene {
                 this.rewardPhase = 'blessing';
                 break;
             case 'blessing':
-                this.rewardPhase = 'weapon';
+                // 根据关卡等级决定武器升级次数：奇数关1次，偶数关2次
+                this.rewardPhase = 'weapon1';
                 break;
             case 'weapon1':
+                // 偶数关卡(2,4,6)有2次武器升级
+                if (this.currentDefeatedLevel % 2 === 0) {
+                    this.rewardPhase = 'weapon2';
+                } else {
+                    this.rewardPhase = 'done';
+                }
+                break;
             case 'weapon2':
             case 'weapon':
                 this.rewardPhase = 'done';
