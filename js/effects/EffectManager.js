@@ -28,6 +28,21 @@ export class EffectManager {
             size: Math.random() * 5 + 2
         });
     }
+    
+    // 打击特效：生成多个粒子
+    spawnHitEffect(x, y, color = '#ffaa00') {
+        for (let i = 0; i < 5; i++) {
+            this.particles.push({
+                x: x + (Math.random() - 0.5) * 20,
+                y: y + (Math.random() - 0.5) * 20,
+                color: color,
+                vx: (Math.random() - 0.5) * 300,
+                vy: (Math.random() - 0.5) * 300,
+                life: 0.3,
+                size: Math.random() * 6 + 3
+            });
+        }
+    }
 
     update(deltaTime) {
         if (this.shakeTimer > 0) this.shakeTimer -= deltaTime;

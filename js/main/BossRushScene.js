@@ -983,12 +983,14 @@ export class BossRushScene {
             this.activeBoss.update(deltaTime);
             
             // 检查玩家投射物对Boss的伤害
+            const boss = this.activeBoss; // 保存引用防止循环中变化
             this.combatSystem.projectiles.forEach(proj => {
+                if (!boss || boss.hp <= 0) return; // Boss已被击败则跳过
                 if (proj.owner !== 'enemy' && !proj.isEnemy && !proj.markedForDeletion) {
-                    const dx = this.activeBoss.x - proj.x;
-                    const dy = this.activeBoss.y - proj.y;
+                    const dx = boss.x - proj.x;
+                    const dy = boss.y - proj.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < (proj.radius || 10) + (this.activeBoss.radius || 50)) {
+                    if (dist < (proj.radius || 10) + (boss.radius || 50)) {
                         let dmg = proj.damage || 10;
                         let isCrit = false;
                         
@@ -998,16 +1000,16 @@ export class BossRushScene {
                             isCrit = true;
                         }
                         
-                        this.activeBoss.hp -= dmg;
+                        boss.hp -= dmg;
                         proj.markedForDeletion = true;
                         proj.lifetime = 0;
                         
                         // 显示伤害数字
-                        this.showDamageNumber(this.activeBoss.x, this.activeBoss.y, Math.round(dmg), isCrit);
+                        this.showDamageNumber(boss.x, boss.y, Math.round(dmg), isCrit);
                         
                         // 打击感：特效+音效
                         if (this.effectManager) {
-                            this.effectManager.spawnHitEffect(this.activeBoss.x, this.activeBoss.y);
+                            this.effectManager.spawnHitEffect(boss.x, boss.y);
                         }
                         if (this.audioManager) {
                             this.audioManager.playSound(isCrit ? 'crit' : 'hit');
