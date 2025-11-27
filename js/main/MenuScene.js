@@ -325,7 +325,7 @@ export class MenuScene {
             card.className = `gallery-card ${boss.unlocked ? '' : 'locked'} ${isWide ? 'wide' : ''}`;
             
             const levelText = boss.isMutated ? `Lv${boss.level} 异化` : `Lv${boss.level}`;
-            const killText = boss.unlocked ? `击杀: ${boss.kills}次` : '未解锁 (击杀1次解锁)';
+            const killText = boss.unlocked ? `击杀: ${boss.kills}次` : (boss.unlockHint || '未解锁 (击杀1次解锁)');
             
             // 确定显示的图片
             let imageContent;

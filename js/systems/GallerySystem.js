@@ -22,12 +22,16 @@ export class GallerySystem {
             { id: 'zeus', level: 4, name: '天穹之王·宙斯', title: 'Zeus', isMutated: false, image: 'zeus.png', lockedImage: 'Zeus locked.png' },
             { id: 'zeus_mutated', level: 4, name: '暴君宙斯', title: 'Tyrant Zeus', isMutated: true, image: 'evil zeus.png', lockedImage: 'Zeus locked.png' },
             // Lv5
-            { id: 'arthur', level: 5, name: '圣剑王·亚瑟', title: 'King Arthur', isMutated: false, image: 'boss_arthur.png' },
-            { id: 'arthur_mutated', level: 5, name: '堕落骑士·莫德雷德', title: 'Mordred', isMutated: true, image: 'boss_arthur_mutated.png' },
+            { id: 'arthur', level: 5, name: '圣剑王·亚瑟', title: 'King Arthur', isMutated: false, image: 'asur.png', lockedImage: 'Zeus locked.png' },
+            { id: 'arthur_mutated', level: 5, name: '堕落骑士·莫德雷德', title: 'Mordred', isMutated: true, image: 'evil asur.png', lockedImage: 'Zeus locked.png' },
             // Lv6 (Boss战专属) - 16:9大图
-            { id: 'poseidon', level: 6, name: '鬼化波塞冬', title: 'Ghost Poseidon', isMutated: false, image: 'boss_poseidon.png', wideImage: true },
+            { id: 'poseidon', level: 6, name: '鬼化波塞冬', title: 'Ghost Poseidon', isMutated: false, image: 'bsd.png', wideImage: true, lockedImage: 'bsd locked.png' },
             // Lv7 (Boss战专属) - 16:9大图
-            { id: 'artemis', level: 7, name: '狂化阿尔忒弥斯', title: 'Berserk Artemis', isMutated: false, image: 'boss_artemis.png', wideImage: true }
+            { id: 'artemis', level: 7, name: '狂化阿尔忒弥斯', title: 'Berserk Artemis', isMutated: false, image: 'boss_artemis.png', wideImage: true },
+            // 特殊解锁 - BSD系列
+            { id: 'bsd_swim', level: 6, name: '波塞冬·泳装', title: 'Poseidon Swim', isMutated: false, image: 'bsd swim.png', wideImage: true, lockedImage: 'bsd locked.png', unlockType: 'poseidon_kills', unlockCount: 3, unlockHint: '击败波塞冬3次解锁' },
+            { id: 'bsd_swimsuit', level: 6, name: '波塞冬·比基尼', title: 'Poseidon Swimsuit', isMutated: false, image: 'bsd swim suit.png', wideImage: true, lockedImage: 'bsd locked.png', unlockType: 'all_except_lv7', unlockCount: 3, unlockHint: '除Lv7外全Boss击杀3次解锁' },
+            { id: 'bsd_beach', level: 6, name: '波塞冬·沙滩', title: 'Poseidon Beach', isMutated: false, image: 'bsd beach.png', wideImage: true, lockedImage: 'bsd locked.png', unlockType: 'poseidon_kills', unlockCount: 6, unlockHint: '击败波塞冬6次解锁' }
         ];
     }
     
@@ -69,8 +73,22 @@ export class GallerySystem {
         return this.killCounts[bossId] || 0;
     }
     
-    // 检查Boss是否已解锁（击杀至少1次）
+    // 检查Boss是否已解锁
     isUnlocked(bossId) {
+        const boss = this.bossData.find(b => b.id === bossId);
+        if (!boss) return false;
+        
+        // 特殊解锁条件
+        if (boss.unlockType === 'poseidon_kills') {
+            return this.getKillCount('poseidon') >= boss.unlockCount;
+        }
+        if (boss.unlockType === 'all_except_lv7') {
+            // 除Lv7外的所有Boss都击杀达到指定次数
+            const requiredBosses = this.bossData.filter(b => b.level < 7 && !b.unlockType);
+            return requiredBosses.every(b => this.getKillCount(b.id) >= boss.unlockCount);
+        }
+        
+        // 普通解锁：击杀至少1次
         return this.getKillCount(bossId) >= 1;
     }
     
