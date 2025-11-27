@@ -960,11 +960,11 @@ export class BossRushScene {
         if (this.weaponSystem) {
             this.weaponSystem.update(deltaTime, this.player);
             
-            // 处理武器攻击Boss
-            if (this.activeBoss && this.inputManager) {
+            // 处理武器攻击Boss（自动攻击）
+            if (this.activeBoss) {
                 const weapon = this.weaponSystem.currentWeapon;
-                if (this.weaponSystem.cooldownTimer <= 0 && this.inputManager.isAttacking) {
-                    // 检测是否击中Boss
+                if (this.weaponSystem.cooldownTimer <= 0) {
+                    // 检测是否击中Boss（自动攻击范围内的Boss）
                     const dx = this.activeBoss.x - this.player.x;
                     const dy = this.activeBoss.y - this.player.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1220,82 +1220,83 @@ export class BossRushScene {
         ctx.restore();
     }
     
-    // 创建背景缓存
+    // 创建背景缓存（白天神殿）
     createBackgroundCache(w, h) {
         this.bgCache = document.createElement('canvas');
         this.bgCache.width = w;
         this.bgCache.height = h;
         const ctx = this.bgCache.getContext('2d');
         
-        // 深邃的天空渐变
-        const skyGrad = ctx.createRadialGradient(w/2, h * 0.3, 0, w/2, h * 0.3, w * 0.8);
-        skyGrad.addColorStop(0, '#1a0a2e');
-        skyGrad.addColorStop(0.3, '#0f0818');
-        skyGrad.addColorStop(0.7, '#080410');
-        skyGrad.addColorStop(1, '#050208');
+        // 明亮的天空渐变（白天）
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+        skyGrad.addColorStop(0, '#87CEEB'); // 天蓝色
+        skyGrad.addColorStop(0.3, '#B0E0E6'); // 浅蓝
+        skyGrad.addColorStop(0.6, '#E0F0FF'); // 淡白蓝
+        skyGrad.addColorStop(1, '#F5E6D3'); // 暖白
         ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, w, h);
         
-        // 添加星云效果
-        for (let i = 0; i < 3; i++) {
-            const nebula = ctx.createRadialGradient(
-                w * (0.2 + i * 0.3), h * 0.25, 0,
-                w * (0.2 + i * 0.3), h * 0.25, w * 0.25
-            );
-            const hue = 260 + i * 30;
-            nebula.addColorStop(0, `hsla(${hue}, 60%, 30%, 0.15)`);
-            nebula.addColorStop(0.5, `hsla(${hue}, 50%, 20%, 0.08)`);
-            nebula.addColorStop(1, 'transparent');
-            ctx.fillStyle = nebula;
-            ctx.fillRect(0, 0, w, h);
-        }
+        // 太阳光芒
+        const sunX = w * 0.8, sunY = h * 0.15;
+        const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 150);
+        sunGrad.addColorStop(0, 'rgba(255, 255, 200, 0.9)');
+        sunGrad.addColorStop(0.3, 'rgba(255, 220, 150, 0.4)');
+        sunGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = sunGrad;
+        ctx.fillRect(0, 0, w, h);
         
-        // 神殿石柱（6根，更详细）
-        const pillarPositions = [0.08, 0.22, 0.38, 0.62, 0.78, 0.92];
+        // 云朵
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        [[w*0.2, h*0.1], [w*0.5, h*0.15], [w*0.7, h*0.08]].forEach(([cx, cy]) => {
+            ctx.beginPath();
+            ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+            ctx.arc(cx + 30, cy - 10, 30, 0, Math.PI * 2);
+            ctx.arc(cx + 50, cy, 35, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        // 神殿石柱（白色大理石）
+        const pillarPositions = [0.1, 0.25, 0.4, 0.6, 0.75, 0.9];
         pillarPositions.forEach((xRatio, i) => {
             const px = xRatio * w;
-            const pw = w * 0.04;
-            const ph = h * (0.5 + (i % 2) * 0.1);
+            const pw = w * 0.035;
+            const ph = h * (0.5 + (i % 2) * 0.08);
             
-            // 柱身渐变
-            const pillarGrad = ctx.createLinearGradient(px - pw/2, h - ph, px + pw/2, h - ph);
-            pillarGrad.addColorStop(0, '#1a1525');
-            pillarGrad.addColorStop(0.5, '#252035');
-            pillarGrad.addColorStop(1, '#1a1525');
+            // 柱身（白色大理石）
+            const pillarGrad = ctx.createLinearGradient(px - pw/2, 0, px + pw/2, 0);
+            pillarGrad.addColorStop(0, '#E8E0D8');
+            pillarGrad.addColorStop(0.5, '#FFF8F0');
+            pillarGrad.addColorStop(1, '#E8E0D8');
             ctx.fillStyle = pillarGrad;
             ctx.fillRect(px - pw/2, h - ph, pw, ph);
             
-            // 柱头装饰
-            ctx.fillStyle = '#302840';
-            ctx.fillRect(px - pw/2 - 6, h - ph - 15, pw + 12, 18);
-            ctx.fillRect(px - pw/2 - 3, h - ph - 25, pw + 6, 12);
+            // 柱头（金色）
+            ctx.fillStyle = '#D4AF37';
+            ctx.fillRect(px - pw/2 - 5, h - ph - 12, pw + 10, 15);
+            ctx.fillRect(px - pw/2 - 3, h - ph - 20, pw + 6, 10);
             
             // 柱基
-            ctx.fillStyle = '#302840';
-            ctx.fillRect(px - pw/2 - 6, h - 55, pw + 12, 18);
-            
-            // 柱身纹理
-            ctx.strokeStyle = 'rgba(60, 50, 80, 0.3)';
-            ctx.lineWidth = 1;
-            for (let j = 0; j < 5; j++) {
-                ctx.beginPath();
-                ctx.moveTo(px - pw/2 + j * (pw/4), h - ph + 20);
-                ctx.lineTo(px - pw/2 + j * (pw/4), h - 55);
-                ctx.stroke();
-            }
+            ctx.fillStyle = '#C0B0A0';
+            ctx.fillRect(px - pw/2 - 5, h - 50, pw + 10, 12);
         });
         
-        // 地面（更丰富的层次）
-        const groundGrad = ctx.createLinearGradient(0, h - 60, 0, h);
-        groundGrad.addColorStop(0, '#15101d');
-        groundGrad.addColorStop(0.5, '#0c0812');
-        groundGrad.addColorStop(1, '#080408');
+        // 地面（大理石地板）
+        const groundGrad = ctx.createLinearGradient(0, h - 50, 0, h);
+        groundGrad.addColorStop(0, '#D0C8C0');
+        groundGrad.addColorStop(0.5, '#E8E0D8');
+        groundGrad.addColorStop(1, '#C8C0B8');
         ctx.fillStyle = groundGrad;
-        ctx.fillRect(0, h - 60, w, 60);
+        ctx.fillRect(0, h - 50, w, 50);
         
-        // 地面纹理线
-        ctx.strokeStyle = 'rgba(40, 30, 50, 0.5)';
-        ctx.lineWidth = 2;
+        // 地砖纹理
+        ctx.strokeStyle = 'rgba(180, 170, 160, 0.5)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < w; i += 80) {
+            ctx.beginPath();
+            ctx.moveTo(i, h - 50);
+            ctx.lineTo(i, h);
+            ctx.stroke();
+        }
         ctx.beginPath();
         ctx.moveTo(0, h - 55);
         ctx.lineTo(w, h - 55);
@@ -1336,36 +1337,21 @@ export class BossRushScene {
     updateBossHPUI() {
         if (!this.activeBoss) return;
         
+        // 使用HTML中已存在的boss-hp-container
         const container = document.getElementById('boss-hp-container');
-        if (!container) {
-            // 创建Boss血条容器
-            const hpContainer = document.createElement('div');
-            hpContainer.id = 'boss-hp-container';
-            hpContainer.style.cssText = `
-                position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
-                width: 300px; text-align: center; z-index: 100;
-            `;
-            hpContainer.innerHTML = `
-                <div id="boss-name" style="color: #ff4444; font-size: 18px; font-weight: bold; margin-bottom: 5px;"></div>
-                <div style="background: #333; border-radius: 5px; height: 20px; border: 2px solid #666;">
-                    <div id="boss-hp-bar" style="background: linear-gradient(to right, #ff4444, #ff6666); height: 100%; border-radius: 3px; transition: width 0.2s;"></div>
-                </div>
-                <div id="boss-hp-text" style="color: #fff; font-size: 12px; margin-top: 3px;"></div>
-            `;
-            document.body.appendChild(hpContainer);
+        if (container) {
+            container.classList.remove('hidden');
+            container.style.display = 'block';
         }
         
         const nameEl = document.getElementById('boss-name');
-        const barEl = document.getElementById('boss-hp-bar');
-        const textEl = document.getElementById('boss-hp-text');
+        const fillEl = document.getElementById('boss-hp-fill');
         
         if (nameEl) nameEl.textContent = this.activeBoss.name;
-        if (barEl) barEl.style.width = `${(this.activeBoss.hp / this.activeBoss.maxHp) * 100}%`;
-        if (textEl) textEl.textContent = `${Math.ceil(this.activeBoss.hp)} / ${this.activeBoss.maxHp}`;
-        
-        // 显示容器
-        const cont = document.getElementById('boss-hp-container');
-        if (cont) cont.style.display = 'block';
+        if (fillEl) {
+            const percent = (this.activeBoss.hp / this.activeBoss.maxHp) * 100;
+            fillEl.style.width = `${percent}%`;
+        }
     }
     
     // 隐藏Boss血条
