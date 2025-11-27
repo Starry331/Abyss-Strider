@@ -467,7 +467,11 @@ export class BossRushScene {
                 this.showBlessingChoice();
                 break;
             case 'weapon':
-                this.showWeaponUpgrade();
+            case 'weapon1':
+                this.showWeaponUpgrade('武器升级 (1/2)');
+                break;
+            case 'weapon2':
+                this.showWeaponUpgrade('武器升级 (2/2)');
                 break;
             case 'done':
                 this.isPaused = false;
@@ -594,7 +598,7 @@ export class BossRushScene {
         });
     }
     
-    showWeaponUpgrade() {
+    showWeaponUpgrade(title = '武器升级') {
         const weapons = this.weaponSystem.weapons;
         
         const panel = document.createElement('div');
@@ -607,7 +611,7 @@ export class BossRushScene {
         `;
         
         panel.innerHTML = `
-            <div style="color: #ffd700; font-size: clamp(22px, 5vw, 32px); margin-bottom: 25px; text-shadow: 0 0 10px #ffd700; text-align: center;">武器升级</div>
+            <div style="color: #ffd700; font-size: clamp(22px, 5vw, 32px); margin-bottom: 25px; text-shadow: 0 0 10px #ffd700; text-align: center;">${title}</div>
             <div style="display: flex; gap: clamp(10px, 2vw, 25px); flex-wrap: wrap; justify-content: center;">
                 ${weapons.map((w, i) => {
                     const maxed = w.upgradeLevel >= 8;
@@ -805,9 +809,9 @@ export class BossRushScene {
                 this.rewardPhase = 'lv5_blessing2';
                 break;
             case 'lv5_blessing2':
-                this.rewardPhase = 'weapon';
+                this.rewardPhase = 'weapon1';
                 break;
-            // 正常奖励流程
+            // 正常奖励流程: build1 -> build2 -> blessing -> weapon1 -> weapon2 -> done
             case 'build1':
                 this.rewardPhase = 'build2';
                 break;
@@ -815,8 +819,15 @@ export class BossRushScene {
                 this.rewardPhase = 'blessing';
                 break;
             case 'blessing':
-                this.rewardPhase = 'weapon';
+                this.rewardPhase = 'weapon1';
                 break;
+            case 'weapon1':
+                this.rewardPhase = 'weapon2';
+                break;
+            case 'weapon2':
+                this.rewardPhase = 'done';
+                break;
+            // 旧的weapon兼容
             case 'weapon':
                 this.rewardPhase = 'done';
                 break;

@@ -59,11 +59,16 @@ export class MutatedMonkeyBoss {
         const dmg = this.damage;
         switch (this.currentSkill) {
             case 'SHADOW_DASH':
-                this.x = this.dashTarget.x; this.y = this.dashTarget.y;
-                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 70, damage: dmg, owner: 'enemy', life: 0.3, maxLife: 0.3,
-                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                    draw(ctx) { ctx.fillStyle = `rgba(80,0,120,${this.life/this.maxLife*0.6})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
-                }); break;
+                // 暗影突袭：延迟0.3秒后到达，给玩家躲避时间
+                const dashDelay = 0.3;
+                setTimeout(() => {
+                    this.x = this.dashTarget.x; this.y = this.dashTarget.y;
+                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 55, damage: dmg, owner: 'enemy', life: 0.25, maxLife: 0.25,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { ctx.fillStyle = `rgba(80,0,120,${this.life/this.maxLife*0.6})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                    });
+                }, dashDelay * 1000);
+                break;
             case 'SOUL_THROW':
                 for (let i = 0; i < 5; i++) { const a = angle + (i - 2) * 0.25;
                     this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320, radius: 10, damage: dmg, owner: 'enemy',
