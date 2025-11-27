@@ -486,135 +486,94 @@ export class GhostPoseidonBoss {
     }
     
     draw(ctx) {
-        const breathe = this.breathe;
-        const isRage = this.phase === 2;
-        const glow = this.tridentGlow;
-        const time = Date.now() / 1000;
+        const b = this.breathe, r = this.phase === 2, g = this.tridentGlow, t = Date.now() / 1000;
         
-        // 深渊漩涡背景
+        // 深海光环
         ctx.save();
-        ctx.globalAlpha = 0.4;
-        for (let i = 0; i < 4; i++) {
-            const swirl = time * 2 + i * 1.5;
-            ctx.strokeStyle = isRage ? `rgba(0, 255, 200, ${0.3 - i * 0.06})` : `rgba(0, 150, 180, ${0.25 - i * 0.05})`;
-            ctx.lineWidth = 3 - i * 0.5;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, 70 + i * 25, swirl, swirl + Math.PI * 1.5);
-            ctx.stroke();
-        }
+        ctx.globalAlpha = 0.5;
+        const aura = ctx.createRadialGradient(this.x, this.y, 20, this.x, this.y, 120);
+        aura.addColorStop(0, r ? 'rgba(0,255,200,0.4)' : 'rgba(0,150,200,0.3)');
+        aura.addColorStop(1, 'transparent');
+        ctx.fillStyle = aura;
+        ctx.beginPath(); ctx.arc(this.x, this.y, 120, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
         
-        // 幽灵触手（6条）
-        ctx.lineCap = 'round';
-        for (let t = 0; t < 6; t++) {
-            const baseAngle = (Math.PI * 2 / 6) * t + time * 0.5;
-            const wave = Math.sin(time * 3 + t) * 15;
-            ctx.strokeStyle = isRage ? `rgba(0, 200, 180, ${0.7 - t * 0.08})` : `rgba(0, 120, 140, ${0.6 - t * 0.07})`;
-            ctx.lineWidth = 8 - t * 0.5;
-            ctx.beginPath();
-            ctx.moveTo(this.x + Math.cos(baseAngle) * 35, this.y + Math.sin(baseAngle) * 40 + breathe);
-            ctx.quadraticCurveTo(
-                this.x + Math.cos(baseAngle) * 70 + wave, this.y + Math.sin(baseAngle) * 75 + breathe,
-                this.x + Math.cos(baseAngle + 0.3) * 95, this.y + Math.sin(baseAngle + 0.3) * 100 + breathe
-            );
-            ctx.stroke();
-        }
-        
-        // 主体 - 幽灵水母形态
-        const bodyGrad = ctx.createRadialGradient(this.x, this.y - 20 + breathe, 0, this.x, this.y + 20 + breathe, 60);
-        bodyGrad.addColorStop(0, isRage ? 'rgba(0, 220, 200, 0.9)' : 'rgba(0, 150, 160, 0.85)');
-        bodyGrad.addColorStop(0.5, isRage ? 'rgba(0, 160, 180, 0.7)' : 'rgba(0, 100, 120, 0.65)');
-        bodyGrad.addColorStop(1, 'rgba(0, 60, 80, 0.3)');
-        ctx.fillStyle = bodyGrad;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y + breathe, 50, 45, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // 内部纹路
-        ctx.strokeStyle = isRage ? 'rgba(0, 255, 220, 0.5)' : 'rgba(0, 180, 200, 0.4)';
+        // 能量波纹
+        ctx.strokeStyle = r ? 'rgba(0,255,220,0.4)' : 'rgba(0,180,220,0.3)';
         ctx.lineWidth = 2;
-        for (let i = 0; i < 5; i++) {
-            const a = time * 2 + i * 1.2;
+        for (let i = 0; i < 3; i++) {
             ctx.beginPath();
-            ctx.arc(this.x, this.y + breathe, 20 + i * 6, a, a + 1);
+            ctx.arc(this.x, this.y, 50 + i * 25 + (t * 30 % 25), 0, Math.PI * 2);
             ctx.stroke();
         }
         
-        // 头部 - 发光球体
-        ctx.save();
-        ctx.shadowColor = isRage ? '#00ffdd' : '#00aacc';
-        ctx.shadowBlur = 25 + glow * 15;
-        const headGrad = ctx.createRadialGradient(this.x, this.y - 45 + breathe, 0, this.x, this.y - 45 + breathe, 38);
-        headGrad.addColorStop(0, isRage ? '#00ffee' : '#00ccdd');
-        headGrad.addColorStop(0.4, isRage ? '#00ccbb' : '#009999');
-        headGrad.addColorStop(1, isRage ? '#006666' : '#004455');
-        ctx.fillStyle = headGrad;
+        // 披风/斗篷
+        ctx.fillStyle = r ? '#004455' : '#003344';
         ctx.beginPath();
-        ctx.arc(this.x, this.y - 45 + breathe, 35, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        ctx.moveTo(this.x - 45, this.y - 20 + b);
+        ctx.quadraticCurveTo(this.x - 55, this.y + 40 + b, this.x - 35, this.y + 70 + b);
+        ctx.lineTo(this.x + 35, this.y + 70 + b);
+        ctx.quadraticCurveTo(this.x + 55, this.y + 40 + b, this.x + 45, this.y - 20 + b);
+        ctx.closePath(); ctx.fill();
         
-        // 诡异面纹
-        ctx.strokeStyle = isRage ? '#00ffff' : '#00dddd';
+        // 身体盔甲
+        const body = ctx.createLinearGradient(this.x, this.y - 40, this.x, this.y + 50);
+        body.addColorStop(0, r ? '#00aacc' : '#0088aa');
+        body.addColorStop(0.5, r ? '#006688' : '#005566');
+        body.addColorStop(1, r ? '#004455' : '#003344');
+        ctx.fillStyle = body;
+        ctx.beginPath(); ctx.ellipse(this.x, this.y + 5 + b, 38, 50, 0, 0, Math.PI * 2); ctx.fill();
+        
+        // 盔甲纹路
+        ctx.strokeStyle = r ? '#00ddff' : '#00aacc';
         ctx.lineWidth = 2;
-        // 左纹
-        ctx.beginPath();
-        ctx.moveTo(this.x - 20, this.y - 60 + breathe);
-        ctx.lineTo(this.x - 28, this.y - 45 + breathe);
-        ctx.lineTo(this.x - 20, this.y - 30 + breathe);
-        ctx.stroke();
-        // 右纹
-        ctx.beginPath();
-        ctx.moveTo(this.x + 20, this.y - 60 + breathe);
-        ctx.lineTo(this.x + 28, this.y - 45 + breathe);
-        ctx.lineTo(this.x + 20, this.y - 30 + breathe);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(this.x, this.y - 30 + b); ctx.lineTo(this.x, this.y + 40 + b); ctx.stroke();
+        ctx.beginPath(); ctx.arc(this.x, this.y + b, 25, 0, Math.PI); ctx.stroke();
         
-        // 眼睛 - 发光深渊之眼
-        ctx.save();
-        ctx.shadowColor = isRage ? '#ff0066' : '#00ffff';
-        ctx.shadowBlur = 15;
-        ctx.fillStyle = isRage ? '#ff0088' : '#00ffff';
-        ctx.beginPath();
-        ctx.ellipse(this.x - 12, this.y - 50 + breathe, 7, 9, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(this.x + 12, this.y - 50 + breathe, 7, 9, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // 瞳孔
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.ellipse(this.x - 12, this.y - 50 + breathe, 3, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(this.x + 12, this.y - 50 + breathe, 3, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        // 肩甲
+        ctx.fillStyle = r ? '#00ccdd' : '#009999';
+        ctx.beginPath(); ctx.ellipse(this.x - 42, this.y - 15 + b, 15, 22, -0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 42, this.y - 15 + b, 15, 22, 0.3, 0, Math.PI * 2); ctx.fill();
         
-        // 深渊三叉戟
-        const tx = this.x + 60, ty = this.y - 25 + breathe;
-        ctx.save();
-        ctx.shadowColor = isRage ? '#00ffaa' : '#00ccff';
-        ctx.shadowBlur = 20 + glow * 10;
-        // 戟杆
-        const poleGrad = ctx.createLinearGradient(tx, ty + 70, tx, ty - 50);
-        poleGrad.addColorStop(0, '#004444');
-        poleGrad.addColorStop(1, isRage ? '#00ddaa' : '#00aacc');
-        ctx.strokeStyle = poleGrad;
-        ctx.lineWidth = 7;
+        // 头盔
+        const helm = ctx.createRadialGradient(this.x, this.y - 50 + b, 5, this.x, this.y - 50 + b, 32);
+        helm.addColorStop(0, r ? '#00eeff' : '#00ccdd');
+        helm.addColorStop(1, r ? '#006677' : '#004455');
+        ctx.fillStyle = helm;
+        ctx.beginPath(); ctx.arc(this.x, this.y - 50 + b, 30, 0, Math.PI * 2); ctx.fill();
+        
+        // 头盔装饰 - 鱼鳍
+        ctx.fillStyle = r ? '#00ffdd' : '#00ddcc';
         ctx.beginPath();
-        ctx.moveTo(tx, ty + 70);
-        ctx.lineTo(tx, ty - 35);
-        ctx.stroke();
-        // 三叉
-        ctx.fillStyle = isRage ? '#00ffcc' : '#00ddff';
+        ctx.moveTo(this.x, this.y - 80 + b); ctx.lineTo(this.x - 8, this.y - 55 + b);
+        ctx.lineTo(this.x + 8, this.y - 55 + b); ctx.closePath(); ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(tx, ty - 70); ctx.lineTo(tx - 5, ty - 35); ctx.lineTo(tx + 5, ty - 35); ctx.closePath(); ctx.fill();
+        ctx.moveTo(this.x - 25, this.y - 65 + b); ctx.lineTo(this.x - 30, this.y - 45 + b);
+        ctx.lineTo(this.x - 15, this.y - 50 + b); ctx.closePath(); ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(tx - 22, ty - 55); ctx.lineTo(tx - 10, ty - 30); ctx.lineTo(tx - 5, ty - 35); ctx.closePath(); ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(tx + 22, ty - 55); ctx.lineTo(tx + 10, ty - 30); ctx.lineTo(tx + 5, ty - 35); ctx.closePath(); ctx.fill();
-        ctx.restore();
+        ctx.moveTo(this.x + 25, this.y - 65 + b); ctx.lineTo(this.x + 30, this.y - 45 + b);
+        ctx.lineTo(this.x + 15, this.y - 50 + b); ctx.closePath(); ctx.fill();
+        
+        // 眼睛
+        ctx.fillStyle = r ? '#ff3366' : '#00ffff';
+        ctx.shadowColor = r ? '#ff0044' : '#00ffff';
+        ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.ellipse(this.x - 10, this.y - 52 + b, 5, 7, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 10, this.y - 52 + b, 5, 7, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // 三叉戟
+        const tx = this.x + 55, ty = this.y - 20 + b;
+        ctx.strokeStyle = r ? '#00ffcc' : '#00ddaa';
+        ctx.lineWidth = 5;
+        ctx.shadowColor = r ? '#00ffaa' : '#00ccff';
+        ctx.shadowBlur = 10 + g * 8;
+        ctx.beginPath(); ctx.moveTo(tx, ty + 60); ctx.lineTo(tx, ty - 30); ctx.stroke();
+        ctx.fillStyle = r ? '#00ffdd' : '#00eeff';
+        ctx.beginPath(); ctx.moveTo(tx, ty - 55); ctx.lineTo(tx - 4, ty - 25); ctx.lineTo(tx + 4, ty - 25); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(tx - 15, ty - 45); ctx.lineTo(tx - 6, ty - 22); ctx.lineTo(tx - 2, ty - 25); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(tx + 15, ty - 45); ctx.lineTo(tx + 6, ty - 22); ctx.lineTo(tx + 2, ty - 25); ctx.closePath(); ctx.fill();
+        ctx.shadowBlur = 0;
         
         // 技能预警
         if (this.state === 'TELEGRAPH') {

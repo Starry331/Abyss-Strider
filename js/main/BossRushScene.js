@@ -979,91 +979,81 @@ export class BossRushScene {
             this.weaponSystem.update(deltaTime, this.player);
             
             // 处理武器攻击Boss（自动攻击）
-            if (this.activeBoss) {
-                const weapon = this.weaponSystem.currentWeapon;
-                if (this.weaponSystem.cooldownTimer <= 0) {
-                    // 检测是否击中Boss（自动攻击范围内的Boss）
-                    const dx = this.activeBoss.x - this.player.x;
-                    const dy = this.activeBoss.y - this.player.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < weapon.range + this.activeBoss.radius) {
-                        // 计算伤害（含damageBonus加成）
-                        let damage = weapon.damage * (this.player.damageBonus || 1);
-                        let isCrit = false;
+            if (this.activeBoss && this.activeBoss.hp > 0) {
+                try {
+                    const weapon = this.weaponSystem.currentWeapon;
+                    if (this.weaponSystem.cooldownTimer <= 0) {
+                        const dx = this.activeBoss.x - this.player.x;
+                        const dy = this.activeBoss.y - this.player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
                         
-                        // 暴击计算
-                        if (Math.random() < (weapon.critChance || 0.2)) {
-                            damage *= (weapon.critMultiplier || 2.0);
-                            isCrit = true;
-                        }
-                        
-                        this.activeBoss.hp -= damage;
-                        this.weaponSystem.cooldownTimer = weapon.cooldown;
-                        
-                        // 显示伤害数字
-                        this.showDamageNumber(this.activeBoss.x, this.activeBoss.y, Math.round(damage), isCrit);
-                        
-                        // 打击感：特效+音效+屏幕震动
-                        if (this.effectManager) {
-                            this.effectManager.spawnHitEffect(this.activeBoss.x, this.activeBoss.y);
-                            // 屏幕震动（暴击更强）
-                            this.effectManager.triggerShake(isCrit ? 8 : 4, isCrit ? 0.15 : 0.08);
-                        }
-                        if (this.audioManager) {
-                            this.audioManager.playSound(isCrit ? 'crit' : 'hit');
-                        }
-                        
-                        // 吸血效果
-                        if (weapon.lifesteal && weapon.lifesteal > 0) {
-                            const healAmount = damage * weapon.lifesteal;
-                            this.player.hp = Math.min(this.player.hp + healAmount, this.player.maxHp);
+                        if (dist < weapon.range + (this.activeBoss.radius || 50)) {
+                            let damage = weapon.damage * (this.player.damageBonus || 1);
+                            let isCrit = Math.random() < (weapon.critChance || 0.2);
+                            if (isCrit) damage *= (weapon.critMultiplier || 2.0);
+                            
+                            this.activeBoss.hp -= damage;
+                            this.weaponSystem.cooldownTimer = weapon.cooldown;
+                            
+                            this.showDamageNumber(this.activeBoss.x, this.activeBoss.y, Math.round(damage), isCrit);
+                            
+                            // 打击特效（安全调用）
+                            try {
+                                if (this.effectManager && this.effectManager.spawnHitEffect) {
+                                    this.effectManager.spawnHitEffect(this.activeBoss.x, this.activeBoss.y);
+                                    this.effectManager.triggerShake(isCrit ? 8 : 4, isCrit ? 0.15 : 0.08);
+                                }
+                            } catch(e) { console.warn('Effect error:', e); }
+                            
+                            try {
+                                if (this.audioManager) this.audioManager.playSound(isCrit ? 'crit' : 'hit');
+                            } catch(e) {}
+                            
+                            if (weapon.lifesteal > 0) {
+                                this.player.hp = Math.min(this.player.hp + damage * weapon.lifesteal, this.player.maxHp);
+                            }
                         }
                     }
-                }
+                } catch(e) { console.error('Boss attack error:', e); }
             }
         }
         
         // 更新Boss
         if (this.activeBoss) {
-            this.activeBoss.update(deltaTime);
+            try { this.activeBoss.update(deltaTime); } catch(e) { console.error('Boss update error:', e); }
             
             // 检查玩家投射物对Boss的伤害
-            const boss = this.activeBoss; // 保存引用防止循环中变化
-            this.combatSystem.projectiles.forEach(proj => {
-                if (!boss || boss.hp <= 0) return; // Boss已被击败则跳过
-                if (proj.owner !== 'enemy' && !proj.isEnemy && !proj.markedForDeletion) {
-                    const dx = boss.x - proj.x;
-                    const dy = boss.y - proj.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < (proj.radius || 10) + (boss.radius || 50)) {
-                        let dmg = proj.damage || 10;
-                        let isCrit = false;
-                        
-                        // 投射物暴击
-                        if (proj.critChance && Math.random() < proj.critChance) {
-                            dmg *= (proj.critMultiplier || 2.0);
-                            isCrit = true;
+            const boss = this.activeBoss;
+            if (boss && boss.hp > 0) {
+                this.combatSystem.projectiles.forEach(proj => {
+                    try {
+                        if (!boss || boss.hp <= 0) return;
+                        if (proj.owner !== 'enemy' && !proj.isEnemy && !proj.markedForDeletion) {
+                            const dx = boss.x - proj.x, dy = boss.y - proj.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < (proj.radius || 10) + (boss.radius || 50)) {
+                                let dmg = proj.damage || 10;
+                                let isCrit = proj.critChance && Math.random() < proj.critChance;
+                                if (isCrit) dmg *= (proj.critMultiplier || 2.0);
+                                
+                                boss.hp -= dmg;
+                                proj.markedForDeletion = true;
+                                proj.lifetime = 0;
+                                
+                                this.showDamageNumber(boss.x, boss.y, Math.round(dmg), isCrit);
+                                
+                                try {
+                                    if (this.effectManager && this.effectManager.spawnHitEffect) {
+                                        this.effectManager.spawnHitEffect(boss.x, boss.y);
+                                        this.effectManager.triggerShake(isCrit ? 6 : 3, 0.1);
+                                    }
+                                    if (this.audioManager) this.audioManager.playSound(isCrit ? 'crit' : 'hit');
+                                } catch(e) {}
+                            }
                         }
-                        
-                        boss.hp -= dmg;
-                        proj.markedForDeletion = true;
-                        proj.lifetime = 0;
-                        
-                        // 显示伤害数字
-                        this.showDamageNumber(boss.x, boss.y, Math.round(dmg), isCrit);
-                        
-                        // 打击感：特效+音效+屏幕震动
-                        if (this.effectManager) {
-                            this.effectManager.spawnHitEffect(boss.x, boss.y);
-                            this.effectManager.triggerShake(isCrit ? 6 : 3, isCrit ? 0.12 : 0.06);
-                        }
-                        if (this.audioManager) {
-                            this.audioManager.playSound(isCrit ? 'crit' : 'hit');
-                        }
-                    }
-                }
-            });
+                    } catch(e) { console.warn('Proj damage error:', e); }
+                });
+            }
             
             // 检查Boss投射物对玩家的伤害
             this.combatSystem.projectiles.forEach(proj => {

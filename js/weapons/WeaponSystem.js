@@ -45,7 +45,7 @@ export class WeaponSystem {
                 type: 'MELEE',
                 damage: 9,            // 基础伤害（构筑倍率基准）
                 range: 58,            // 基础范围
-                cooldown: 0.26,       // 攻击间隔
+                cooldown: 0.38,       // 攻击间隔（降速：0.26→0.38）
                 color: '#e74c3c',
                 arc: Math.PI / 2.5,
                 critChance: 0.2,      // 基础20%暴击率
