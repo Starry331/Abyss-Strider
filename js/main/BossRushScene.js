@@ -55,15 +55,15 @@ export class BossRushScene {
     // 初始化众神赐福（平衡版：蓝/紫/金/红稀有度）
     initGodBlessings() {
         return {
-            // ===== 蓝色稀有度（基础） =====
+            // ===== 蓝色稀有度（基础，弱效果） =====
             poseidon: {
                 name: '波塞冬', title: 'Poseidon', icon: '🔱', rarity: 'blue',
                 desc: '海神，风暴主宰',
                 color: '#44aaff', bgColor: '#1a2a3a',
                 effects: [
-                    { name: '海神之怒', desc: '攻击轻微击退', apply: (p, ws) => { ws.weapons.forEach(w => w.knockback = 20); } },
-                    { name: '潮汐护盾', desc: '受伤时15%概率免疫', apply: (p, ws) => { p.dodgeChance = (p.dodgeChance || 0) + 0.15; } },
-                    { name: '深海力量', desc: '暴击伤害+30%', apply: (p, ws) => { ws.weapons.forEach(w => w.critMultiplier = (w.critMultiplier || 2) + 0.3); } }
+                    { name: '海神之怒', desc: '攻击微弱击退', apply: (p, ws) => { ws.weapons.forEach(w => w.knockback = 10); } },
+                    { name: '潮汐护盾', desc: '受伤时8%概率免疫', apply: (p, ws) => { p.dodgeChance = (p.dodgeChance || 0) + 0.08; } },
+                    { name: '深海力量', desc: '暴击伤害+15%', apply: (p, ws) => { ws.weapons.forEach(w => w.critMultiplier = (w.critMultiplier || 2) + 0.15); } }
                 ]
             },
             apollo: {
@@ -71,21 +71,21 @@ export class BossRushScene {
                 desc: '光明之神，预言主宰',
                 color: '#ffaa44', bgColor: '#3a2a1a',
                 effects: [
-                    { name: '光明箭矢', desc: '投射物速度+30%', apply: (p, ws) => { ws.projectileSpeedMult = (ws.projectileSpeedMult || 1) * 1.3; } },
-                    { name: '预言之眼', desc: '攻击范围+20%', apply: (p, ws) => { ws.weapons.forEach(w => w.range *= 1.2); } },
-                    { name: '太阳祝福', desc: '恢复80生命', apply: (p, ws) => { p.hp = Math.min(p.hp + 80, p.maxHp); } }
+                    { name: '光明箭矢', desc: '投射物速度+15%', apply: (p, ws) => { ws.projectileSpeedMult = (ws.projectileSpeedMult || 1) * 1.15; } },
+                    { name: '预言之眼', desc: '攻击范围+10%', apply: (p, ws) => { ws.weapons.forEach(w => w.range *= 1.1); } },
+                    { name: '太阳祝福', desc: '恢复40生命', apply: (p, ws) => { p.hp = Math.min(p.hp + 40, p.maxHp); } }
                 ]
             },
             
-            // ===== 紫色稀有度（中等） =====
+            // ===== 紫色稀有度（中等，适中效果） =====
             zeus: {
                 name: '宙斯', title: 'Zeus', icon: '⚡', rarity: 'purple',
                 desc: '天神之王，雷霆加护',
                 color: '#ffdd44', bgColor: '#3a3a1a',
                 effects: [
-                    { name: '雷霆之力', desc: '攻击+35%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.35; } },
-                    { name: '天神庇护', desc: '最大生命+80', apply: (p, ws) => { p.maxHp += 80; p.hp += 80; } },
-                    { name: '闪电链', desc: '攻击有20%概率连锁', apply: (p, ws) => { ws.weapons.forEach(w => w.chainChance = 0.2); } }
+                    { name: '雷霆之力', desc: '攻击+25%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.25; } },
+                    { name: '天神庇护', desc: '最大生命+60', apply: (p, ws) => { p.maxHp += 60; p.hp += 60; } },
+                    { name: '闪电链', desc: '攻击有15%概率连锁', apply: (p, ws) => { ws.weapons.forEach(w => w.chainChance = 0.15); } }
                 ]
             },
             hera: {
@@ -93,9 +93,9 @@ export class BossRushScene {
                 desc: '婚姻女神，家庭守护',
                 color: '#ff88cc', bgColor: '#3a1a2a',
                 effects: [
-                    { name: '女王威严', desc: '减伤+25%', apply: (p, ws) => { p.damageReduction = (p.damageReduction || 0) + 0.25; } },
-                    { name: '家庭祝福', desc: '每秒回复0.5%生命', apply: (p, ws) => { p.regenRate = (p.regenRate || 0) + 0.005; } },
-                    { name: '神后恩典', desc: '护盾+80', apply: (p, ws) => { p.shield = (p.shield || 0) + 80; } }
+                    { name: '女王威严', desc: '减伤+18%', apply: (p, ws) => { p.damageReduction = (p.damageReduction || 0) + 0.18; } },
+                    { name: '家庭祝福', desc: '每秒回复0.3%生命', apply: (p, ws) => { p.regenRate = (p.regenRate || 0) + 0.003; } },
+                    { name: '神后恩典', desc: '护盾+60', apply: (p, ws) => { p.shield = (p.shield || 0) + 60; } }
                 ]
             },
             athena: {
@@ -103,9 +103,9 @@ export class BossRushScene {
                 desc: '智慧女神，战争策略',
                 color: '#aaaaff', bgColor: '#2a2a3a',
                 effects: [
-                    { name: '战争智慧', desc: '暴击率+20%', apply: (p, ws) => { ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.2); } },
-                    { name: '神盾庇护', desc: '格挡+15%伤害', apply: (p, ws) => { p.blockChance = (p.blockChance || 0) + 0.15; } },
-                    { name: '智慧光芒', desc: '移速+20%', apply: (p, ws) => { p.speed *= 1.2; } }
+                    { name: '战争智慧', desc: '暴击率+12%', apply: (p, ws) => { ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.12); } },
+                    { name: '神盾庇护', desc: '格挡+10%伤害', apply: (p, ws) => { p.blockChance = (p.blockChance || 0) + 0.1; } },
+                    { name: '智慧光芒', desc: '移速+15%', apply: (p, ws) => { p.speed *= 1.15; } }
                 ]
             },
             artemis: {
@@ -113,9 +113,9 @@ export class BossRushScene {
                 desc: '狩猎女神，月之守护',
                 color: '#cc88ff', bgColor: '#2a1a3a',
                 effects: [
-                    { name: '猎手本能', desc: '攻速+30%', apply: (p, ws) => { ws.weapons.forEach(w => w.cooldown *= 0.7); } },
+                    { name: '猎手本能', desc: '攻速+20%', apply: (p, ws) => { ws.weapons.forEach(w => w.cooldown *= 0.8); } },
                     { name: '月光箭', desc: '攻击穿透敌人', apply: (p, ws) => { ws.weapons.forEach(w => w.pierce = true); } },
-                    { name: '野兽之力', desc: '攻击+30%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.3; } }
+                    { name: '野兽之力', desc: '攻击+20%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.2; } }
                 ]
             },
             
@@ -214,6 +214,10 @@ export class BossRushScene {
     enter() {
         console.log('进入Boss战模式');
         this.isActive = true;
+        this.isResurrecting = false; // 重置复活状态
+        
+        // 重新初始化BossRushMode确保干净状态
+        this.bossRushMode = new BossRushMode();
         this.bossRushMode.start();
         
         // 初始化输入管理器
@@ -221,9 +225,15 @@ export class BossRushScene {
         
         // 初始化玩家
         const canvas = document.getElementById('game-canvas');
+        if (!canvas) {
+            console.error('Canvas not found!');
+            return;
+        }
         this.player = new this.Player(canvas.width / 2, canvas.height / 2, this.inputManager);
         this.player.maxHp = 250; // Boss战更高初始血量
         this.player.hp = 250;
+        this.player.resurrectCount = 0; // 重置复活次数
+        this.player.invincibleTime = 0; // 重置无敌时间
         
         // 重置战斗系统
         this.combatSystem.projectiles = [];
@@ -276,8 +286,14 @@ export class BossRushScene {
         console.log(`生成Boss: ${bossInfo.name} (Lv${bossInfo.level})`);
         
         const canvas = document.getElementById('game-canvas');
-        const x = this.player.x + 300;
-        const y = this.player.y;
+        if (!canvas) {
+            console.error('Canvas not found in spawnCurrentBoss!');
+            return;
+        }
+        
+        // 确保Boss生成在画布中央右侧
+        const x = Math.min(canvas.width * 0.7, canvas.width - 100);
+        const y = canvas.height / 2;
         
         // 根据Boss类型创建
         if (bossInfo.level === 6) {
@@ -998,6 +1014,11 @@ export class BossRushScene {
                     if (dist < proj.radius + this.player.radius) {
                         proj.lifetime = 0;
                         
+                        // 无敌时间检测
+                        if (this.player.invincibleTime && this.player.invincibleTime > 0) {
+                            return; // 无敌状态，不受伤
+                        }
+                        
                         // 闪避检测
                         if (this.player.dodgeChance && Math.random() < this.player.dodgeChance) {
                             // 闪避成功，不受伤
@@ -1056,19 +1077,30 @@ export class BossRushScene {
         this.uiManager.updateHealth(this.player.hp, this.player.maxHp);
         
         // 检查玩家死亡
-        if (this.player.hp <= 0) {
+        if (this.player.hp <= 0 && !this.isResurrecting) {
             // 检查复活机会
             if (this.player.resurrectCount && this.player.resurrectCount > 0) {
                 this.player.resurrectCount--;
                 this.player.hp = this.player.maxHp; // 满血复活
+                this.isResurrecting = true; // 复活中标记
+                this.player.invincibleTime = 2.0; // 2秒无敌时间
+                
                 // 显示复活特效
-                this.showRewardNotification('💀 冥界复活！ 💀', () => {});
+                this.showRewardNotification('💀 冥界复活！ 💀', () => {
+                    this.isResurrecting = false;
+                });
+                
                 if (this.audioManager) {
                     this.audioManager.playSound('levelup');
                 }
             } else {
                 this.onPlayerDeath();
             }
+        }
+        
+        // 更新无敌时间
+        if (this.player.invincibleTime && this.player.invincibleTime > 0) {
+            this.player.invincibleTime -= deltaTime;
         }
     }
     
@@ -1109,7 +1141,20 @@ export class BossRushScene {
         // 绘制拾取物
         this.drawPickups(ctx);
         
-        // 绘制玩家
+        // 绘制玩家（无敌状态闪烁效果）
+        if (this.player.invincibleTime && this.player.invincibleTime > 0) {
+            ctx.save();
+            ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 50) * 0.3;
+            // 绘制无敌光环
+            ctx.strokeStyle = '#ffdd44';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#ffdd44';
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(this.player.x, this.player.y, this.player.radius + 10, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
         this.player.draw(ctx);
         
         // 绘制武器特效
@@ -1173,39 +1218,99 @@ export class BossRushScene {
         this.bgCache.height = h;
         const ctx = this.bgCache.getContext('2d');
         
-        // 天空渐变
-        const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
-        skyGrad.addColorStop(0, '#080412');
-        skyGrad.addColorStop(0.4, '#100818');
-        skyGrad.addColorStop(1, '#0a0510');
+        // 深邃的天空渐变
+        const skyGrad = ctx.createRadialGradient(w/2, h * 0.3, 0, w/2, h * 0.3, w * 0.8);
+        skyGrad.addColorStop(0, '#1a0a2e');
+        skyGrad.addColorStop(0.3, '#0f0818');
+        skyGrad.addColorStop(0.7, '#080410');
+        skyGrad.addColorStop(1, '#050208');
         ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, w, h);
         
-        // 简化石柱（4根）
-        const pillarPositions = [0.15, 0.35, 0.65, 0.85];
-        pillarPositions.forEach(xRatio => {
+        // 添加星云效果
+        for (let i = 0; i < 3; i++) {
+            const nebula = ctx.createRadialGradient(
+                w * (0.2 + i * 0.3), h * 0.25, 0,
+                w * (0.2 + i * 0.3), h * 0.25, w * 0.25
+            );
+            const hue = 260 + i * 30;
+            nebula.addColorStop(0, `hsla(${hue}, 60%, 30%, 0.15)`);
+            nebula.addColorStop(0.5, `hsla(${hue}, 50%, 20%, 0.08)`);
+            nebula.addColorStop(1, 'transparent');
+            ctx.fillStyle = nebula;
+            ctx.fillRect(0, 0, w, h);
+        }
+        
+        // 神殿石柱（6根，更详细）
+        const pillarPositions = [0.08, 0.22, 0.38, 0.62, 0.78, 0.92];
+        pillarPositions.forEach((xRatio, i) => {
             const px = xRatio * w;
-            const pw = w * 0.035;
-            const ph = h * 0.55;
+            const pw = w * 0.04;
+            const ph = h * (0.5 + (i % 2) * 0.1);
             
-            ctx.fillStyle = '#1a1520';
+            // 柱身渐变
+            const pillarGrad = ctx.createLinearGradient(px - pw/2, h - ph, px + pw/2, h - ph);
+            pillarGrad.addColorStop(0, '#1a1525');
+            pillarGrad.addColorStop(0.5, '#252035');
+            pillarGrad.addColorStop(1, '#1a1525');
+            ctx.fillStyle = pillarGrad;
             ctx.fillRect(px - pw/2, h - ph, pw, ph);
-            ctx.fillStyle = '#252030';
-            ctx.fillRect(px - pw/2 - 4, h - ph - 12, pw + 8, 12);
-            ctx.fillRect(px - pw/2 - 4, h - 15, pw + 8, 15);
+            
+            // 柱头装饰
+            ctx.fillStyle = '#302840';
+            ctx.fillRect(px - pw/2 - 6, h - ph - 15, pw + 12, 18);
+            ctx.fillRect(px - pw/2 - 3, h - ph - 25, pw + 6, 12);
+            
+            // 柱基
+            ctx.fillStyle = '#302840';
+            ctx.fillRect(px - pw/2 - 6, h - 55, pw + 12, 18);
+            
+            // 柱身纹理
+            ctx.strokeStyle = 'rgba(60, 50, 80, 0.3)';
+            ctx.lineWidth = 1;
+            for (let j = 0; j < 5; j++) {
+                ctx.beginPath();
+                ctx.moveTo(px - pw/2 + j * (pw/4), h - ph + 20);
+                ctx.lineTo(px - pw/2 + j * (pw/4), h - 55);
+                ctx.stroke();
+            }
         });
         
-        // 地面
-        ctx.fillStyle = '#0c0810';
-        ctx.fillRect(0, h - 50, w, 50);
+        // 地面（更丰富的层次）
+        const groundGrad = ctx.createLinearGradient(0, h - 60, 0, h);
+        groundGrad.addColorStop(0, '#15101d');
+        groundGrad.addColorStop(0.5, '#0c0812');
+        groundGrad.addColorStop(1, '#080408');
+        ctx.fillStyle = groundGrad;
+        ctx.fillRect(0, h - 60, w, 60);
         
-        // 中央光柱（静态部分）
-        const beamGrad = ctx.createLinearGradient(w/2 - 80, 0, w/2 + 80, 0);
+        // 地面纹理线
+        ctx.strokeStyle = 'rgba(40, 30, 50, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, h - 55);
+        ctx.lineTo(w, h - 55);
+        ctx.stroke();
+        
+        // 中央神圣光柱
+        const beamGrad = ctx.createLinearGradient(w/2 - 100, 0, w/2 + 100, 0);
         beamGrad.addColorStop(0, 'transparent');
-        beamGrad.addColorStop(0.5, 'rgba(255, 200, 100, 0.06)');
+        beamGrad.addColorStop(0.3, 'rgba(255, 200, 100, 0.03)');
+        beamGrad.addColorStop(0.5, 'rgba(255, 220, 150, 0.08)');
+        beamGrad.addColorStop(0.7, 'rgba(255, 200, 100, 0.03)');
         beamGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = beamGrad;
-        ctx.fillRect(w/2 - 100, 0, 200, h);
+        ctx.fillRect(w/2 - 120, 0, 240, h);
+        
+        // 顶部神殿轮廓
+        ctx.fillStyle = '#0a0610';
+        ctx.beginPath();
+        ctx.moveTo(w * 0.3, 0);
+        ctx.lineTo(w * 0.4, h * 0.08);
+        ctx.lineTo(w * 0.5, h * 0.03);
+        ctx.lineTo(w * 0.6, h * 0.08);
+        ctx.lineTo(w * 0.7, 0);
+        ctx.fill();
     }
     
     drawProgress(ctx) {
