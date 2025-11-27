@@ -36,7 +36,9 @@ export class CombatSystem {
     }
 
     draw(ctx) {
-        this.projectiles.forEach(p => p.draw(ctx));
+        this.projectiles.forEach(p => {
+            if (p.draw) p.draw(ctx);
+        });
         // 绘制打击特效
         hitEffects.draw(ctx);
     }

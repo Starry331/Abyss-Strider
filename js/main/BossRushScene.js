@@ -1558,7 +1558,7 @@ export class BossRushScene {
         });
     }
     
-    // 应用临时buff
+    // 应用临时buff（静默应用，无弹窗）
     applyTempBuff(buffType, duration) {
         const originalValues = {};
         
@@ -1566,16 +1566,13 @@ export class BossRushScene {
             case 'damage':
                 originalValues.damageBonus = this.player.damageBonus || 1;
                 this.player.damageBonus = (this.player.damageBonus || 1) * 1.5;
-                this.showRewardNotification('⚔️ 伤害提升! (10秒)', () => {});
                 break;
             case 'speed':
                 originalValues.speed = this.player.speed;
                 this.player.speed *= 1.4;
-                this.showRewardNotification('💨 速度提升! (10秒)', () => {});
                 break;
             case 'shield':
                 this.player.shield = (this.player.shield || 0) + 80;
-                this.showRewardNotification('🛡️ 临时护盾! (+80)', () => {});
                 return; // 护盾不需要恢复
         }
         
