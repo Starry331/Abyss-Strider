@@ -489,180 +489,131 @@ export class GhostPoseidonBoss {
         const breathe = this.breathe;
         const isRage = this.phase === 2;
         const glow = this.tridentGlow;
+        const time = Date.now() / 1000;
         
-        // 深渊光环
+        // 深渊漩涡背景
         ctx.save();
-        ctx.globalAlpha = 0.3 + glow * 0.2;
-        const auraGrad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 100);
-        auraGrad.addColorStop(0, isRage ? 'rgba(0, 100, 200, 0.8)' : 'rgba(0, 150, 255, 0.5)');
-        auraGrad.addColorStop(1, 'transparent');
-        ctx.fillStyle = auraGrad;
+        ctx.globalAlpha = 0.4;
+        for (let i = 0; i < 4; i++) {
+            const swirl = time * 2 + i * 1.5;
+            ctx.strokeStyle = isRage ? `rgba(0, 255, 200, ${0.3 - i * 0.06})` : `rgba(0, 150, 180, ${0.25 - i * 0.05})`;
+            ctx.lineWidth = 3 - i * 0.5;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 70 + i * 25, swirl, swirl + Math.PI * 1.5);
+            ctx.stroke();
+        }
+        ctx.restore();
+        
+        // 幽灵触手（6条）
+        ctx.lineCap = 'round';
+        for (let t = 0; t < 6; t++) {
+            const baseAngle = (Math.PI * 2 / 6) * t + time * 0.5;
+            const wave = Math.sin(time * 3 + t) * 15;
+            ctx.strokeStyle = isRage ? `rgba(0, 200, 180, ${0.7 - t * 0.08})` : `rgba(0, 120, 140, ${0.6 - t * 0.07})`;
+            ctx.lineWidth = 8 - t * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(this.x + Math.cos(baseAngle) * 35, this.y + Math.sin(baseAngle) * 40 + breathe);
+            ctx.quadraticCurveTo(
+                this.x + Math.cos(baseAngle) * 70 + wave, this.y + Math.sin(baseAngle) * 75 + breathe,
+                this.x + Math.cos(baseAngle + 0.3) * 95, this.y + Math.sin(baseAngle + 0.3) * 100 + breathe
+            );
+            ctx.stroke();
+        }
+        
+        // 主体 - 幽灵水母形态
+        const bodyGrad = ctx.createRadialGradient(this.x, this.y - 20 + breathe, 0, this.x, this.y + 20 + breathe, 60);
+        bodyGrad.addColorStop(0, isRage ? 'rgba(0, 220, 200, 0.9)' : 'rgba(0, 150, 160, 0.85)');
+        bodyGrad.addColorStop(0.5, isRage ? 'rgba(0, 160, 180, 0.7)' : 'rgba(0, 100, 120, 0.65)');
+        bodyGrad.addColorStop(1, 'rgba(0, 60, 80, 0.3)');
+        ctx.fillStyle = bodyGrad;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 100, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + breathe, 50, 45, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 内部纹路
+        ctx.strokeStyle = isRage ? 'rgba(0, 255, 220, 0.5)' : 'rgba(0, 180, 200, 0.4)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+            const a = time * 2 + i * 1.2;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y + breathe, 20 + i * 6, a, a + 1);
+            ctx.stroke();
+        }
+        
+        // 头部 - 发光球体
+        ctx.save();
+        ctx.shadowColor = isRage ? '#00ffdd' : '#00aacc';
+        ctx.shadowBlur = 25 + glow * 15;
+        const headGrad = ctx.createRadialGradient(this.x, this.y - 45 + breathe, 0, this.x, this.y - 45 + breathe, 38);
+        headGrad.addColorStop(0, isRage ? '#00ffee' : '#00ccdd');
+        headGrad.addColorStop(0.4, isRage ? '#00ccbb' : '#009999');
+        headGrad.addColorStop(1, isRage ? '#006666' : '#004455');
+        ctx.fillStyle = headGrad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 45 + breathe, 35, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
         
-        // 水波纹效果
-        ctx.strokeStyle = `rgba(0, 200, 255, ${0.3 + glow * 0.2})`;
+        // 诡异面纹
+        ctx.strokeStyle = isRage ? '#00ffff' : '#00dddd';
         ctx.lineWidth = 2;
-        for (let i = 0; i < 3; i++) {
-            const r = 60 + i * 20 + (Date.now() / 50 % 20);
-            ctx.beginPath();
-            ctx.arc(this.x, this.y + 20, r, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-        
-        // 身体 - 强壮海神形态
-        const bodyGrad = ctx.createLinearGradient(this.x - 40, this.y - 60, this.x + 40, this.y + 60);
-        bodyGrad.addColorStop(0, isRage ? '#003366' : '#004488');
-        bodyGrad.addColorStop(0.5, isRage ? '#004477' : '#0066aa');
-        bodyGrad.addColorStop(1, isRage ? '#002244' : '#003366');
-        ctx.fillStyle = bodyGrad;
+        // 左纹
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + 10 + breathe, 45, 55, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // 鳞片纹理
-        ctx.strokeStyle = 'rgba(0, 200, 255, 0.3)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 5; i++) {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y + 10 + i * 15 + breathe, 30 - i * 3, 0, Math.PI);
-            ctx.stroke();
-        }
-        
-        // 肩甲
-        ctx.fillStyle = isRage ? '#0055aa' : '#0077cc';
+        ctx.moveTo(this.x - 20, this.y - 60 + breathe);
+        ctx.lineTo(this.x - 28, this.y - 45 + breathe);
+        ctx.lineTo(this.x - 20, this.y - 30 + breathe);
+        ctx.stroke();
+        // 右纹
         ctx.beginPath();
-        ctx.ellipse(this.x - 40, this.y - 20 + breathe, 18, 25, -0.3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(this.x + 40, this.y - 20 + breathe, 18, 25, 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // 头部
-        const headGrad = ctx.createRadialGradient(this.x, this.y - 50 + breathe, 0, this.x, this.y - 50 + breathe, 35);
-        headGrad.addColorStop(0, isRage ? '#4488aa' : '#66aacc');
-        headGrad.addColorStop(1, isRage ? '#224466' : '#336688');
-        ctx.fillStyle = headGrad;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y - 50 + breathe, 32, 35, 0, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // 海神冠冕
-        ctx.fillStyle = '#ffd700';
-        ctx.beginPath();
-        ctx.moveTo(this.x - 25, this.y - 75 + breathe);
-        ctx.lineTo(this.x - 20, this.y - 95 + breathe);
-        ctx.lineTo(this.x - 10, this.y - 80 + breathe);
-        ctx.lineTo(this.x, this.y - 100 + breathe);
-        ctx.lineTo(this.x + 10, this.y - 80 + breathe);
-        ctx.lineTo(this.x + 20, this.y - 95 + breathe);
-        ctx.lineTo(this.x + 25, this.y - 75 + breathe);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#ffaa00';
-        ctx.lineWidth = 2;
+        ctx.moveTo(this.x + 20, this.y - 60 + breathe);
+        ctx.lineTo(this.x + 28, this.y - 45 + breathe);
+        ctx.lineTo(this.x + 20, this.y - 30 + breathe);
         ctx.stroke();
         
-        // 冠冕宝石
-        ctx.fillStyle = '#00ffff';
+        // 眼睛 - 发光深渊之眼
+        ctx.save();
+        ctx.shadowColor = isRage ? '#ff0066' : '#00ffff';
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = isRage ? '#ff0088' : '#00ffff';
         ctx.beginPath();
-        ctx.arc(this.x, this.y - 85 + breathe, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(this.x - 2, this.y - 87 + breathe, 2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // 胡须 - 海神标志
-        ctx.strokeStyle = isRage ? '#88ccee' : '#aaddff';
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        // 左胡须
-        ctx.beginPath();
-        ctx.moveTo(this.x - 15, this.y - 30 + breathe);
-        ctx.quadraticCurveTo(this.x - 35, this.y - 20 + breathe, this.x - 45, this.y + 10 + breathe);
-        ctx.stroke();
-        // 右胡须
-        ctx.beginPath();
-        ctx.moveTo(this.x + 15, this.y - 30 + breathe);
-        ctx.quadraticCurveTo(this.x + 35, this.y - 20 + breathe, this.x + 45, this.y + 10 + breathe);
-        ctx.stroke();
-        
-        // 眼睛
-        ctx.fillStyle = isRage ? '#00ffff' : '#88eeff';
-        ctx.beginPath();
-        ctx.ellipse(this.x - 12, this.y - 55 + breathe, 8, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x - 12, this.y - 50 + breathe, 7, 9, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(this.x + 12, this.y - 55 + breathe, 8, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 12, this.y - 50 + breathe, 7, 9, 0, 0, Math.PI * 2);
         ctx.fill();
         // 瞳孔
-        ctx.fillStyle = '#003366';
+        ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.ellipse(this.x - 12, this.y - 55 + breathe, 3, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x - 12, this.y - 50 + breathe, 3, 5, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(this.x + 12, this.y - 55 + breathe, 3, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 12, this.y - 50 + breathe, 3, 5, 0, 0, Math.PI * 2);
         ctx.fill();
-        // 眼神光
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(this.x - 10, this.y - 57 + breathe, 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(this.x + 14, this.y - 57 + breathe, 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.restore();
         
-        // 三叉戟
-        const tridentX = this.x + 55;
-        const tridentY = this.y - 30 + breathe;
-        
-        // 戟杆
-        ctx.strokeStyle = '#8B4513';
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(tridentX, tridentY + 80);
-        ctx.lineTo(tridentX, tridentY - 40);
-        ctx.stroke();
-        
-        // 三叉戟头 - 发光效果
+        // 深渊三叉戟
+        const tx = this.x + 60, ty = this.y - 25 + breathe;
         ctx.save();
-        ctx.shadowColor = isRage ? '#00ffff' : '#00aaff';
-        ctx.shadowBlur = 15 + glow * 10;
-        
-        ctx.fillStyle = '#ffd700';
-        ctx.strokeStyle = '#ffaa00';
-        ctx.lineWidth = 2;
-        
-        // 中叉
+        ctx.shadowColor = isRage ? '#00ffaa' : '#00ccff';
+        ctx.shadowBlur = 20 + glow * 10;
+        // 戟杆
+        const poleGrad = ctx.createLinearGradient(tx, ty + 70, tx, ty - 50);
+        poleGrad.addColorStop(0, '#004444');
+        poleGrad.addColorStop(1, isRage ? '#00ddaa' : '#00aacc');
+        ctx.strokeStyle = poleGrad;
+        ctx.lineWidth = 7;
         ctx.beginPath();
-        ctx.moveTo(tridentX - 4, tridentY - 40);
-        ctx.lineTo(tridentX, tridentY - 70);
-        ctx.lineTo(tridentX + 4, tridentY - 40);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(tx, ty + 70);
+        ctx.lineTo(tx, ty - 35);
         ctx.stroke();
-        
-        // 左叉
+        // 三叉
+        ctx.fillStyle = isRage ? '#00ffcc' : '#00ddff';
         ctx.beginPath();
-        ctx.moveTo(tridentX - 8, tridentY - 35);
-        ctx.lineTo(tridentX - 18, tridentY - 60);
-        ctx.lineTo(tridentX - 12, tridentY - 35);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        
-        // 右叉
+        ctx.moveTo(tx, ty - 70); ctx.lineTo(tx - 5, ty - 35); ctx.lineTo(tx + 5, ty - 35); ctx.closePath(); ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(tridentX + 8, tridentY - 35);
-        ctx.lineTo(tridentX + 18, tridentY - 60);
-        ctx.lineTo(tridentX + 12, tridentY - 35);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        
+        ctx.moveTo(tx - 22, ty - 55); ctx.lineTo(tx - 10, ty - 30); ctx.lineTo(tx - 5, ty - 35); ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(tx + 22, ty - 55); ctx.lineTo(tx + 10, ty - 30); ctx.lineTo(tx + 5, ty - 35); ctx.closePath(); ctx.fill();
         ctx.restore();
         
         // 技能预警

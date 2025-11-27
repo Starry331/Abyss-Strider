@@ -468,10 +468,8 @@ export class BossRushScene {
                 break;
             case 'weapon':
             case 'weapon1':
-                this.showWeaponUpgrade('武器升级 (1/2)');
-                break;
             case 'weapon2':
-                this.showWeaponUpgrade('武器升级 (2/2)');
+                this.showWeaponUpgrade('武器升级');
                 break;
             case 'done':
                 this.isPaused = false;
@@ -811,7 +809,7 @@ export class BossRushScene {
             case 'lv5_blessing2':
                 this.rewardPhase = 'weapon1';
                 break;
-            // 正常奖励流程: build1 -> build2 -> blessing -> weapon1 -> weapon2 -> done
+            // 正常奖励流程: build1 -> build2 -> blessing -> weapon -> done (武器下调为1次)
             case 'build1':
                 this.rewardPhase = 'build2';
                 break;
@@ -819,15 +817,10 @@ export class BossRushScene {
                 this.rewardPhase = 'blessing';
                 break;
             case 'blessing':
-                this.rewardPhase = 'weapon1';
+                this.rewardPhase = 'weapon';
                 break;
             case 'weapon1':
-                this.rewardPhase = 'weapon2';
-                break;
             case 'weapon2':
-                this.rewardPhase = 'done';
-                break;
-            // 旧的weapon兼容
             case 'weapon':
                 this.rewardPhase = 'done';
                 break;
