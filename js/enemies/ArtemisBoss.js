@@ -18,7 +18,7 @@ export class BerserkArtemisBoss {
         this.isFinalBoss = true;
         
         // 基础属性 (大幅增强 - 最终Boss)
-        this.maxHp = 15000; // 超大血量
+        this.maxHp = 20000; // 最终Boss超高血量
         this.hp = this.maxHp;
         this.radius = 60;
         this.color = '#aa44aa';
@@ -48,7 +48,8 @@ export class BerserkArtemisBoss {
             'LUNAR_STRIKE',      // 月神打击
             'WILD_HUNT',         // 狩猎本能
             'LUNAR_RAIN',        // 月蚀之雨
-            'GODDESS_WRATH'      // 女神之怒
+            'GODDESS_WRATH',     // 女神之怒
+            'LUNAR_SHIELD'       // 近身防御爆炸
         ];
         
         // 二阶段技能（强力技能）
@@ -64,7 +65,8 @@ export class BerserkArtemisBoss {
             'CELESTIAL_SNIPE',   // 天穹狙击
             'HUNTER_STORM',      // 猎人风暴
             'LUNAR_RAIN',        // 月蚀之雨
-            'GODDESS_WRATH'      // 女神之怒
+            'GODDESS_WRATH',     // 女神之怒
+            'LUNAR_SHIELD'       // 近身防御爆炸
         ];
         
         // 三阶段技能（全部强力技能+秒杀技）
@@ -80,6 +82,7 @@ export class BerserkArtemisBoss {
             'LUNAR_RAIN',
             'ECLIPSE_BURST',     // 日蚀爆发
             'GODDESS_WRATH',
+            'LUNAR_SHIELD',      // 近身防御爆炸
             'LUNAR_EXECUTION',   // 秒杀技1
             'STAR_MOON_DOOM'     // 秒杀技2
         ];
@@ -1010,6 +1013,68 @@ export class BerserkArtemisBoss {
                         }
                     });
                 }, 1000);
+                break;
+                
+            case 'LUNAR_SHIELD':
+                // 月神护盾 - 近身防御高伤爆炸（带预警）
+                // 第一阶段：1.2秒预警
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 150, damage: 0, lifetime: 1.2, maxLife: 1.2, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        // 危险区域闪烁
+                        ctx.fillStyle = `rgba(255,100,255,${0.15 + Math.sin(Date.now() / 50) * 0.1})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 150, 0, Math.PI * 2); ctx.fill();
+                        // 收缩的警告圈
+                        ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 4; ctx.setLineDash([10, 5]);
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 150 - p * 100, 0, Math.PI * 2); ctx.stroke();
+                        ctx.setLineDash([]);
+                        // 能量聚集效果
+                        for (let i = 0; i < 8; i++) {
+                            const a = (Math.PI * 2 / 8) * i + Date.now() / 200;
+                            const dist = 150 - p * 120;
+                            ctx.fillStyle = `rgba(255,150,255,${p * 0.8})`;
+                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * dist, this.y + Math.sin(a) * dist, 8, 0, Math.PI * 2); ctx.fill();
+                        }
+                        // 警告文字
+                        ctx.fillStyle = '#ff00ff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠️ 月神护盾蓄力中！远离Boss！ ⚠️', this.x, this.y - 170);
+                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px Arial';
+                        ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - 145);
+                    }
+                });
+                // 第二阶段：爆炸
+                setTimeout(() => {
+                    // 屏幕抖动
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 35; this.player.screenShake.duration = 0.8; }
+                    // 检测近身伤害
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < 150) {
+                        const damage = Math.round(dmg * 2.5); // 高伤害
+                        this.player.takeDamage ? this.player.takeDamage(damage) : (this.player.hp -= damage);
+                    }
+                    // 爆炸特效
+                    for (let ring = 0; ring < 3; ring++) {
+                        this.spawnProjectile({
+                            x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, maxRadius: 180, damage: 0, lifetime: 0.5, maxLife: 0.5, ring: ring,
+                            update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { 
+                                ctx.strokeStyle = `rgba(255,100,255,${this.life / this.maxLife})`; 
+                                ctx.lineWidth = 12 - this.ring * 3;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                            }
+                        });
+                    }
+                    // 向外散射弹幕
+                    for (let i = 0; i < 16; i++) {
+                        const a = (Math.PI * 2 / 16) * i;
+                        this.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(a) * 400, vy: Math.sin(a) * 400,
+                            radius: 12, damage: dmg * 0.6, lifetime: 1.2, color: '#ff88ff', isEnemy: true
+                        });
+                    }
+                }, 1200);
                 break;
         }
     }

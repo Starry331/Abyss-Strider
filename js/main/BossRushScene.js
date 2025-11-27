@@ -251,12 +251,27 @@ export class BossRushScene {
         this.combatSystem.projectiles = [];
         this.combatSystem.player = this.player;
         
-        // 绑定武器系统到玩家
+        // 绑定武器系统到玩家并完全重置
         if (this.weaponSystem) {
             this.player.setWeaponSystem(this.weaponSystem);
             this.weaponSystem.cooldownTimer = 0;
-            // 重置武器等级
-            this.weaponSystem.weapons.forEach(w => w.upgradeLevel = 1);
+            this.weaponSystem.projectileSpeedMult = 1; // 重置投射物速度
+            // 完全重置武器属性（清除构筑/赐福效果）
+            this.weaponSystem.weapons[0] = { // Staff
+                name: 'Staff', cnName: '法杖', type: 'AOE', damage: 16, range: 180,
+                cooldown: 0.9, color: '#9b59b6', aoeRadius: 60, critChance: 0.22,
+                critMultiplier: 2.0, lifesteal: 0, manaSteal: 0, upgradeLevel: 1, knockback: 0
+            };
+            this.weaponSystem.weapons[1] = { // Longsword
+                name: 'Longsword', cnName: '长剑', type: 'MELEE', damage: 16, range: 78,
+                cooldown: 0.75, color: '#ecf0f1', arc: Math.PI / 2, knockback: 50,
+                cleave: true, critChance: 0.2, critMultiplier: 2.0, lifesteal: 0, manaSteal: 0, upgradeLevel: 1
+            };
+            this.weaponSystem.weapons[2] = { // Dual Blades
+                name: 'Dual Blades', cnName: '双刀', type: 'MELEE', damage: 9, range: 58,
+                cooldown: 0.38, color: '#e74c3c', arc: Math.PI / 2.5, critChance: 0.2,
+                critMultiplier: 2.0, lifesteal: 0, manaSteal: 0, upgradeLevel: 1, knockback: 0
+            };
             // 初始化武器显示
             const weapon = this.weaponSystem.currentWeapon;
             const weaponIcon = document.getElementById('weapon-icon');
@@ -266,9 +281,14 @@ export class BossRushScene {
         }
         this.lastSwitchState = false; // 武器切换状态
         
-        // 初始化构筑系统
+        // 初始化构筑系统（重新创建确保干净状态）
         if (this.BuildSystem && this.weaponSystem) {
             this.buildSystem = new this.BuildSystem(this.weaponSystem, this.player, null);
+        }
+        
+        // 清除UI上的buff显示
+        if (this.uiManager) {
+            this.uiManager.clearAllBuffs();
         }
         
         // 清空特效
