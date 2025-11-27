@@ -25,8 +25,8 @@ export class BerserkArtemisBoss {
         this.damage = 100; // 增强伤害
         
         // 战斗属性
-        this.telegraphDuration = 0.65; // 预警时间
-        this.attackCooldown = 0.7; // 一阶段攻击间隔
+        this.telegraphDuration = 0.55; // 预警时间
+        this.attackCooldown = 0.6; // 一阶段攻击间隔
         this.state = 'IDLE';
         this.timer = 0;
         this.currentSkill = null;
@@ -39,66 +39,72 @@ export class BerserkArtemisBoss {
         this.huntTargets = [];
         this.trapPositions = [];
         
-        // 一阶段技能（精简强力）
+        // 一阶段技能（精简强力 + 增加近身技能概率）
         this.skills = [
             'TRIPLE_ARROW',      // 五连箭
             'MOON_SHOT',         // 月光箭
             'HUNTER_DASH',       // 猎手冲刺
             'SILVER_RAIN',       // 银箭雨
             'LUNAR_STRIKE',      // 月神打击
-            'WILD_HUNT',         // 狩猎本能
             'LUNAR_RAIN',        // 月蚀之雨
-            'GODDESS_WRATH',     // 女神之怒
             'LUNAR_SHIELD',      // 近身防御1
+            'LUNAR_SHIELD',      // 近身防御1 x2
             'CRESCENT_BURST',    // 近身防御2
-            'MOON_REPEL'         // 近身防御3
+            'CRESCENT_BURST',    // 近身防御2 x2
+            'MOON_REPEL',        // 近身防御3
+            'MOON_REPEL'         // 近身防御3 x2
         ];
         
-        // 二阶段技能（强力技能）
+        // 二阶段技能（强力技能 + 增加近身技能概率）
         this.phase2Skills = [
-            'TRIPLE_ARROW',
-            'MOON_SHOT',
             'HUNTER_DASH',
             'LUNAR_STRIKE',
             'MOONLIGHT_BARRAGE', // 月光弹幕
-            'ARTEMIS_WRATH',     // 阿尔忒弥斯之怒
             'SHADOW_STEP',       // 影步
             'FERAL_CHARGE',      // 野性冲锋
-            'CELESTIAL_SNIPE',   // 天穹狙击
             'HUNTER_STORM',      // 猎人风暴
             'LUNAR_RAIN',        // 月蚀之雨
-            'GODDESS_WRATH',     // 女神之怒
             'LUNAR_SHIELD',      // 近身防御1
+            'LUNAR_SHIELD',      // 近身防御1 x2
             'CRESCENT_BURST',    // 近身防御2
+            'CRESCENT_BURST',    // 近身防御2 x2
             'MOON_REPEL',        // 近身防御3
+            'MOON_REPEL',        // 近身防御3 x2
             'ARTEMIS_BARRIER',   // 近身防御4
+            'ARTEMIS_BARRIER',   // 近身防御4 x2
             'SILVER_NOVA',       // 近身防御5
-            'HUNT_COUNTER'       // 近身防御6
+            'SILVER_NOVA',       // 近身防御5 x2
+            'HUNT_COUNTER',      // 近身防御6
+            'HUNT_COUNTER'       // 近身防御6 x2
         ];
         
-        // 三阶段技能（全部强力技能+秒杀技）
+        // 三阶段技能（全部强力技能 + 增加近身技能概率）
         this.phase3Skills = [
             'HUNTER_DASH',
             'LUNAR_STRIKE',
             'MOONLIGHT_BARRAGE',
             'SHADOW_STEP',
-            'FERAL_CHARGE',
-            'CELESTIAL_SNIPE',
-            'HUNTER_STORM',
-            'DIVINE_BEAST',      // 神兽召唤
             'LUNAR_RAIN',
-            'ECLIPSE_BURST',     // 日蚀爆发
-            'GODDESS_WRATH',
             'LUNAR_SHIELD',      // 近身防御1
+            'LUNAR_SHIELD',      // 近身防御1 x2
             'CRESCENT_BURST',    // 近身防御2
+            'CRESCENT_BURST',    // 近身防御2 x2
             'MOON_REPEL',        // 近身防御3
+            'MOON_REPEL',        // 近身防御3 x2
             'ARTEMIS_BARRIER',   // 近身防御4
+            'ARTEMIS_BARRIER',   // 近身防御4 x2
             'SILVER_NOVA',       // 近身防御5
+            'SILVER_NOVA',       // 近身防御5 x2
             'HUNT_COUNTER',      // 近身防御6
+            'HUNT_COUNTER',      // 近身防御6 x2
             'MOONFALL_SLAM',     // 近身防御7
+            'MOONFALL_SLAM',     // 近身防御7 x2
             'STARLIGHT_BURST',   // 近身防御8
+            'STARLIGHT_BURST',   // 近身防御8 x2
             'DIVINE_REPULSE',    // 近身防御9
-            'CRESCENT_SLASH',    // 新月斩（30%概率）
+            'DIVINE_REPULSE',    // 近身防御9 x2
+            'CRESCENT_SLASH',    // 新月斩
+            'CRESCENT_SLASH',    // 新月斩 x2
             'LUNAR_EXECUTION',   // 秒杀技1
             'STAR_MOON_DOOM'     // 秒杀技2
         ];
@@ -159,10 +165,29 @@ export class BerserkArtemisBoss {
                 draw(ctx) {
                     const alpha = Math.min(1, this.life / this.maxLife);
                     ctx.globalAlpha = alpha;
-                    ctx.fillStyle = this.color;
+                    // 月牙形弹幕
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    const angle = Math.atan2(this.vy, this.vx);
+                    ctx.rotate(angle);
+                    // 月牙本体
+                    ctx.fillStyle = '#ffffcc';
                     ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.fillStyle = 'rgba(80,60,30,0.7)';
+                    ctx.beginPath();
+                    ctx.arc(this.radius * 0.4, 0, this.radius * 0.75, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 方向箭头
+                    ctx.fillStyle = `rgba(255,200,100,${alpha * 0.8})`;
+                    ctx.beginPath();
+                    ctx.moveTo(this.radius + 12, 0);
+                    ctx.lineTo(this.radius + 2, -6);
+                    ctx.lineTo(this.radius + 2, 6);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
                     ctx.globalAlpha = 1;
                 }
             };
@@ -174,15 +199,15 @@ export class BerserkArtemisBoss {
         this.breathe = Math.sin(Date.now() / 400) * 2;
         this.moonGlow = (Math.sin(Date.now() / 250) + 1) * 0.5;
         
-        // 三相位切换: 0.7→0.65→0.60秒
+        // 三相位切换: 0.6→0.55→0.48秒
         if (this.hp <= this.maxHp * 0.3 && this.phase < 3) {
             this.phase = 3;
-            this.attackCooldown = 0.60;
-            this.telegraphDuration = 0.5;
+            this.attackCooldown = 0.48;
+            this.telegraphDuration = 0.42;
             console.log('☠️ 阿尔忒弥斯进入绝境阶段！解锁秒杀技能！');
         } else if (this.hp <= this.maxHp * 0.6 && this.phase === 1) {
             this.phase = 2;
-            this.attackCooldown = 0.65;
+            this.attackCooldown = 0.55;
             console.log('☠️ 阿尔忒弥斯进入狂暴阶段！解锁强力技能！');
         }
         
