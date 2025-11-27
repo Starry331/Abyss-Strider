@@ -740,58 +740,168 @@ class MonkeyBoss extends BaseBoss {
 
     drawSkillIndicator(ctx) {
         const angle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+        const time = Date.now() / 1000;
+        const pulseAlpha = 0.4 + Math.sin(time * 8) * 0.2;
         
         switch (this.currentSkill) {
             case 'QUICK_DASH':
+                // 冲刺预警 - 箭头+轨迹
                 this.drawDashIndicator(ctx, this.dashTarget.x, this.dashTarget.y, '255, 165, 0');
+                // 额外箭头指示方向
+                const dashDist = 200;
+                for (let i = 1; i <= 3; i++) {
+                    const ax = this.x + Math.cos(angle) * (dashDist / 3 * i);
+                    const ay = this.y + Math.sin(angle) * (dashDist / 3 * i);
+                    ctx.fillStyle = `rgba(255, 165, 0, ${pulseAlpha * (1 - i * 0.2)})`;
+                    ctx.beginPath();
+                    ctx.moveTo(ax + Math.cos(angle) * 15, ay + Math.sin(angle) * 15);
+                    ctx.lineTo(ax + Math.cos(angle + 2.5) * 10, ay + Math.sin(angle + 2.5) * 10);
+                    ctx.lineTo(ax + Math.cos(angle - 2.5) * 10, ay + Math.sin(angle - 2.5) * 10);
+                    ctx.closePath();
+                    ctx.fill();
+                }
                 break;
+                
             case 'BANANA_THROW':
-                // 扇形指示
-                ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+                // 扇形投掷预警 - 使用扇形指示器
+                this.drawConeIndicator(ctx, angle, 0.4, 250, '255, 255, 0');
+                // 香蕉图标
+                ctx.fillStyle = `rgba(255, 255, 0, ${pulseAlpha + 0.3})`;
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🍌', this.x + Math.cos(angle) * 80, this.y + Math.sin(angle) * 80);
+                break;
+                
+            case 'TAIL_WHIP':
+                // 尾巴横扫预警 - 近身AOE
+                this.drawAOEIndicator(ctx, this.x, this.y, 80, '139, 69, 19');
+                // 旋转箭头表示横扫
+                ctx.strokeStyle = `rgba(139, 69, 19, ${pulseAlpha + 0.3})`;
+                ctx.lineWidth = 4;
                 ctx.beginPath();
-                ctx.moveTo(this.x, this.y);
-                ctx.arc(this.x, this.y, 250, angle - 0.4, angle + 0.4);
+                ctx.arc(this.x, this.y, 60, time * 3, time * 3 + Math.PI * 1.5);
+                ctx.stroke();
+                // 箭头尖端
+                const tailAngle = time * 3 + Math.PI * 1.5;
+                ctx.fillStyle = `rgba(139, 69, 19, ${pulseAlpha + 0.3})`;
+                ctx.beginPath();
+                ctx.moveTo(this.x + Math.cos(tailAngle) * 70, this.y + Math.sin(tailAngle) * 70);
+                ctx.lineTo(this.x + Math.cos(tailAngle - 0.3) * 55, this.y + Math.sin(tailAngle - 0.3) * 55);
+                ctx.lineTo(this.x + Math.cos(tailAngle + 0.3) * 55, this.y + Math.sin(tailAngle + 0.3) * 55);
                 ctx.closePath();
                 ctx.fill();
                 break;
-            case 'TAIL_WHIP':
-                this.drawAOEIndicator(ctx, this.x, this.y, 80, '139, 69, 19');
-                break;
+                
             case 'JUNGLE_LEAP':
+                // 跳跃预警 - 起跳点+落点
                 this.drawDashIndicator(ctx, this.player.x, this.player.y, '255, 140, 0');
                 this.drawAOEIndicator(ctx, this.player.x, this.player.y, 100, '139, 69, 19');
+                // 跳跃弧线
+                ctx.strokeStyle = `rgba(255, 140, 0, ${pulseAlpha})`;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([10, 5]);
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                const midX = (this.x + this.player.x) / 2;
+                const midY = Math.min(this.y, this.player.y) - 80;
+                ctx.quadraticCurveTo(midX, midY, this.player.x, this.player.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                // 落地警告
+                ctx.fillStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.2})`;
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('💥', this.player.x, this.player.y - 60);
                 break;
+                
             case 'FRENZY':
-                // 全方向警告
+                // 狂暴全方向预警 - 放射线+圆环
+                this.drawAOEIndicator(ctx, this.x, this.y, 150, '255, 69, 0', false);
                 for (let i = 0; i < 6; i++) {
                     const a = (Math.PI * 2 / 6) * i;
-                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
-                    ctx.lineWidth = 3;
+                    // 方向线
+                    ctx.strokeStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.2})`;
+                    ctx.lineWidth = 4;
                     ctx.beginPath();
                     ctx.moveTo(this.x, this.y);
                     ctx.lineTo(this.x + Math.cos(a) * 150, this.y + Math.sin(a) * 150);
                     ctx.stroke();
+                    // 箭头
+                    ctx.fillStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.3})`;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + Math.cos(a) * 160, this.y + Math.sin(a) * 160);
+                    ctx.lineTo(this.x + Math.cos(a + 0.3) * 140, this.y + Math.sin(a + 0.3) * 140);
+                    ctx.lineTo(this.x + Math.cos(a - 0.3) * 140, this.y + Math.sin(a - 0.3) * 140);
+                    ctx.closePath();
+                    ctx.fill();
                 }
                 break;
+                
             case 'VINE_TRAP':
-                // 玩家周围区域警告
+                // 藤蔓陷阱预警 - 玩家周围多个区域
                 this.drawAOEIndicator(ctx, this.player.x, this.player.y, 100, '34, 139, 34');
+                // 藤蔓图案
+                ctx.strokeStyle = `rgba(0, 100, 0, ${pulseAlpha + 0.2})`;
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 6; i++) {
+                    const va = (Math.PI * 2 / 6) * i + time * 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(this.player.x, this.player.y);
+                    ctx.quadraticCurveTo(
+                        this.player.x + Math.cos(va) * 50, 
+                        this.player.y + Math.sin(va) * 50 - 20,
+                        this.player.x + Math.cos(va) * 80, 
+                        this.player.y + Math.sin(va) * 80
+                    );
+                    ctx.stroke();
+                }
+                ctx.fillStyle = `rgba(34, 139, 34, ${pulseAlpha})`;
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🌿', this.player.x, this.player.y - 70);
                 break;
+                
             case 'COCONUT_RAIN':
-                // 头顶落物警告
-                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 130, '139, 90, 43');
-                ctx.fillStyle = 'rgba(139, 69, 19, 0.3)';
-                ctx.font = 'bold 24px Arial';
+                // 椰子雨预警 - 落物指示
+                this.drawFallIndicator(ctx, this.player.x, this.player.y, 130, '139, 69, 19');
+                // 多个落点
+                for (let i = 0; i < 3; i++) {
+                    const ox = (i - 1) * 60;
+                    ctx.strokeStyle = `rgba(139, 69, 19, ${pulseAlpha * 0.6})`;
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(this.player.x + ox, this.player.y, 25, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+                // 椰子图标
+                ctx.fillStyle = `rgba(139, 69, 19, ${pulseAlpha + 0.3})`;
+                ctx.font = 'bold 22px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('↓↓↓', this.player.x, this.player.y - 80);
+                ctx.fillText('🥥', this.player.x, this.player.y - 100);
                 break;
+                
             case 'PRIMAL_RAGE':
-                // 连续冲刺警告
+                // 原始狂怒预警 - 强烈警告
                 this.drawDashIndicator(ctx, this.player.x, this.player.y, '255, 0, 0');
-                ctx.fillStyle = 'rgba(255, 69, 0, 0.4)';
-                ctx.font = 'bold 28px Arial';
+                // 多层冲击波预警
+                for (let ring = 0; ring < 3; ring++) {
+                    ctx.strokeStyle = `rgba(255, 69, 0, ${(pulseAlpha - ring * 0.1)})`;
+                    ctx.lineWidth = 4 - ring;
+                    ctx.setLineDash([8, 4]);
+                    ctx.beginPath();
+                    ctx.arc(this.player.x, this.player.y, 80 + ring * 30, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+                // 危险警告
+                ctx.fillStyle = `rgba(255, 0, 0, ${pulseAlpha + 0.4})`;
+                ctx.font = 'bold 32px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('!!!', this.x, this.y - this.radius - 20);
+                ctx.fillText('⚠️', this.x, this.y - this.radius - 25);
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('狂暴！', this.x, this.y - this.radius - 5);
                 break;
         }
     }
