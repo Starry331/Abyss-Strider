@@ -153,15 +153,15 @@ export class BerserkArtemisBoss {
         this.moonGlow = (Math.sin(Date.now() / 250) + 1) * 0.5;
         
         // 三相位切换 - 更快进入2、3阶段
-        if (this.hp <= this.maxHp * 0.4 && this.phase < 3) {
+        if (this.hp <= this.maxHp * 0.5 && this.phase < 3) {
             this.phase = 3;
             this.attackCooldown = 0.45;
             this.telegraphDuration = 0.35;
-            console.log('阿尔忒弥斯进入绝境阶段！');
-        } else if (this.hp <= this.maxHp * 0.7 && this.phase === 1) {
+            console.log('☠️ 阿尔忒弥斯进入绝境阶段！解锁秒杀技能！');
+        } else if (this.hp <= this.maxHp * 0.8 && this.phase === 1) {
             this.phase = 2;
             this.attackCooldown = 0.5;
-            console.log('阿尔忒弥斯进入狂暴阶段！');
+            console.log('☠️ 阿尔忒弥斯进入狂暴阶段！解锁强力技能！');
         }
         
         // 秒杀技能后的真空期
