@@ -321,7 +321,8 @@ export class MenuScene {
         
         bossData.forEach(boss => {
             const card = document.createElement('div');
-            card.className = `gallery-card ${boss.unlocked ? '' : 'locked'}`;
+            const isWide = boss.wideImage && boss.unlocked;
+            card.className = `gallery-card ${boss.unlocked ? '' : 'locked'} ${isWide ? 'wide' : ''}`;
             
             const levelText = boss.isMutated ? `Lv${boss.level} 异化` : `Lv${boss.level}`;
             const killText = boss.unlocked ? `击杀: ${boss.kills}次` : '未解锁 (击杀1次解锁)';
@@ -329,25 +330,63 @@ export class MenuScene {
             // 确定显示的图片
             let imageContent;
             if (boss.unlocked) {
-                imageContent = `<img src="assets/gallery/${boss.image}" onerror="this.parentElement.innerHTML='🎭'">`;
+                imageContent = `<img src="assets/gallery/${boss.image}" onerror="this.parentElement.innerHTML='🎭'" loading="lazy">`;
             } else if (boss.lockedImage) {
-                imageContent = `<img src="assets/gallery/${boss.lockedImage}" onerror="this.parentElement.innerHTML='❓'">`;
+                imageContent = `<img src="assets/gallery/${boss.lockedImage}" onerror="this.parentElement.innerHTML='❓'" loading="lazy">`;
             } else {
                 imageContent = '❓';
             }
             
             card.innerHTML = `
-                <div class="gallery-image">
+                <div class="gallery-image ${isWide ? 'wide' : ''}">
                     ${imageContent}
                 </div>
                 <div class="gallery-name">${boss.name}</div>
                 <div class="gallery-title">${boss.title}</div>
                 ${boss.isMutated ? '<div class="gallery-mutated">⚡ 异化形态</div>' : ''}
                 <div class="gallery-kills">${killText}</div>
+                ${isWide ? '<div class="gallery-preview-hint">点击查看大图</div>' : ''}
             `;
+            
+            // Lv6-Lv7支持大图预览
+            if (isWide) {
+                card.addEventListener('click', () => this.showImagePreview(boss));
+            }
             
             grid.appendChild(card);
         });
+    }
+    
+    showImagePreview(boss) {
+        let preview = document.getElementById('gallery-preview');
+        if (!preview) {
+            preview = document.createElement('div');
+            preview.id = 'gallery-preview';
+            preview.innerHTML = `
+                <div class="preview-backdrop"></div>
+                <div class="preview-content">
+                    <img src="" alt="">
+                    <div class="preview-info">
+                        <div class="preview-name"></div>
+                        <div class="preview-title"></div>
+                    </div>
+                    <button class="preview-close">✕ 关闭</button>
+                </div>
+            `;
+            document.body.appendChild(preview);
+            
+            preview.querySelector('.preview-backdrop').addEventListener('click', () => {
+                preview.classList.remove('active');
+            });
+            preview.querySelector('.preview-close').addEventListener('click', () => {
+                preview.classList.remove('active');
+            });
+        }
+        
+        preview.querySelector('img').src = `assets/gallery/${boss.image}`;
+        preview.querySelector('.preview-name').textContent = boss.name;
+        preview.querySelector('.preview-title').textContent = boss.title;
+        preview.classList.add('active');
     }
 
     enter() {

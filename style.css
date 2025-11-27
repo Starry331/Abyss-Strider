@@ -1003,6 +1003,98 @@ canvas {
     z-index: 10000;
 }
 
+/* Lv6-Lv7 宽图卡片 */
+.gallery-card.wide {
+    grid-column: span 2;
+}
+
+.gallery-card.wide .gallery-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/9;
+}
+
+.gallery-preview-hint {
+    color: #ffd700;
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+/* 大图预览 */
+#gallery-preview {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+#gallery-preview.active {
+    display: flex;
+}
+
+.preview-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.9);
+}
+
+.preview-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.preview-content img {
+    max-width: 90vw;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 0 50px rgba(255,215,0,0.3);
+}
+
+.preview-info {
+    text-align: center;
+}
+
+.preview-name {
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.preview-title {
+    color: #888;
+    font-size: 16px;
+    font-style: italic;
+}
+
+.preview-close {
+    padding: 10px 30px;
+    background: rgba(255,100,100,0.8);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.preview-close:hover {
+    background: rgba(255,100,100,1);
+}
+
 /* 其他菜单通用样式 */
 #blessing-menu {
     position: absolute;

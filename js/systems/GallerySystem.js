@@ -24,10 +24,10 @@ export class GallerySystem {
             // Lv5
             { id: 'arthur', level: 5, name: '圣剑王·亚瑟', title: 'King Arthur', isMutated: false, image: 'boss_arthur.png' },
             { id: 'arthur_mutated', level: 5, name: '堕落骑士·莫德雷德', title: 'Mordred', isMutated: true, image: 'boss_arthur_mutated.png' },
-            // Lv6 (Boss战专属)
-            { id: 'poseidon', level: 6, name: '鬼化波塞冬', title: 'Ghost Poseidon', isMutated: false, image: 'boss_poseidon.png' },
-            // Lv7 (Boss战专属)
-            { id: 'artemis', level: 7, name: '狂化阿尔忒弥斯', title: 'Berserk Artemis', isMutated: false, image: 'boss_artemis.png' }
+            // Lv6 (Boss战专属) - 16:9大图
+            { id: 'poseidon', level: 6, name: '鬼化波塞冬', title: 'Ghost Poseidon', isMutated: false, image: 'boss_poseidon.png', wideImage: true },
+            // Lv7 (Boss战专属) - 16:9大图
+            { id: 'artemis', level: 7, name: '狂化阿尔忒弥斯', title: 'Berserk Artemis', isMutated: false, image: 'boss_artemis.png', wideImage: true }
         ];
     }
     
