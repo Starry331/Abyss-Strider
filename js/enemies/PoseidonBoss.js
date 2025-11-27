@@ -56,13 +56,19 @@ export class GhostPoseidonBoss {
             'EARTHQUAKE',        // 地震
             'POSEIDON_WRATH',    // 波塞冬之怒
             'KRAKEN_SUMMON',     // 召唤克拉肯触手
-            'ABYSS_DOMAIN'       // 深渊领域
+            'ABYSS_DOMAIN',      // 深渊领域
+            'DIVINE_JUDGMENT'    // 秒杀技：神罚海啸（有预警和后摇）
         ];
         
         // 视觉效果
         this.breathe = 0;
         this.tridentGlow = 0;
         this.waterParticles = [];
+        
+        // 秒杀技预警状态
+        this.divineJudgmentWarning = false;
+        this.divineJudgmentSafeZone = { x: 0, y: 0, radius: 100 };
+        this.divineJudgmentTimer = 0;
     }
     
     update(deltaTime) {
@@ -149,6 +155,10 @@ export class GhostPoseidonBoss {
                         y: this.y + Math.sin(angle) * 150
                     });
                 }
+                break;
+            case 'DIVINE_JUDGMENT':
+                // 秒杀技预警：延长预警时间
+                this.telegraphDuration = 2.5;
                 break;
         }
     }
@@ -326,6 +336,45 @@ export class GhostPoseidonBoss {
                     color: 'rgba(0, 50, 100, 0.4)', isEnemy: true,
                     isDOT: true
                 });
+                break;
+                
+            case 'DIVINE_JUDGMENT':
+                // 秒杀技：神罚海啸 - 全屏攻击，只有安全区可躲避
+                // 设置安全区（Boss位置附近）
+                this.divineJudgmentWarning = true;
+                this.divineJudgmentSafeZone = {
+                    x: this.x,
+                    y: this.y,
+                    radius: 120
+                };
+                
+                // 2.5秒预警后发动
+                setTimeout(() => {
+                    this.divineJudgmentWarning = false;
+                    // 检查玩家是否在安全区
+                    const px = this.player.x;
+                    const py = this.player.y;
+                    const sx = this.divineJudgmentSafeZone.x;
+                    const sy = this.divineJudgmentSafeZone.y;
+                    const dist = Math.sqrt((px - sx) ** 2 + (py - sy) ** 2);
+                    
+                    if (dist > this.divineJudgmentSafeZone.radius) {
+                        // 不在安全区，造成巨额伤害
+                        this.player.hp -= 999;
+                    }
+                    
+                    // 全屏水柱特效
+                    for (let i = 0; i < 30; i++) {
+                        const rx = Math.random() * 800 + 100;
+                        const ry = Math.random() * 600;
+                        this.combatSystem.spawnProjectile({
+                            x: rx, y: -50,
+                            vx: 0, vy: 600,
+                            radius: 30, damage: 0, lifetime: 1.5,
+                            color: '#00aaff', isEnemy: false // 纯视觉效果
+                        });
+                    }
+                }, 2500);
                 break;
         }
     }
@@ -540,6 +589,39 @@ export class GhostPoseidonBoss {
                         ctx.arc(zone.x, zone.y, 60, 0, Math.PI * 2);
                         ctx.stroke();
                     });
+                    break;
+                case 'DIVINE_JUDGMENT':
+                    // 秒杀技预警：全屏红色警告 + 安全区绿色
+                    ctx.restore();
+                    ctx.save();
+                    
+                    // 全屏红色危险区
+                    ctx.fillStyle = `rgba(255, 0, 0, ${0.2 + Math.sin(Date.now() / 100) * 0.15})`;
+                    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    
+                    // 安全区绿色圆圈
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 5;
+                    ctx.setLineDash([15, 10]);
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 120, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // 安全区内部
+                    ctx.fillStyle = `rgba(0, 255, 0, ${0.15 + Math.sin(Date.now() / 150) * 0.1})`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 120, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 警告文字
+                    ctx.fillStyle = '#ff4444';
+                    ctx.font = 'bold 36px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('⚠️ 神罚海啸 - 快躲到安全区！ ⚠️', ctx.canvas.width / 2, 80);
+                    
+                    ctx.fillStyle = '#00ff00';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.fillText('↓ 安全区 ↓', this.x, this.y - 140);
                     break;
             }
             ctx.restore();

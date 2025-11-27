@@ -64,13 +64,22 @@ export class BerserkArtemisBoss {
         this.phase3Skills = [
             ...this.phase2Skills,
             'OLYMPUS_JUDGMENT',  // 奥林匹斯审判
-            'ETERNAL_HUNT'       // 永恒狩猎
+            'ETERNAL_HUNT',      // 永恒狩猎
+            'CRESCENT_SLASH',    // 近身技：月牙斩
+            'LUNAR_EXECUTION'    // 秒杀技：月神处刑（有预警和后摇）
         ];
         
         // 视觉效果
         this.breathe = 0;
         this.moonGlow = 0;
         this.bowCharge = 0;
+        
+        // 秒杀技状态
+        this.lunarExecutionWarning = false;
+        this.lunarExecutionSafeZones = [];
+        
+        // 近身攻击范围
+        this.meleeRange = 100;
     }
     
     update(deltaTime) {
@@ -177,6 +186,14 @@ export class BerserkArtemisBoss {
                         y: this.player.y + Math.sin(angle) * 150
                     });
                 }
+                break;
+            case 'CRESCENT_SLASH':
+                // 近身技预警
+                this.dashTarget = { x: this.player.x, y: this.player.y };
+                break;
+            case 'LUNAR_EXECUTION':
+                // 秒杀技预警：延长预警时间
+                this.telegraphDuration = 3.0;
                 break;
         }
     }
@@ -436,6 +453,82 @@ export class BerserkArtemisBoss {
                     }, dash * 400);
                 }
                 break;
+                
+            case 'CRESCENT_SLASH':
+                // 近身技：月牙斩 - 快速接近并释放月牙形攻击
+                const slashAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                // 瞬移到玩家身边
+                this.x = this.player.x - Math.cos(slashAngle) * 60;
+                this.y = this.player.y - Math.sin(slashAngle) * 60;
+                
+                // 月牙形攻击
+                for (let i = -3; i <= 3; i++) {
+                    const a = slashAngle + i * 0.25;
+                    this.combatSystem.spawnProjectile({
+                        x: this.x, y: this.y,
+                        vx: Math.cos(a) * 250, vy: Math.sin(a) * 250,
+                        radius: 20, damage: dmg * 0.8, lifetime: 0.6,
+                        color: '#ddaaff', isEnemy: true
+                    });
+                }
+                
+                // 回退
+                setTimeout(() => {
+                    this.x -= Math.cos(slashAngle) * 150;
+                    this.y -= Math.sin(slashAngle) * 150;
+                }, 300);
+                break;
+                
+            case 'LUNAR_EXECUTION':
+                // 秒杀技：月神处刑 - 全屏月光，只有阴影区可躲避
+                this.lunarExecutionWarning = true;
+                
+                // 生成3个安全区（阴影区）
+                this.lunarExecutionSafeZones = [];
+                for (let i = 0; i < 3; i++) {
+                    const angle = (Math.PI * 2 / 3) * i + Math.random() * 0.5;
+                    const dist = 180 + Math.random() * 100;
+                    this.lunarExecutionSafeZones.push({
+                        x: this.x + Math.cos(angle) * dist,
+                        y: this.y + Math.sin(angle) * dist,
+                        radius: 80
+                    });
+                }
+                
+                // 3秒预警后发动
+                setTimeout(() => {
+                    this.lunarExecutionWarning = false;
+                    
+                    // 检查玩家是否在任一安全区
+                    const px = this.player.x;
+                    const py = this.player.y;
+                    let isSafe = false;
+                    
+                    for (const zone of this.lunarExecutionSafeZones) {
+                        const dist = Math.sqrt((px - zone.x) ** 2 + (py - zone.y) ** 2);
+                        if (dist <= zone.radius) {
+                            isSafe = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!isSafe) {
+                        // 不在安全区，造成巨额伤害
+                        this.player.hp -= 999;
+                    }
+                    
+                    // 全屏月光特效
+                    for (let i = 0; i < 24; i++) {
+                        const a = (Math.PI * 2 / 24) * i;
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y,
+                            vx: Math.cos(a) * 400, vy: Math.sin(a) * 400,
+                            radius: 25, damage: 0, lifetime: 1.5,
+                            color: '#ffddff', isEnemy: false // 纯视觉效果
+                        });
+                    }
+                }, 3000);
+                break;
         }
     }
     
@@ -649,6 +742,66 @@ export class BerserkArtemisBoss {
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, 180, 0, Math.PI * 2);
                     ctx.stroke();
+                    break;
+                case 'CRESCENT_SLASH':
+                    // 近身技预警：显示冲刺路径和攻击范围
+                    ctx.strokeStyle = '#ff88ff';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.dashTarget.x, this.dashTarget.y);
+                    ctx.stroke();
+                    
+                    // 月牙攻击范围
+                    ctx.beginPath();
+                    ctx.arc(this.dashTarget.x, this.dashTarget.y, 80, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#ff88ff';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.fillText('⚔️ 近身斩击!', this.dashTarget.x, this.dashTarget.y - 100);
+                    break;
+                case 'LUNAR_EXECUTION':
+                    // 秒杀技预警：全屏紫色警告 + 安全区（阴影）
+                    ctx.restore();
+                    ctx.save();
+                    
+                    // 全屏紫色月光危险区
+                    ctx.fillStyle = `rgba(200, 100, 255, ${0.25 + Math.sin(Date.now() / 100) * 0.15})`;
+                    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    
+                    // 安全区（阴影区）- 深色圆圈
+                    this.lunarExecutionSafeZones.forEach((zone, i) => {
+                        // 安全区边框
+                        ctx.strokeStyle = '#333';
+                        ctx.lineWidth = 4;
+                        ctx.setLineDash([12, 8]);
+                        ctx.beginPath();
+                        ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                        // 安全区内部（阴影）
+                        ctx.fillStyle = `rgba(30, 30, 50, ${0.6 + Math.sin(Date.now() / 150) * 0.2})`;
+                        ctx.beginPath();
+                        ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // 安全区标记
+                        ctx.fillStyle = '#aaaaaa';
+                        ctx.font = 'bold 14px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('阴影区', zone.x, zone.y + 5);
+                    });
+                    
+                    // 警告文字
+                    ctx.fillStyle = '#ff66ff';
+                    ctx.font = 'bold 36px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('⚠️ 月神处刑 - 躲入阴影！ ⚠️', ctx.canvas.width / 2, 80);
+                    
+                    ctx.fillStyle = '#888';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.fillText('↓ 阴影区可躲避 ↓', ctx.canvas.width / 2, 120);
                     break;
             }
             ctx.restore();
