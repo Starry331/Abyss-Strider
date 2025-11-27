@@ -66,13 +66,9 @@ export class MutatedIceDragonBoss {
     draw(ctx) {
         const time = Date.now() / 1000;
         
-        // ===== 深渊紫雾光环 =====
-        const aura = ctx.createRadialGradient(this.x, this.y, this.radius * 0.3, this.x, this.y, this.radius * 2.8);
-        aura.addColorStop(0, 'rgba(150,50,200,0.6)');
-        aura.addColorStop(0.5, 'rgba(100,0,150,0.3)');
-        aura.addColorStop(1, 'transparent');
-        ctx.fillStyle = aura;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2.8, 0, Math.PI * 2); ctx.fill();
+        // ===== 深渊紫雾光环 (简化) =====
+        ctx.fillStyle = 'rgba(130,50,180,0.35)';
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2); ctx.fill();
         
         // ===== 漂浮的深渊冰晶 =====
         for (let i = 0; i < 10; i++) {
@@ -120,12 +116,8 @@ export class MutatedIceDragonBoss {
             ctx.stroke();
         }
         
-        // ===== 龙身 =====
-        const bodyGrad = ctx.createRadialGradient(this.x - 15, this.y - 10, 0, this.x, this.y, this.radius);
-        bodyGrad.addColorStop(0, '#cc66ff');
-        bodyGrad.addColorStop(0.5, '#9932cc');
-        bodyGrad.addColorStop(1, '#4a0080');
-        ctx.fillStyle = bodyGrad;
+        // ===== 龙身 (纯色) =====
+        ctx.fillStyle = '#9932cc';
         
         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
         
@@ -310,12 +302,8 @@ export class MutatedCerberusBoss {
     draw(ctx) {
         const time = Date.now() / 1000;
         
-        // ===== 冥界深渊光环 =====
-        const aura = ctx.createRadialGradient(this.x, this.y, this.radius * 0.3, this.x, this.y, this.radius * 2.8);
-        aura.addColorStop(0, 'rgba(80,0,0,0.7)');
-        aura.addColorStop(0.5, 'rgba(50,0,0,0.4)');
-        aura.addColorStop(1, 'transparent');
-        ctx.fillStyle = aura;
+        // ===== 冥界深渊光环 (简化) =====
+        ctx.fillStyle = 'rgba(80,0,0,0.4)';
         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2.8, 0, Math.PI * 2); ctx.fill();
         
         // ===== 熔岩地面裂缝 =====
@@ -344,12 +332,8 @@ export class MutatedCerberusBoss {
             ctx.fillStyle = '#2a0000';
         });
         
-        // ===== 主体身躯（熔岩犬身）=====
-        const bodyGrad = ctx.createRadialGradient(this.x - 15, this.y - 10, 0, this.x, this.y, this.radius);
-        bodyGrad.addColorStop(0, '#660000');
-        bodyGrad.addColorStop(0.5, '#3a0000');
-        bodyGrad.addColorStop(1, '#1a0000');
-        ctx.fillStyle = bodyGrad;
+        // ===== 主体身躯 (纯色) =====
+        ctx.fillStyle = '#4a0000';
         
         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
         
@@ -419,11 +403,8 @@ export class MutatedCerberusBoss {
                 ctx.fill();
             }
             
-            // 头部
-            const headGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, 28);
-            headGrad.addColorStop(0, '#660000');
-            headGrad.addColorStop(1, '#2a0000');
-            ctx.fillStyle = headGrad;
+            // 头部 (纯色)
+            ctx.fillStyle = '#4a0000';
             ctx.beginPath(); ctx.ellipse(hx, hy, 28, 22, head.angle, 0, Math.PI * 2); ctx.fill();
             
             // 尖耳朵
@@ -542,13 +523,9 @@ export class MutatedZeusBoss {
     draw(ctx) {
         const time = Date.now() / 1000;
         
-        // ===== 暴风雷暴光环 =====
-        const aura = ctx.createRadialGradient(this.x, this.y, this.radius * 0.3, this.x, this.y, this.radius * 3);
-        aura.addColorStop(0, 'rgba(255,180,0,0.6)');
-        aura.addColorStop(0.5, 'rgba(255,100,0,0.3)');
-        aura.addColorStop(1, 'transparent');
-        ctx.fillStyle = aura;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 3, 0, Math.PI * 2); ctx.fill();
+        // ===== 暴风雷暴光环 (简化) =====
+        ctx.fillStyle = 'rgba(255,150,0,0.3)';
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2.2, 0, Math.PI * 2); ctx.fill();
         
         // ===== 旋转雷电环 =====
         ctx.strokeStyle = '#ff6600';
@@ -591,13 +568,8 @@ export class MutatedZeusBoss {
         ctx.fill();
         ctx.strokeStyle = '#ff6600'; ctx.lineWidth = 3; ctx.stroke();
         
-        // ===== 暴君躯体 =====
-        const bodyGrad = ctx.createRadialGradient(this.x - 10, this.y - 15, 0, this.x, this.y, this.radius);
-        bodyGrad.addColorStop(0, '#ffcc00');
-        bodyGrad.addColorStop(0.4, '#cc8800');
-        bodyGrad.addColorStop(0.8, '#4a3000');
-        bodyGrad.addColorStop(1, '#2a1800');
-        ctx.fillStyle = bodyGrad;
+        // ===== 暴君躯体 (纯色) =====
+        ctx.fillStyle = '#cc8800';
         
         ctx.beginPath();
         ctx.ellipse(this.x, this.y - 5, this.radius * 0.9, this.radius * 0.8, 0, 0, Math.PI * 2);
@@ -670,11 +642,8 @@ export class MutatedZeusBoss {
             ctx.stroke();
         }
         
-        // 脸部
-        const faceGrad = ctx.createRadialGradient(this.x, this.y - 28, 0, this.x, this.y - 22, 32);
-        faceGrad.addColorStop(0, '#ddb070');
-        faceGrad.addColorStop(1, '#8b6914');
-        ctx.fillStyle = faceGrad;
+        // 脸部 (纯色)
+        ctx.fillStyle = '#c9a050';
         ctx.beginPath();
         ctx.ellipse(this.x, this.y - 22, 30, 26, 0, 0, Math.PI * 2);
         ctx.fill();

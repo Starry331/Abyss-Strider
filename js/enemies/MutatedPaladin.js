@@ -206,10 +206,8 @@ export class MutatedPaladinBoss {
         const time = Date.now() / 1000, isRage = this.phase === 2;
         // 残影
         this.dashTrail.forEach(t => { ctx.fillStyle = `rgba(153,0,153,${t.life})`; ctx.beginPath(); ctx.arc(t.x, t.y, this.radius * 0.8, 0, Math.PI * 2); ctx.fill(); });
-        // 黑暗光环
-        const aura = ctx.createRadialGradient(this.x, this.y, this.radius * 0.3, this.x, this.y, this.radius * 2.8);
-        aura.addColorStop(0, 'rgba(100,0,100,0.5)'); aura.addColorStop(0.5, 'rgba(50,0,50,0.25)'); aura.addColorStop(1, 'transparent');
-        ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2.8, 0, Math.PI * 2); ctx.fill();
+        // 黑暗光环 (简化)
+        ctx.fillStyle = 'rgba(80,0,80,0.35)'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2); ctx.fill();
         // 黑暗披风
         ctx.fillStyle = '#1a001a'; ctx.beginPath(); ctx.moveTo(this.x - 25, this.y - 10);
         ctx.quadraticCurveTo(this.x - 55 + Math.sin(time * 3) * 10, this.y + 35, this.x - 40, this.y + 65);
@@ -217,18 +215,14 @@ export class MutatedPaladinBoss {
         ctx.quadraticCurveTo(this.x + 55 + Math.sin(time * 3 + 1) * 10, this.y + 35, this.x + 25, this.y - 10);
         ctx.closePath(); ctx.fill();
         ctx.strokeStyle = '#660066'; ctx.lineWidth = 2; ctx.stroke();
-        // 堕落铠甲
-        const body = ctx.createRadialGradient(this.x - 10, this.y - 10, 0, this.x, this.y, this.radius);
-        body.addColorStop(0, '#4a004a'); body.addColorStop(0.5, '#2a002a'); body.addColorStop(1, '#0a000a');
-        ctx.fillStyle = body;  ctx.shadowBlur = isRage ? 35 : 20;
+        // 堕落铠甲 (纯色)
+        ctx.fillStyle = '#3a003a';
         ctx.beginPath(); ctx.ellipse(this.x, this.y, this.radius * 0.85, this.radius * 0.75, 0, 0, Math.PI * 2); ctx.fill(); 
         // 堕落纹饰
         ctx.strokeStyle = '#990099'; ctx.lineWidth = 2; ctx.beginPath();
         ctx.moveTo(this.x - 15, this.y - 20); ctx.lineTo(this.x, this.y + 15); ctx.lineTo(this.x + 15, this.y - 20); ctx.stroke();
-        // 黑暗头盔
-        const helmet = ctx.createRadialGradient(this.x, this.y - 40, 0, this.x, this.y - 35, 30);
-        helmet.addColorStop(0, '#3a003a'); helmet.addColorStop(1, '#0a000a');
-        ctx.fillStyle = helmet; ctx.beginPath(); ctx.ellipse(this.x, this.y - 38, 25, 22, 0, 0, Math.PI * 2); ctx.fill();
+        // 黑暗头盔 (纯色)
+        ctx.fillStyle = '#2a002a'; ctx.beginPath(); ctx.ellipse(this.x, this.y - 38, 25, 22, 0, 0, Math.PI * 2); ctx.fill();
         // 恶魔角
         ctx.fillStyle = '#330033'; ctx.beginPath(); ctx.moveTo(this.x - 20, this.y - 55);
         ctx.quadraticCurveTo(this.x - 25, this.y - 70, this.x - 15, this.y - 75); ctx.lineTo(this.x - 18, this.y - 50); ctx.closePath(); ctx.fill();
@@ -240,9 +234,7 @@ export class MutatedPaladinBoss {
         ctx.ellipse(this.x + 8, this.y - 40, 5, 4, 0, 0, Math.PI * 2); ctx.fill(); 
         // 堕落之剑 Clarent
         ctx.save(); ctx.translate(this.x + 48, this.y - 12); ctx.rotate(-0.4 + Math.sin(time * 3) * 0.15);
-        const sword = ctx.createLinearGradient(0, -85, 0, 20);
-        sword.addColorStop(0, '#660066'); sword.addColorStop(0.5, '#330033'); sword.addColorStop(1, '#1a001a');
-        ctx.fillStyle = sword; 
+        ctx.fillStyle = '#440044'; 
         ctx.beginPath(); ctx.moveTo(0, -90); ctx.lineTo(10, -60); ctx.lineTo(10, 15); ctx.lineTo(-10, 15); ctx.lineTo(-10, -60); ctx.closePath(); ctx.fill();
         ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -85); ctx.lineTo(0, 10); ctx.stroke();
         ctx.fillStyle = '#990099'; ctx.beginPath(); ctx.moveTo(-22, 15); ctx.lineTo(-18, 24); ctx.lineTo(18, 24); ctx.lineTo(22, 15);
