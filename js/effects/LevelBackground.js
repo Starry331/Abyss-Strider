@@ -1,21 +1,46 @@
 /**
- * Level Background Renderer - 增强版
+ * Level Background Renderer - 性能优化版
  * 5个关卡独特背景主题
  */
 
 export class LevelBackground {
     constructor() {
+        // 减少粒子数量以提升性能
         this.snowflakes = [];
         this.sparks = [];
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 25; i++) {
             this.snowflakes.push({ x: Math.random() * 2000, y: Math.random() * 2000, size: Math.random() * 3 + 2, speed: Math.random() * 30 + 20, wobble: Math.random() * Math.PI * 2 });
             this.sparks.push({ x: Math.random() * 2000, y: Math.random() * 2000, vy: -(Math.random() * 40 + 20), life: Math.random(), size: Math.random() * 3 + 1 });
         }
+        // 缓存渐变和常量
+        this.gradientCache = {};
+        this.lastWidth = 0;
+        this.lastHeight = 0;
     }
 
     update(deltaTime) {
-        this.snowflakes.forEach(s => { s.y += s.speed * deltaTime; s.x += Math.sin(s.wobble + Date.now()/1000) * 8 * deltaTime; if (s.y > 2000) { s.y = -10; s.x = Math.random() * 2000; } });
-        this.sparks.forEach(s => { s.y += s.vy * deltaTime; s.life -= deltaTime * 0.5; if (s.life <= 0) { s.y = 2000; s.x = Math.random() * 2000; s.life = 1; } });
+        const time = Date.now() / 1000;
+        for (let i = 0; i < this.snowflakes.length; i++) {
+            const s = this.snowflakes[i];
+            s.y += s.speed * deltaTime;
+            s.x += Math.sin(s.wobble + time) * 8 * deltaTime;
+            if (s.y > 2000) { s.y = -10; s.x = Math.random() * 2000; }
+        }
+        for (let i = 0; i < this.sparks.length; i++) {
+            const s = this.sparks[i];
+            s.y += s.vy * deltaTime;
+            s.life -= deltaTime * 0.5;
+            if (s.life <= 0) { s.y = 2000; s.x = Math.random() * 2000; s.life = 1; }
+        }
+    }
+    
+    // 检查并重建渐变缓存
+    checkCache(ctx, w, h) {
+        if (w !== this.lastWidth || h !== this.lastHeight) {
+            this.gradientCache = {};
+            this.lastWidth = w;
+            this.lastHeight = h;
+        }
     }
 
     draw(ctx, levelData, cameraX, cameraY) {
@@ -157,59 +182,57 @@ export class LevelBackground {
     }
 
     // ==========================================
-    // Level 2: 冰封雪山 - 雪花、冰晶、山峰、极光
+    // Level 2: 冰封雪山 - 雪花、冰晶、山峰、极光 [性能优化]
     // ==========================================
     drawFrozenMountain(ctx, canvas, time) {
         const w = canvas.width, h = canvas.height;
+        this.checkCache(ctx, w, h);
         
-        // 极光渐变天空
-        const sky = ctx.createLinearGradient(0, 0, 0, h);
-        sky.addColorStop(0, '#0a1528');
-        sky.addColorStop(0.3, '#152a45');
-        sky.addColorStop(0.6, '#1a3a5c');
-        sky.addColorStop(1, '#0a1a2c');
-        ctx.fillStyle = sky;
+        // 缓存天空渐变
+        if (!this.gradientCache.frozenSky) {
+            const sky = ctx.createLinearGradient(0, 0, 0, h);
+            sky.addColorStop(0, '#0a1528');
+            sky.addColorStop(0.3, '#152a45');
+            sky.addColorStop(0.6, '#1a3a5c');
+            sky.addColorStop(1, '#0a1a2c');
+            this.gradientCache.frozenSky = sky;
+        }
+        ctx.fillStyle = this.gradientCache.frozenSky;
         ctx.fillRect(0, 0, w, h);
 
-        // 极光效果
-        ctx.globalAlpha = 0.15;
-        for (let i = 0; i < 3; i++) {
-            const auroraY = 60 + i * 40;
+        // 极光效果 - 减少循环复杂度
+        ctx.globalAlpha = 0.12;
+        for (let i = 0; i < 2; i++) {
+            const auroraY = 70 + i * 50;
             const wave = Math.sin(time * 0.5 + i) * 20;
-            const auroraGrad = ctx.createLinearGradient(0, auroraY - 30, 0, auroraY + 50);
-            auroraGrad.addColorStop(0, 'transparent');
-            auroraGrad.addColorStop(0.3, i % 2 === 0 ? '#40ff80' : '#4080ff');
-            auroraGrad.addColorStop(0.7, i % 2 === 0 ? '#8040ff' : '#40ffff');
-            auroraGrad.addColorStop(1, 'transparent');
-            ctx.fillStyle = auroraGrad;
+            ctx.fillStyle = i === 0 ? '#40ff80' : '#4080ff';
             ctx.beginPath();
             ctx.moveTo(0, auroraY + wave);
-            for (let x = 0; x <= w; x += 30) {
+            for (let x = 0; x <= w; x += 50) {
                 ctx.lineTo(x, auroraY + Math.sin(x * 0.02 + time + i) * 25 + wave);
             }
-            ctx.lineTo(w, auroraY + 60);
-            ctx.lineTo(0, auroraY + 60);
+            ctx.lineTo(w, auroraY + 50);
+            ctx.lineTo(0, auroraY + 50);
             ctx.fill();
         }
-        ctx.globalAlpha = 1;
 
-        // 远山 - 雾蒙蒙的轮廓
+        // 远山 - 增大步长
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = '#5a8aac';
         ctx.beginPath();
         ctx.moveTo(0, h);
-        for (let x = 0; x <= w; x += 30) {
+        for (let x = 0; x <= w; x += 50) {
             ctx.lineTo(x, h - 220 - Math.sin(x * 0.008) * 100 - Math.sin(x * 0.02) * 40);
         }
         ctx.lineTo(w, h);
         ctx.fill();
 
-        // 中景雪山 - 带积雪
+        // 中景雪山
         ctx.globalAlpha = 0.35;
         ctx.fillStyle = '#4a7a9c';
         ctx.beginPath();
         ctx.moveTo(0, h);
-        for (let x = 0; x <= w; x += 25) {
+        for (let x = 0; x <= w; x += 40) {
             ctx.lineTo(x, h - 160 - Math.sin(x * 0.012 + 0.5) * 80);
         }
         ctx.lineTo(w, h);
@@ -219,306 +242,213 @@ export class LevelBackground {
         ctx.fillStyle = '#e8f4ff';
         ctx.beginPath();
         ctx.moveTo(0, h);
-        for (let x = 0; x <= w; x += 25) {
-            const baseY = h - 160 - Math.sin(x * 0.012 + 0.5) * 80;
-            ctx.lineTo(x, baseY + 15);
+        for (let x = 0; x <= w; x += 40) {
+            ctx.lineTo(x, h - 145 - Math.sin(x * 0.012 + 0.5) * 80);
         }
-        for (let x = w; x >= 0; x -= 25) {
-            const baseY = h - 160 - Math.sin(x * 0.012 + 0.5) * 80;
-            ctx.lineTo(x, baseY + 35);
+        for (let x = w; x >= 0; x -= 40) {
+            ctx.lineTo(x, h - 125 - Math.sin(x * 0.012 + 0.5) * 80);
         }
         ctx.fill();
         ctx.globalAlpha = 1;
 
-        // 飘落雪花 - 多层次
-        this.snowflakes.forEach((s, i) => {
+        // 飘落雪花 - 批量绘制
+        ctx.fillStyle = '#fff';
+        for (let i = 0; i < this.snowflakes.length; i++) {
+            const s = this.snowflakes[i];
             const sx = (s.x + time * (15 + i % 3 * 5)) % w;
             const sy = s.y % h;
-            const alpha = 0.4 + Math.sin(time * 2 + s.wobble) * 0.3;
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = 0.5;
             ctx.beginPath();
             ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
             ctx.fill();
-            // 雪花闪烁
-            if (i % 5 === 0) {
-                ctx.fillStyle = `rgba(200, 230, 255, ${alpha * 0.5})`;
-                ctx.beginPath();
-                ctx.arc(sx, sy, s.size * 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        });
-        ctx.globalAlpha = 1;
+        }
 
-        // 冰晶 - 更精致
-        for (let i = 0; i < 10; i++) {
-            const cx = (i * 110 + 60) % w;
-            const cy = (i * 85 + 120) % h;
-            const pulse = Math.sin(time * 2 + i) * 0.3 + 0.7;
-            
-            ctx.strokeStyle = `rgba(180, 220, 255, ${0.2 * pulse})`;
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#80c0ff';
-            ctx.shadowBlur = 8;
+        // 冰晶 - 减少数量，移除shadowBlur
+        ctx.globalAlpha = 0.2;
+        ctx.strokeStyle = 'rgba(180, 220, 255, 0.6)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+            const cx = (i * 160 + 80) % w;
+            const cy = (i * 120 + 100) % h;
             for (let j = 0; j < 6; j++) {
                 const a = (Math.PI / 3) * j + time * 0.1;
                 ctx.beginPath();
                 ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + Math.cos(a) * 22, cy + Math.sin(a) * 22);
-                ctx.stroke();
-                // 分支
-                const bx = cx + Math.cos(a) * 14;
-                const by = cy + Math.sin(a) * 14;
-                ctx.beginPath();
-                ctx.moveTo(bx, by);
-                ctx.lineTo(bx + Math.cos(a + 0.5) * 8, by + Math.sin(a + 0.5) * 8);
-                ctx.moveTo(bx, by);
-                ctx.lineTo(bx + Math.cos(a - 0.5) * 8, by + Math.sin(a - 0.5) * 8);
+                ctx.lineTo(cx + Math.cos(a) * 20, cy + Math.sin(a) * 20);
                 ctx.stroke();
             }
-            ctx.shadowBlur = 0;
         }
 
-        // 冰霜边缘 - 上下
-        ctx.globalAlpha = 0.2;
-        const frostTop = ctx.createLinearGradient(0, 0, 0, 100);
-        frostTop.addColorStop(0, '#ffffff');
-        frostTop.addColorStop(1, 'transparent');
-        ctx.fillStyle = frostTop;
-        ctx.fillRect(0, 0, w, 100);
-        
-        const frostBottom = ctx.createLinearGradient(0, h - 60, 0, h);
-        frostBottom.addColorStop(0, 'transparent');
-        frostBottom.addColorStop(1, 'rgba(200, 230, 255, 0.3)');
-        ctx.fillStyle = frostBottom;
-        ctx.fillRect(0, h - 60, w, 60);
-        ctx.globalAlpha = 1;
-
-        // 呼吸般的寒气
-        ctx.globalAlpha = 0.05;
+        // 冰霜边缘
+        ctx.globalAlpha = 0.15;
         ctx.fillStyle = '#ffffff';
-        for (let i = 0; i < 5; i++) {
-            const bx = (time * 20 + i * 200) % (w + 100) - 50;
-            const by = h - 100 + Math.sin(time + i) * 30;
-            ctx.beginPath();
-            ctx.ellipse(bx, by, 60 + Math.sin(time * 2 + i) * 20, 25, 0, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        ctx.fillRect(0, 0, w, 60);
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = '#c8e8ff';
+        ctx.fillRect(0, h - 40, w, 40);
         ctx.globalAlpha = 1;
     }
 
     // ==========================================
-    // Level 3: 地狱回廊 - 滚烫岩浆、火焰、恶魔符文
+    // Level 3: 地狱回廊 - 滚烫岩浆、火焰、恶魔符文 [性能优化]
     // ==========================================
     drawHellCorridor(ctx, canvas, time) {
         const w = canvas.width, h = canvas.height;
+        this.checkCache(ctx, w, h);
         
-        // 炼狱渐变背景
-        const grad = ctx.createRadialGradient(w/2, h, 0, w/2, h/2, h);
-        grad.addColorStop(0, '#4a1a0a');
-        grad.addColorStop(0.4, '#2a0a05');
-        grad.addColorStop(1, '#0a0202');
-        ctx.fillStyle = grad;
+        // 缓存背景渐变
+        if (!this.gradientCache.hellBg) {
+            const grad = ctx.createRadialGradient(w/2, h, 0, w/2, h/2, h);
+            grad.addColorStop(0, '#4a1a0a');
+            grad.addColorStop(0.4, '#2a0a05');
+            grad.addColorStop(1, '#0a0202');
+            this.gradientCache.hellBg = grad;
+        }
+        ctx.fillStyle = this.gradientCache.hellBg;
         ctx.fillRect(0, 0, w, h);
 
-        // 熔岩裂缝 - 发光效果
-        for (let i = 0; i < 5; i++) {
-            const sx = (i * 180 + 80) % w;
-            const pulse = Math.sin(time * 3 + i) * 0.3 + 0.7;
-            
-            // 裂缝光晕
-            ctx.globalAlpha = 0.3 * pulse;
-            const crackGlow = ctx.createLinearGradient(sx - 30, 0, sx + 30, 0);
-            crackGlow.addColorStop(0, 'transparent');
-            crackGlow.addColorStop(0.5, '#ff4400');
-            crackGlow.addColorStop(1, 'transparent');
-            ctx.fillStyle = crackGlow;
-            ctx.fillRect(sx - 30, 0, 60, h);
-            
-            // 裂缝本体
-            ctx.globalAlpha = 0.9;
-            ctx.strokeStyle = `rgb(255, ${100 + Math.sin(time * 4 + i) * 50}, 0)`;
-            ctx.lineWidth = 4;
-            ctx.shadowColor = '#ff6600';
-            ctx.shadowBlur = 20;
+        // 熔岩裂缝 - 简化，移除shadowBlur
+        ctx.globalAlpha = 0.8;
+        ctx.strokeStyle = '#ff4400';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 4; i++) {
+            const sx = (i * 220 + 100) % w;
             ctx.beginPath();
-            ctx.moveTo(sx + Math.sin(i) * 10, 0);
-            for (let y = 0; y < h; y += 20) {
-                ctx.lineTo(sx + Math.sin(y * 0.04 + time * 2 + i) * 20, y);
+            ctx.moveTo(sx, 0);
+            for (let y = 0; y < h; y += 40) {
+                ctx.lineTo(sx + Math.sin(y * 0.04 + time * 2 + i) * 15, y);
             }
             ctx.stroke();
-            ctx.shadowBlur = 0;
         }
-        ctx.globalAlpha = 1;
 
-        // 底部岩浆池 - 滚烫波动
-        const lavaY = h - 80;
+        // 底部岩浆池
+        const lavaY = h - 70;
         
-        // 岩浆光晕
-        const lavaGlow = ctx.createLinearGradient(0, lavaY - 50, 0, h);
-        lavaGlow.addColorStop(0, 'transparent');
-        lavaGlow.addColorStop(0.3, 'rgba(255, 100, 0, 0.2)');
-        lavaGlow.addColorStop(1, 'rgba(255, 50, 0, 0.5)');
-        ctx.fillStyle = lavaGlow;
-        ctx.fillRect(0, lavaY - 50, w, h - lavaY + 50);
+        // 岩浆光晕 - 简单矩形
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#ff4400';
+        ctx.fillRect(0, lavaY - 30, w, h - lavaY + 30);
 
-        // 岩浆表面波动
+        // 岩浆表面波动 - 增大步长
+        ctx.globalAlpha = 1;
         ctx.fillStyle = '#ff4400';
         ctx.beginPath();
         ctx.moveTo(0, h);
-        for (let x = 0; x <= w; x += 15) {
-            const waveY = lavaY + Math.sin(x * 0.03 + time * 3) * 8 + Math.sin(x * 0.05 + time * 2) * 5;
-            ctx.lineTo(x, waveY);
+        for (let x = 0; x <= w; x += 30) {
+            ctx.lineTo(x, lavaY + Math.sin(x * 0.03 + time * 3) * 8);
         }
         ctx.lineTo(w, h);
         ctx.fill();
 
-        // 岩浆高光
+        // 岩浆高光 - 减少数量
         ctx.fillStyle = '#ff8844';
-        for (let x = 0; x < w; x += 40) {
-            const hlY = lavaY + Math.sin(x * 0.04 + time * 3) * 6;
-            ctx.globalAlpha = 0.5 + Math.sin(time * 4 + x * 0.1) * 0.3;
+        ctx.globalAlpha = 0.6;
+        for (let x = 0; x < w; x += 80) {
             ctx.beginPath();
-            ctx.ellipse(x + 20, hlY + 15, 15, 6, 0, 0, Math.PI * 2);
+            ctx.ellipse(x + 40, lavaY + 15, 20, 8, 0, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.globalAlpha = 1;
 
-        // 岩浆气泡
-        for (let i = 0; i < 8; i++) {
-            const bx = (i * 120 + time * 30) % w;
+        // 岩浆气泡 - 减少数量
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = '#ffaa44';
+        for (let i = 0; i < 5; i++) {
+            const bx = (i * 180 + time * 30) % w;
             const bubblePhase = (time * 2 + i * 0.5) % 1;
-            const by = lavaY + 20 - bubblePhase * 40;
-            const bSize = 4 + Math.sin(bubblePhase * Math.PI) * 4;
-            
-            ctx.globalAlpha = 1 - bubblePhase;
-            ctx.fillStyle = '#ffaa44';
+            const by = lavaY + 20 - bubblePhase * 35;
             ctx.beginPath();
-            ctx.arc(bx, by, bSize, 0, Math.PI * 2);
+            ctx.arc(bx, by, 4, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.globalAlpha = 1;
 
-        // 恶魔符文圆环
-        ctx.globalAlpha = 0.15;
+        // 恶魔符文 - 减少数量和复杂度
+        ctx.globalAlpha = 0.12;
         ctx.strokeStyle = '#ff2200';
         ctx.lineWidth = 2;
-        for (let i = 0; i < 4; i++) {
-            const rx = (i * 220 + 120) % w;
-            const ry = (i * 150 + 100) % (h - 100);
-            const rotSpeed = (i % 2 === 0 ? 1 : -1) * 0.3;
-            
+        for (let i = 0; i < 3; i++) {
+            const rx = (i * 280 + 140) % w;
+            const ry = (i * 180 + 120) % (h - 100);
             ctx.save();
             ctx.translate(rx, ry);
-            ctx.rotate(time * rotSpeed + i);
-            
-            // 外圈
+            ctx.rotate(time * 0.3 * (i % 2 === 0 ? 1 : -1));
             ctx.beginPath();
-            ctx.arc(0, 0, 35, 0, Math.PI * 2);
+            ctx.arc(0, 0, 30, 0, Math.PI * 2);
             ctx.stroke();
-            
-            // 五芒星
-            ctx.beginPath();
+            // 简化五芒星
             for (let j = 0; j < 5; j++) {
                 const a = (Math.PI * 2 / 5) * j - Math.PI/2;
-                const na = (Math.PI * 2 / 5) * ((j+2)%5) - Math.PI/2;
-                ctx.moveTo(Math.cos(a)*28, Math.sin(a)*28);
-                ctx.lineTo(Math.cos(na)*28, Math.sin(na)*28);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(a) * 25, Math.sin(a) * 25);
+                ctx.stroke();
             }
-            ctx.stroke();
             ctx.restore();
         }
-        ctx.globalAlpha = 1;
 
-        // 上升的火星和灰烬
-        this.sparks.forEach((s, i) => {
+        // 上升的火星 - 使用缓存的sparks
+        for (let i = 0; i < this.sparks.length; i++) {
+            const s = this.sparks[i];
             const sx = s.x % w;
             const sy = (h + s.y - time * 60) % (h + 50) - 50;
-            ctx.globalAlpha = s.life * 0.8;
-            ctx.fillStyle = i % 3 === 0 ? '#ffcc44' : '#ff6622';
+            ctx.globalAlpha = s.life * 0.7;
+            ctx.fillStyle = '#ff6622';
             ctx.beginPath();
             ctx.arc(sx, sy, s.size, 0, Math.PI * 2);
             ctx.fill();
-        });
-        ctx.globalAlpha = 1;
-
-        // 热浪扭曲效果
-        ctx.globalAlpha = 0.03;
-        ctx.strokeStyle = '#ff8800';
-        ctx.lineWidth = 3;
-        for (let y = lavaY - 100; y > 50; y -= 30) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            for (let x = 0; x <= w; x += 20) {
-                ctx.lineTo(x, y + Math.sin(x * 0.02 + time * 3 + y * 0.01) * 8);
-            }
-            ctx.stroke();
         }
         ctx.globalAlpha = 1;
     }
 
     // ==========================================
-    // Level 4: 奥林匹斯 - 浮动云层、神殿柱、闪电
+    // Level 4: 奥林匹斯 - 浮动云层、神殿柱、闪电 [性能优化]
     // ==========================================
     drawLavaZone(ctx, canvas, time) {
         const w = canvas.width, h = canvas.height;
+        this.checkCache(ctx, w, h);
         
-        // 神圣天空渐变
-        const sky = ctx.createLinearGradient(0, 0, 0, h);
-        sky.addColorStop(0, '#1a2a4a');
-        sky.addColorStop(0.3, '#3a5080');
-        sky.addColorStop(0.6, '#5a80b0');
-        sky.addColorStop(1, '#8ab0d0');
-        ctx.fillStyle = sky;
+        // 缓存天空渐变
+        if (!this.gradientCache.olympusSky) {
+            const sky = ctx.createLinearGradient(0, 0, 0, h);
+            sky.addColorStop(0, '#1a2a4a');
+            sky.addColorStop(0.3, '#3a5080');
+            sky.addColorStop(0.6, '#5a80b0');
+            sky.addColorStop(1, '#8ab0d0');
+            this.gradientCache.olympusSky = sky;
+        }
+        ctx.fillStyle = this.gradientCache.olympusSky;
         ctx.fillRect(0, 0, w, h);
 
-        // 远处云层
-        ctx.globalAlpha = 0.3;
-        for (let i = 0; i < 6; i++) {
-            const cx = (i * 180 + time * 8) % (w + 200) - 100;
-            const cy = 80 + i * 25 + Math.sin(time * 0.5 + i) * 10;
-            ctx.fillStyle = '#ffffff';
+        // 远处云层 - 减少数量
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 4; i++) {
+            const cx = (i * 220 + time * 8) % (w + 200) - 100;
+            const cy = 80 + i * 30;
             ctx.beginPath();
-            ctx.ellipse(cx, cy, 80 + i * 10, 25 + i * 3, 0, 0, Math.PI * 2);
-            ctx.ellipse(cx + 50, cy - 10, 50, 18, 0, 0, Math.PI * 2);
-            ctx.ellipse(cx - 40, cy + 5, 45, 15, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx, cy, 80, 25, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx + 45, cy - 8, 45, 16, 0, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.globalAlpha = 1;
 
-        // 神殿柱子 - 宏伟
+        // 神殿柱子 - 简化渐变
         const pillarPositions = [80, 180, w - 180, w - 80];
-        pillarPositions.forEach((px, i) => {
+        ctx.globalAlpha = 1;
+        pillarPositions.forEach((px) => {
             // 柱子阴影
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            ctx.fillRect(px - 18, 120, 40, h - 160);
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.fillRect(px - 16, 120, 36, h - 160);
             
-            // 柱子主体
-            const pillarGrad = ctx.createLinearGradient(px - 20, 0, px + 20, 0);
-            pillarGrad.addColorStop(0, '#c8c8d0');
-            pillarGrad.addColorStop(0.3, '#f0f0f8');
-            pillarGrad.addColorStop(0.7, '#e8e8f0');
-            pillarGrad.addColorStop(1, '#a8a8b0');
-            ctx.fillStyle = pillarGrad;
-            ctx.fillRect(px - 20, 100, 40, h - 140);
+            // 柱子主体 - 使用纯色代替渐变
+            ctx.fillStyle = '#e0e0e8';
+            ctx.fillRect(px - 18, 100, 36, h - 140);
             
-            // 柱头装饰
+            // 柱头
             ctx.fillStyle = '#d8d8e0';
-            ctx.fillRect(px - 28, 90, 56, 20);
-            ctx.fillRect(px - 24, 80, 48, 15);
+            ctx.fillRect(px - 26, 90, 52, 18);
+            ctx.fillRect(px - 22, 80, 44, 14);
             
             // 柱脚
-            ctx.fillRect(px - 28, h - 50, 56, 20);
-            
-            // 柱子纹理
-            ctx.strokeStyle = 'rgba(150,150,160,0.3)';
-            ctx.lineWidth = 1;
-            for (let y = 120; y < h - 60; y += 40) {
-                ctx.beginPath();
-                ctx.moveTo(px - 18, y);
-                ctx.lineTo(px + 18, y);
-                ctx.stroke();
-            }
+            ctx.fillRect(px - 26, h - 48, 52, 18);
         });
 
         // 神殿顶部
@@ -539,291 +469,175 @@ export class LevelBackground {
         ctx.lineTo(w - 70, 88);
         ctx.stroke();
 
-        // 浮动的近景云
-        for (let i = 0; i < 4; i++) {
-            const cx = (i * 250 + time * 15) % (w + 300) - 150;
-            const cy = h - 80 + Math.sin(time * 0.8 + i) * 15;
-            
-            ctx.globalAlpha = 0.6;
-            ctx.fillStyle = '#ffffff';
+        // 浮动云 - 减少数量
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 3; i++) {
+            const cx = (i * 300 + time * 15) % (w + 250) - 125;
+            const cy = h - 75 + Math.sin(time * 0.8 + i) * 12;
             ctx.beginPath();
-            ctx.ellipse(cx, cy, 100, 30, 0, 0, Math.PI * 2);
-            ctx.ellipse(cx + 60, cy - 15, 60, 22, 0, 0, Math.PI * 2);
-            ctx.ellipse(cx - 50, cy + 8, 55, 20, 0, 0, Math.PI * 2);
-            ctx.ellipse(cx + 30, cy + 12, 45, 18, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx, cy, 90, 28, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx + 50, cy - 12, 50, 18, 0, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.globalAlpha = 1;
 
-        // 闪电效果
-        if (Math.sin(time * 2) > 0.95) {
-            ctx.strokeStyle = '#ffffaa';
+        // 闪电 - 简化，移除shadowBlur
+        if (Math.sin(time * 2) > 0.96) {
+            ctx.globalAlpha = 0.9;
+            ctx.strokeStyle = '#ffffcc';
             ctx.lineWidth = 3;
-            ctx.shadowColor = '#ffffff';
-            ctx.shadowBlur = 20;
-            const lx = w / 2 + Math.sin(time * 10) * 100;
+            const lx = w / 2 + Math.sin(time * 10) * 80;
             ctx.beginPath();
             ctx.moveTo(lx, 30);
-            ctx.lineTo(lx - 20, 80);
-            ctx.lineTo(lx + 10, 80);
-            ctx.lineTo(lx - 30, 150);
-            ctx.lineTo(lx + 5, 150);
-            ctx.lineTo(lx - 40, 220);
+            ctx.lineTo(lx - 15, 80);
+            ctx.lineTo(lx + 8, 80);
+            ctx.lineTo(lx - 25, 150);
             ctx.stroke();
-            ctx.shadowBlur = 0;
             
-            // 闪电闪光
-            ctx.globalAlpha = 0.1;
+            ctx.globalAlpha = 0.08;
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, w, h);
-            ctx.globalAlpha = 1;
         }
 
-        // 金色光粒子
+        // 金色粒子 - 减少数量
         ctx.fillStyle = '#ffd700';
-        for (let i = 0; i < 15; i++) {
-            const px = (Math.sin(time * 0.3 + i * 0.8) * 0.5 + 0.5) * w;
-            const py = (Math.cos(time * 0.25 + i * 1.1) * 0.4 + 0.3) * h;
-            const size = 2 + Math.sin(time * 2 + i) * 1;
-            ctx.globalAlpha = 0.4 + Math.sin(time * 3 + i) * 0.3;
+        for (let i = 0; i < 10; i++) {
+            const px = (Math.sin(time * 0.3 + i * 1.2) * 0.5 + 0.5) * w;
+            const py = (Math.cos(time * 0.25 + i * 1.4) * 0.4 + 0.3) * h;
+            ctx.globalAlpha = 0.4;
             ctx.beginPath();
-            ctx.arc(px, py, size, 0, Math.PI * 2);
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.globalAlpha = 1;
 
         // 地面云雾
-        const groundFog = ctx.createLinearGradient(0, h - 40, 0, h);
-        groundFog.addColorStop(0, 'transparent');
-        groundFog.addColorStop(1, 'rgba(255, 255, 255, 0.4)');
-        ctx.fillStyle = groundFog;
-        ctx.fillRect(0, h - 40, w, 40);
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, h - 35, w, 35);
+        ctx.globalAlpha = 1;
     }
 
     // ==========================================
-    // Level 5: 宏伟圣殿 - 神圣光柱、金色符文、大理石柱
+    // Level 5: 宏伟圣殿 - 神圣光柱、金色符文、大理石柱 [性能优化]
     // ==========================================
     drawTemple(ctx, canvas, time) {
         const w = canvas.width, h = canvas.height;
         const cx = w / 2, cy = h / 2;
+        this.checkCache(ctx, w, h);
         
-        // 神圣紫金渐变背景
-        const grad = ctx.createRadialGradient(cx, cy * 0.6, 0, cx, cy, Math.max(w, h));
-        grad.addColorStop(0, '#4a3a60');
-        grad.addColorStop(0.3, '#2a1a40');
-        grad.addColorStop(0.6, '#1a1030');
-        grad.addColorStop(1, '#0a0518');
-        ctx.fillStyle = grad;
+        // 缓存背景渐变
+        if (!this.gradientCache.templeBg) {
+            const grad = ctx.createRadialGradient(cx, cy * 0.6, 0, cx, cy, Math.max(w, h));
+            grad.addColorStop(0, '#4a3a60');
+            grad.addColorStop(0.3, '#2a1a40');
+            grad.addColorStop(0.6, '#1a1030');
+            grad.addColorStop(1, '#0a0518');
+            this.gradientCache.templeBg = grad;
+        }
+        ctx.fillStyle = this.gradientCache.templeBg;
         ctx.fillRect(0, 0, w, h);
 
-        // 神圣光柱 - 从天而降
-        for (let i = 0; i < 7; i++) {
-            const lx = (i + 0.5) * (w / 7);
-            const pulse = Math.sin(time * 1.5 + i * 0.7) * 0.3 + 0.7;
-            const width = 30 + Math.sin(time * 2 + i) * 5;
-
-            // 光柱外晕
-            ctx.globalAlpha = 0.1 * pulse;
-            const outerGlow = ctx.createLinearGradient(lx, 0, lx, h);
-            outerGlow.addColorStop(0, '#ffd700');
-            outerGlow.addColorStop(0.5, '#ffa500');
-            outerGlow.addColorStop(1, 'transparent');
-            ctx.fillStyle = outerGlow;
-            ctx.fillRect(lx - width * 1.5, 0, width * 3, h);
-            
-            // 光柱核心
-            ctx.globalAlpha = 0.25 * pulse;
-            const innerGlow = ctx.createLinearGradient(lx, 0, lx, h);
-            innerGlow.addColorStop(0, '#ffffff');
-            innerGlow.addColorStop(0.3, '#ffd700');
-            innerGlow.addColorStop(0.7, '#ffaa00');
-            innerGlow.addColorStop(1, 'transparent');
-            ctx.fillStyle = innerGlow;
-            ctx.fillRect(lx - width / 2, 0, width, h);
+        // 神圣光柱 - 减少数量，简化渐变
+        ctx.globalAlpha = 0.15;
+        ctx.fillStyle = '#ffd700';
+        for (let i = 0; i < 5; i++) {
+            const lx = (i + 0.5) * (w / 5);
+            const width = 25;
+            ctx.fillRect(lx - width / 2, 0, width, h * 0.8);
         }
-        ctx.globalAlpha = 1;
 
-        // 宏伟大理石柱
-        const pillarPositions = [60, 140, w - 140, w - 60];
-        pillarPositions.forEach((px, i) => {
+        // 大理石柱 - 简化
+        const pillarPositions = [70, 150, w - 150, w - 70];
+        ctx.globalAlpha = 0.4;
+        pillarPositions.forEach((px) => {
             // 柱子阴影
-            ctx.globalAlpha = 0.3;
             ctx.fillStyle = '#1a1030';
-            ctx.fillRect(px - 16, 50, 36, h - 90);
+            ctx.fillRect(px - 14, 50, 32, h - 90);
             
-            // 柱子主体 - 大理石纹理
-            ctx.globalAlpha = 0.5;
-            const pillarGrad = ctx.createLinearGradient(px - 18, 0, px + 18, 0);
-            pillarGrad.addColorStop(0, '#a8a8c0');
-            pillarGrad.addColorStop(0.2, '#d8d8e8');
-            pillarGrad.addColorStop(0.5, '#f0f0ff');
-            pillarGrad.addColorStop(0.8, '#d0d0e0');
-            pillarGrad.addColorStop(1, '#9898b0');
-            ctx.fillStyle = pillarGrad;
-            ctx.fillRect(px - 18, 40, 36, h - 80);
+            // 柱子主体
+            ctx.fillStyle = '#d0d0e8';
+            ctx.fillRect(px - 16, 40, 32, h - 80);
             
-            // 柱头 - 科林斯风格
+            // 柱头
             ctx.fillStyle = '#e0e0f0';
-            ctx.fillRect(px - 26, 32, 52, 16);
-            ctx.fillRect(px - 22, 24, 44, 12);
-            ctx.fillRect(px - 18, 18, 36, 8);
+            ctx.fillRect(px - 24, 32, 48, 14);
+            ctx.fillRect(px - 20, 24, 40, 10);
             
             // 柱脚
-            ctx.fillRect(px - 26, h - 48, 52, 16);
-            ctx.fillRect(px - 22, h - 36, 44, 8);
-            
-            // 柱子雕刻纹理
-            ctx.strokeStyle = 'rgba(180, 180, 200, 0.4)';
-            ctx.lineWidth = 1;
-            for (let y = 60; y < h - 60; y += 30) {
-                ctx.beginPath();
-                ctx.moveTo(px - 16, y);
-                ctx.lineTo(px + 16, y);
-                ctx.stroke();
-            }
-            // 垂直纹理
-            for (let x = -12; x <= 12; x += 8) {
-                ctx.beginPath();
-                ctx.moveTo(px + x, 50);
-                ctx.lineTo(px + x, h - 50);
-                ctx.stroke();
-            }
+            ctx.fillRect(px - 24, h - 46, 48, 14);
         });
-        ctx.globalAlpha = 1;
 
-        // 金色符文魔法阵 - 三层旋转
-        const rings = [
-            { radius: 200, speed: 0.2, symbols: 16 },
-            { radius: 140, speed: -0.3, symbols: 12 },
-            { radius: 80, speed: 0.5, symbols: 8 }
-        ];
+        // 金色符文魔法阵 - 简化，移除shadowBlur
+        ctx.globalAlpha = 0.15;
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
         
-        rings.forEach((ring, ri) => {
-            ctx.globalAlpha = 0.15 + ri * 0.05;
-            ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#ffd700';
-            ctx.shadowBlur = 10;
-            
-            // 圆环
+        // 三层圆环
+        const radii = [180, 130, 80];
+        radii.forEach((r, ri) => {
             ctx.beginPath();
-            ctx.arc(cx, cy, ring.radius, 0, Math.PI * 2);
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
             ctx.stroke();
             
-            // 符文
-            for (let i = 0; i < ring.symbols; i++) {
-                const angle = (Math.PI * 2 / ring.symbols) * i + time * ring.speed;
-                const rx = cx + Math.cos(angle) * ring.radius;
-                const ry = cy + Math.sin(angle) * ring.radius;
-                
-                ctx.save();
-                ctx.translate(rx, ry);
-                ctx.rotate(angle + Math.PI / 2);
-                
-                // 不同形状的符文
-                if (ri === 0) {
-                    // 菱形
-                    ctx.beginPath();
-                    ctx.moveTo(0, -10);
-                    ctx.lineTo(7, 0);
-                    ctx.lineTo(0, 10);
-                    ctx.lineTo(-7, 0);
-                    ctx.closePath();
-                    ctx.stroke();
-                } else if (ri === 1) {
-                    // 三角
-                    ctx.beginPath();
-                    ctx.moveTo(0, -8);
-                    ctx.lineTo(7, 6);
-                    ctx.lineTo(-7, 6);
-                    ctx.closePath();
-                    ctx.stroke();
-                } else {
-                    // 星形
-                    ctx.beginPath();
-                    for (let j = 0; j < 6; j++) {
-                        const sa = (Math.PI / 3) * j;
-                        ctx.moveTo(0, 0);
-                        ctx.lineTo(Math.cos(sa) * 8, Math.sin(sa) * 8);
-                    }
-                    ctx.stroke();
-                }
-                ctx.restore();
+            // 简化符文 - 只画放射线
+            const numLines = 8 - ri * 2;
+            for (let i = 0; i < numLines; i++) {
+                const angle = (Math.PI * 2 / numLines) * i + time * (ri % 2 === 0 ? 0.2 : -0.3);
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(angle) * (r - 15), cy + Math.sin(angle) * (r - 15));
+                ctx.lineTo(cx + Math.cos(angle) * (r + 15), cy + Math.sin(angle) * (r + 15));
+                ctx.stroke();
             }
-            ctx.shadowBlur = 0;
         });
 
-        // 中心神圣核心
-        ctx.globalAlpha = 0.3;
-        const coreGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 100);
-        coreGlow.addColorStop(0, '#ffffff');
-        coreGlow.addColorStop(0.3, '#ffd700');
-        coreGlow.addColorStop(0.6, '#ff8800');
-        coreGlow.addColorStop(1, 'transparent');
-        ctx.fillStyle = coreGlow;
+        // 中心核心 - 简化
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#ffd700';
         ctx.beginPath();
-        ctx.arc(cx, cy, 100, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 60, 0, Math.PI * 2);
         ctx.fill();
         
         // 核心十字
         ctx.globalAlpha = 0.5;
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 4;
-        ctx.shadowColor = '#ffd700';
-        ctx.shadowBlur = 20;
         ctx.beginPath();
-        ctx.moveTo(cx, cy - 35);
-        ctx.lineTo(cx, cy + 35);
-        ctx.moveTo(cx - 25, cy - 10);
-        ctx.lineTo(cx + 25, cy - 10);
+        ctx.moveTo(cx, cy - 30);
+        ctx.lineTo(cx, cy + 30);
+        ctx.moveTo(cx - 20, cy - 8);
+        ctx.lineTo(cx + 20, cy - 8);
         ctx.stroke();
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
 
-        // 上升的神圣光粒子
-        for (let i = 0; i < 25; i++) {
-            const px = (Math.sin(time * 0.4 + i * 0.5) * 0.4 + 0.5) * w;
-            const py = (h - (time * 40 + i * 50) % (h + 100));
-            const size = 2 + Math.sin(time * 3 + i) * 1.5;
-            const alpha = 0.3 + Math.sin(time * 2 + i) * 0.2;
-            
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = i % 3 === 0 ? '#ffffff' : '#ffd700';
+        // 上升粒子 - 减少数量
+        ctx.fillStyle = '#ffd700';
+        for (let i = 0; i < 15; i++) {
+            const px = (Math.sin(time * 0.4 + i * 0.7) * 0.4 + 0.5) * w;
+            const py = (h - (time * 40 + i * 60) % (h + 80));
+            ctx.globalAlpha = 0.35;
             ctx.beginPath();
-            ctx.arc(px, py, size, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 粒子拖尾
-            ctx.globalAlpha = alpha * 0.3;
-            ctx.beginPath();
-            ctx.arc(px, py + 10, size * 0.7, 0, Math.PI * 2);
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.globalAlpha = 1;
 
-        // 地面神圣地砖
-        ctx.globalAlpha = 0.15;
+        // 地面地砖 - 简化
+        ctx.globalAlpha = 0.1;
         ctx.strokeStyle = '#ffd700';
         ctx.lineWidth = 1;
-        for (let x = 0; x < w; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(0, h - 35);
+        ctx.lineTo(w, h - 35);
+        ctx.stroke();
+        for (let x = 0; x < w; x += 80) {
             ctx.beginPath();
-            ctx.moveTo(x, h - 40);
+            ctx.moveTo(x, h - 35);
             ctx.lineTo(x, h);
             ctx.stroke();
         }
-        ctx.beginPath();
-        ctx.moveTo(0, h - 40);
-        ctx.lineTo(w, h - 40);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
 
-        // 顶部神圣光芒
-        ctx.globalAlpha = 0.1;
-        const topGlow = ctx.createLinearGradient(0, 0, 0, 80);
-        topGlow.addColorStop(0, '#ffd700');
-        topGlow.addColorStop(1, 'transparent');
-        ctx.fillStyle = topGlow;
-        ctx.fillRect(0, 0, w, 80);
+        // 顶部光芒
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(0, 0, w, 60);
         ctx.globalAlpha = 1;
     }
 }

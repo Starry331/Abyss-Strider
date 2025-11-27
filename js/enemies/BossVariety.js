@@ -829,80 +829,53 @@ class MonkeyBoss extends BaseBoss {
         ctx.lineTo(this.x + 5, this.y - 42 + breathe);
         ctx.stroke();
         
-        // 眼睛
-        ctx.fillStyle = '#ffffee';
+        // 眼睛 - 小而邪恶
+        ctx.fillStyle = isRage ? '#ff3300' : '#ffaa00';
         ctx.beginPath();
-        ctx.ellipse(this.x - 7, this.y - 32 + breathe, 6, 7, -0.15, 0, Math.PI * 2);
+        ctx.ellipse(this.x - 7, this.y - 32 + breathe, 4, 3, -0.3, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(this.x + 7, this.y - 32 + breathe, 6, 7, 0.15, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 7, this.y - 32 + breathe, 4, 3, 0.3, 0, Math.PI * 2);
         ctx.fill();
-        // 眼眶
-        ctx.strokeStyle = isRage ? '#4a1010' : '#3a2010';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        // 瞳孔
-        ctx.fillStyle = isRage ? '#ff2200' : '#8b4513';
+        // 竖瞳
+        ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.ellipse(this.x - 6, this.y - 31 + breathe, 3, 5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x - 7, this.y - 32 + breathe, 1.5, 2.5, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(this.x + 8, this.y - 31 + breathe, 3, 5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 7, this.y - 32 + breathe, 1.5, 2.5, 0, 0, Math.PI * 2);
         ctx.fill();
-        // 眼睛高光
-        ctx.fillStyle = '#fff';
+        // 眼睛微光
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.beginPath();
-        ctx.arc(this.x - 8, this.y - 33 + breathe, 2, 0, Math.PI * 2);
+        ctx.arc(this.x - 8, this.y - 33 + breathe, 1, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(this.x + 6, this.y - 33 + breathe, 2, 0, Math.PI * 2);
+        ctx.arc(this.x + 6, this.y - 33 + breathe, 1, 0, Math.PI * 2);
         ctx.fill();
         
         // 鼻子
         ctx.fillStyle = isRage ? '#8a4040' : '#8b6914';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y - 22 + breathe, 8, 5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y - 22 + breathe, 7, 4, 0, 0, Math.PI * 2);
         ctx.fill();
         // 鼻孔
         ctx.fillStyle = '#2a1005';
         ctx.beginPath();
-        ctx.ellipse(this.x - 3, this.y - 21 + breathe, 2.5, 2, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x - 2.5, this.y - 21 + breathe, 2, 1.5, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(this.x + 3, this.y - 21 + breathe, 2.5, 2, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 2.5, this.y - 21 + breathe, 2, 1.5, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 嘴巴
-        ctx.fillStyle = '#1a0505';
+        // 嘴巴 - 紧闭凶狠
+        ctx.strokeStyle = isRage ? '#3a0a0a' : '#2a1005';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y - 12 + breathe, 12, 6, 0, 0.1, Math.PI - 0.1);
-        ctx.fill();
-        
-        // 獠牙
-        ctx.fillStyle = '#ffffee';
-        const fangLen = isRage ? 14 : 10;
-        ctx.beginPath();
-        ctx.moveTo(this.x - 9, this.y - 14 + breathe);
-        ctx.lineTo(this.x - 7, this.y - 14 + fangLen + breathe);
-        ctx.lineTo(this.x - 5, this.y - 14 + breathe);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(this.x + 9, this.y - 14 + breathe);
-        ctx.lineTo(this.x + 7, this.y - 14 + fangLen + breathe);
-        ctx.lineTo(this.x + 5, this.y - 14 + breathe);
-        ctx.closePath();
-        ctx.fill();
-        // 小牙齿
-        for (let i = -2; i <= 2; i++) {
-            if (i === 0) continue;
-            ctx.beginPath();
-            ctx.moveTo(this.x + i * 3 - 1, this.y - 13 + breathe);
-            ctx.lineTo(this.x + i * 3, this.y - 9 + breathe);
-            ctx.lineTo(this.x + i * 3 + 1, this.y - 13 + breathe);
-            ctx.closePath();
-            ctx.fill();
-        }
+        ctx.moveTo(this.x - 10, this.y - 12 + breathe);
+        ctx.quadraticCurveTo(this.x, this.y - 8 + breathe, this.x + 10, this.y - 12 + breathe);
+        ctx.stroke();
         
         // 脸部伤疤
         ctx.strokeStyle = isRage ? '#aa4040' : '#8b4513';

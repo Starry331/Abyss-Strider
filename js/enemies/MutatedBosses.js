@@ -356,52 +356,34 @@ export class MutatedMonkeyBoss {
         ctx.lineTo(this.x + 5, this.y - 42 + breathe);
         ctx.stroke();
         
-        // 邪眼
-        ctx.fillStyle = isRage ? '#ff44ff' : '#dd22dd';
-        ctx.beginPath(); ctx.ellipse(this.x - 7, this.y - 32 + breathe, 6, 7, -0.15, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(this.x + 7, this.y - 32 + breathe, 6, 7, 0.15, 0, Math.PI * 2); ctx.fill();
-        // 瞳孔
+        // 邪眼 - 小而邪恶
+        ctx.fillStyle = isRage ? '#ff00ff' : '#cc00dd';
+        ctx.beginPath(); ctx.ellipse(this.x - 7, this.y - 32 + breathe, 4, 3, -0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 7, this.y - 32 + breathe, 4, 3, 0.3, 0, Math.PI * 2); ctx.fill();
+        // 竖瞳
         ctx.fillStyle = '#110011';
-        ctx.beginPath(); ctx.ellipse(this.x - 6, this.y - 31 + breathe, 2.5, 5, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(this.x + 8, this.y - 31 + breathe, 2.5, 5, 0, 0, Math.PI * 2); ctx.fill();
-        // 眼睛发光
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(this.x - 8, this.y - 33 + breathe, 2, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(this.x + 6, this.y - 33 + breathe, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x - 7, this.y - 32 + breathe, 1.5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 7, this.y - 32 + breathe, 1.5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+        // 眼睛微光
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath(); ctx.arc(this.x - 8, this.y - 33 + breathe, 1, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(this.x + 6, this.y - 33 + breathe, 1, 0, Math.PI * 2); ctx.fill();
         
         // 鼻子
         ctx.fillStyle = isRage ? '#774488' : '#553366';
-        ctx.beginPath(); ctx.ellipse(this.x, this.y - 22 + breathe, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x, this.y - 22 + breathe, 7, 4, 0, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#220022';
-        ctx.beginPath(); ctx.ellipse(this.x - 3, this.y - 21 + breathe, 2.5, 2, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(this.x + 3, this.y - 21 + breathe, 2.5, 2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x - 2.5, this.y - 21 + breathe, 2, 1.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 2.5, this.y - 21 + breathe, 2, 1.5, 0, 0, Math.PI * 2); ctx.fill();
         
-        // 嘴巴
-        ctx.fillStyle = '#110011';
-        ctx.beginPath(); ctx.ellipse(this.x, this.y - 12 + breathe, 12, 6, 0, 0.1, Math.PI - 0.1); ctx.fill();
-        
-        // 獠牙
-        ctx.fillStyle = '#ffffff';
-        const fangLen = isRage ? 16 : 12;
+        // 嘴巴 - 紧闭凶狠
+        ctx.strokeStyle = isRage ? '#330033' : '#220022';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(this.x - 9, this.y - 14 + breathe);
-        ctx.lineTo(this.x - 7, this.y - 14 + fangLen + breathe);
-        ctx.lineTo(this.x - 5, this.y - 14 + breathe);
-        ctx.closePath(); ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(this.x + 9, this.y - 14 + breathe);
-        ctx.lineTo(this.x + 7, this.y - 14 + fangLen + breathe);
-        ctx.lineTo(this.x + 5, this.y - 14 + breathe);
-        ctx.closePath(); ctx.fill();
-        // 小牙齿
-        for (let i = -2; i <= 2; i++) {
-            if (i === 0) continue;
-            ctx.beginPath();
-            ctx.moveTo(this.x + i * 3 - 1, this.y - 13 + breathe);
-            ctx.lineTo(this.x + i * 3, this.y - 9 + breathe);
-            ctx.lineTo(this.x + i * 3 + 1, this.y - 13 + breathe);
-            ctx.closePath(); ctx.fill();
-        }
+        ctx.moveTo(this.x - 10, this.y - 12 + breathe);
+        ctx.quadraticCurveTo(this.x, this.y - 8 + breathe, this.x + 10, this.y - 12 + breathe);
+        ctx.stroke();
         
         // 第三只眼
         ctx.fillStyle = isRage ? '#ff00ff' : '#cc00cc';
