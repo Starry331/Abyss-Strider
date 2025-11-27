@@ -25,8 +25,8 @@ export class BerserkArtemisBoss {
         this.damage = 100; // 增强伤害
         
         // 战斗属性
-        this.telegraphDuration = 0.6; // 预警时间
-        this.attackCooldown = 0.85; // 攻击间隔
+        this.telegraphDuration = 0.65; // 预警时间
+        this.attackCooldown = 0.7; // 一阶段攻击间隔
         this.state = 'IDLE';
         this.timer = 0;
         this.currentSkill = null;
@@ -98,9 +98,13 @@ export class BerserkArtemisBoss {
             'MOONFALL_SLAM',     // 近身防御7
             'STARLIGHT_BURST',   // 近身防御8
             'DIVINE_REPULSE',    // 近身防御9
+            'CRESCENT_SLASH',    // 新月斩（30%概率）
             'LUNAR_EXECUTION',   // 秒杀技1
             'STAR_MOON_DOOM'     // 秒杀技2
         ];
+        
+        // 新月斩释放状态
+        this.isCastingCrescent = false;
         
         // 秒杀技能真空期
         this.executionCooldown = 0;
@@ -170,15 +174,15 @@ export class BerserkArtemisBoss {
         this.breathe = Math.sin(Date.now() / 400) * 2;
         this.moonGlow = (Math.sin(Date.now() / 250) + 1) * 0.5;
         
-        // 三相位切换
+        // 三相位切换: 0.7→0.65→0.60秒
         if (this.hp <= this.maxHp * 0.3 && this.phase < 3) {
             this.phase = 3;
-            this.attackCooldown = 0.45;
-            this.telegraphDuration = 0.35;
+            this.attackCooldown = 0.60;
+            this.telegraphDuration = 0.5;
             console.log('☠️ 阿尔忒弥斯进入绝境阶段！解锁秒杀技能！');
         } else if (this.hp <= this.maxHp * 0.6 && this.phase === 1) {
             this.phase = 2;
-            this.attackCooldown = 0.5;
+            this.attackCooldown = 0.65;
             console.log('☠️ 阿尔忒弥斯进入狂暴阶段！解锁强力技能！');
         }
         
@@ -188,8 +192,8 @@ export class BerserkArtemisBoss {
             return;
         }
         
-        // 状态机
-        if (this.state === 'IDLE') {
+        // 状态机 - 新月斩释放时不移动
+        if (this.state === 'IDLE' && !this.isCastingCrescent) {
             const dx = this.player.x - this.x;
             const dy = this.player.y - this.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
@@ -1031,345 +1035,539 @@ export class BerserkArtemisBoss {
                 break;
                 
             case 'LUNAR_SHIELD':
-                // 月神护盾 - 近身防御高伤爆炸（带预警）
-                // 第一阶段：1.2秒预警
+                // 月神护盾 - 月亮砸下来的近身防御
+                const shieldRadius = 180; // 增大范围
                 this.spawnProjectile({
-                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 150, damage: 0, lifetime: 1.2, maxLife: 1.2, boss: this,
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: shieldRadius, damage: 0, lifetime: 1.5, maxLife: 1.5, boss: this, moonY: -100,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.moonY = -100 + (1 - this.life / this.maxLife) * 150; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        // 危险区域
+                        ctx.fillStyle = `rgba(200,180,255,${0.15 + p * 0.2})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, shieldRadius, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#ccaaff'; ctx.lineWidth = 4; ctx.setLineDash([12, 6]);
+                        ctx.beginPath(); ctx.arc(this.x, this.y, shieldRadius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.setLineDash([]);
+                        // 月亮下落动画
+                        const moonSize = 50 + p * 30;
+                        ctx.fillStyle = `rgba(255,255,200,${0.6 + p * 0.4})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y + this.moonY, moonSize, 0, Math.PI * 2); ctx.fill();
+                        // 月亮阴影
+                        ctx.fillStyle = `rgba(180,180,150,0.5)`;
+                        ctx.beginPath(); ctx.arc(this.x + moonSize * 0.3, this.y + this.moonY, moonSize * 0.8, 0, Math.PI * 2); ctx.fill();
+                        // 月光粒子
+                        for (let i = 0; i < 12; i++) {
+                            const a = (Math.PI * 2 / 12) * i + Date.now() / 200;
+                            const dist = shieldRadius - p * 100;
+                            ctx.fillStyle = `rgba(255,255,200,${p * 0.6})`;
+                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * dist, this.y + Math.sin(a) * dist, 6, 0, Math.PI * 2); ctx.fill();
+                        }
+                        ctx.fillStyle = '#ffeeaa'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌙 月亮坠落！快离开！ 🌙', this.x, this.y - shieldRadius - 20);
+                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px Arial';
+                        ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - shieldRadius + 5);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 50; this.player.screenShake.duration = 1.0; }
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < shieldRadius) this.player.takeDamage ? this.player.takeDamage(dmg * 2.8) : (this.player.hp -= dmg * 2.8);
+                    // 月光爆炸波纹
+                    for (let ring = 0; ring < 4; ring++) {
+                        this.spawnProjectile({
+                            x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, maxRadius: 220, damage: 0, lifetime: 0.6, maxLife: 0.6, ring: ring,
+                            update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.strokeStyle = `rgba(255,255,200,${this.life / this.maxLife})`; ctx.lineWidth = 10 - this.ring * 2; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); }
+                        });
+                    }
+                    // 月光弹幕
+                    for (let i = 0; i < 20; i++) {
+                        const a = (Math.PI * 2 / 20) * i;
+                        this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 380, vy: Math.sin(a) * 380, radius: 14, damage: dmg * 0.6, lifetime: 1.2, color: '#ffeeaa', isEnemy: true });
+                    }
+                }, 1500);
+                break;
+                
+            case 'CRESCENT_BURST':
+                // 新月爆裂 - 新月形月亮快速砸下
+                const crescentR = 150; // 增大范围
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: crescentR, damage: 0, lifetime: 1.0, maxLife: 1.0, boss: this,
                     update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) {
                         const p = 1 - this.life / this.maxLife;
-                        // 危险区域闪烁
-                        ctx.fillStyle = `rgba(255,100,255,${0.15 + Math.sin(Date.now() / 50) * 0.1})`;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 150, 0, Math.PI * 2); ctx.fill();
-                        // 收缩的警告圈
-                        ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 4; ctx.setLineDash([10, 5]);
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 150 - p * 100, 0, Math.PI * 2); ctx.stroke();
-                        ctx.setLineDash([]);
-                        // 能量聚集效果
-                        for (let i = 0; i < 8; i++) {
-                            const a = (Math.PI * 2 / 8) * i + Date.now() / 200;
-                            const dist = 150 - p * 120;
-                            ctx.fillStyle = `rgba(255,150,255,${p * 0.8})`;
-                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * dist, this.y + Math.sin(a) * dist, 8, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = `rgba(255,240,200,${0.15 + p * 0.2})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, crescentR, 0, Math.PI * 2); ctx.fill();
+                        // 新月形动画（4个旋转新月）
+                        for (let i = 0; i < 4; i++) {
+                            const a = (Math.PI / 2) * i + Date.now() / 120;
+                            const cx = this.x + Math.cos(a) * (crescentR - 50);
+                            const cy = this.y + Math.sin(a) * (crescentR - 50);
+                            // 画新月
+                            ctx.fillStyle = `rgba(255,255,180,${0.6 + p * 0.4})`;
+                            ctx.beginPath(); ctx.arc(cx, cy, 25, 0, Math.PI * 2); ctx.fill();
+                            ctx.fillStyle = `rgba(100,80,60,0.7)`;
+                            ctx.beginPath(); ctx.arc(cx + 10, cy, 20, 0, Math.PI * 2); ctx.fill();
                         }
-                        // 警告文字
-                        ctx.fillStyle = '#ff00ff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
-                        ctx.fillText('⚠️ 月神护盾蓄力中！远离Boss！ ⚠️', this.x, this.y - 170);
-                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px Arial';
-                        ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - 145);
+                        ctx.strokeStyle = '#ffeeaa'; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, crescentR - p * 80, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#ffeeaa'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌙 新月爆裂！ 🌙', this.x, this.y - crescentR - 15);
                     }
                 });
-                // 第二阶段：爆炸
                 setTimeout(() => {
-                    // 屏幕抖动
-                    if (this.player.screenShake) { this.player.screenShake.intensity = 35; this.player.screenShake.duration = 0.8; }
-                    // 检测近身伤害
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 35; this.player.screenShake.duration = 0.6; }
                     const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                    if (dist < 150) {
-                        const damage = Math.round(dmg * 2.5); // 高伤害
-                        this.player.takeDamage ? this.player.takeDamage(damage) : (this.player.hp -= damage);
+                    if (dist < crescentR) this.player.takeDamage ? this.player.takeDamage(dmg * 2.2) : (this.player.hp -= dmg * 2.2);
+                    // 6道新月斩
+                    for (let i = 0; i < 6; i++) {
+                        const a = (Math.PI * 2 / 6) * i;
+                        this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 380, vy: Math.sin(a) * 380, radius: 20, damage: dmg * 0.7, lifetime: 1.2, color: '#ffeeaa', isEnemy: true });
                     }
-                    // 爆炸特效
+                }, 1000);
+                break;
+                
+            case 'MOON_REPEL':
+                // 月之斥力 - 满月冲击波
+                const repelR = 140; // 增大范围
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: repelR, damage: 0, lifetime: 1.2, maxLife: 1.2, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        // 满月光环
+                        ctx.fillStyle = `rgba(255,255,220,${0.1 + p * 0.15})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, repelR, 0, Math.PI * 2); ctx.fill();
+                        // 中心满月
+                        ctx.fillStyle = `rgba(255,255,200,${0.5 + p * 0.3})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 40 + p * 20, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = `rgba(200,200,180,0.4)`;
+                        ctx.beginPath(); ctx.arc(this.x + 15, this.y - 10, 25, 0, Math.PI * 2); ctx.fill();
+                        // 月光扩散圈
+                        ctx.strokeStyle = '#ffeeaa'; ctx.lineWidth = 5; ctx.setLineDash([10, 5]);
+                        ctx.beginPath(); ctx.arc(this.x, this.y, repelR - p * 60, 0, Math.PI * 2); ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = '#ffeeaa'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌕 月之斥力！ 🌕', this.x, this.y - repelR - 15);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 38; this.player.screenShake.duration = 0.7; }
+                    const dx = this.player.x - this.x, dy = this.player.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < repelR) {
+                        this.player.takeDamage ? this.player.takeDamage(dmg * 2) : (this.player.hp -= dmg * 2);
+                        const angle = Math.atan2(dy, dx);
+                        this.player.x += Math.cos(angle) * 200;
+                        this.player.y += Math.sin(angle) * 200;
+                    }
+                    // 月光扩散波
                     for (let ring = 0; ring < 3; ring++) {
                         this.spawnProjectile({
-                            x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, maxRadius: 180, damage: 0, lifetime: 0.5, maxLife: 0.5, ring: ring,
+                            x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, maxRadius: 250, damage: 0, lifetime: 0.5, maxLife: 0.5, ring: ring,
                             update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                            draw(ctx) { 
-                                ctx.strokeStyle = `rgba(255,100,255,${this.life / this.maxLife})`; 
-                                ctx.lineWidth = 12 - this.ring * 3;
-                                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
-                            }
-                        });
-                    }
-                    // 向外散射弹幕
-                    for (let i = 0; i < 16; i++) {
-                        const a = (Math.PI * 2 / 16) * i;
-                        this.spawnProjectile({
-                            x: this.x, y: this.y, vx: Math.cos(a) * 400, vy: Math.sin(a) * 400,
-                            radius: 12, damage: dmg * 0.6, lifetime: 1.2, color: '#ff88ff', isEnemy: true
+                            draw(ctx) { ctx.strokeStyle = `rgba(255,255,200,${this.life / this.maxLife})`; ctx.lineWidth = 8 - this.ring * 2; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); }
                         });
                     }
                 }, 1200);
                 break;
                 
-            case 'CRESCENT_BURST':
-                // 新月爆裂 - 快速近身反击
+            case 'ARTEMIS_BARRIER':
+                // 阿尔忒弥斯屏障 - 月相轮转防御
+                const barrierR = 160; // 增大范围
                 this.spawnProjectile({
-                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 120, damage: 0, lifetime: 0.8, maxLife: 0.8, boss: this,
-                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: barrierR, damage: 0, lifetime: 1.6, maxLife: 1.6, boss: this, moonAngle: 0,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.moonAngle += dt * 3; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) {
                         const p = 1 - this.life / this.maxLife;
-                        ctx.fillStyle = `rgba(200,180,255,${0.2 + Math.sin(Date.now() / 40) * 0.1})`;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 120, 0, Math.PI * 2); ctx.fill();
-                        // 新月形状预警
-                        for (let i = 0; i < 4; i++) {
-                            const a = (Math.PI / 2) * i + Date.now() / 150;
-                            ctx.strokeStyle = '#ccaaff'; ctx.lineWidth = 3;
-                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * 60, this.y + Math.sin(a) * 60, 30, a - 1, a + 1); ctx.stroke();
+                        ctx.fillStyle = `rgba(255,255,220,${0.12 + p * 0.15})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, barrierR, 0, Math.PI * 2); ctx.fill();
+                        // 8个旋转月相
+                        for (let i = 0; i < 8; i++) {
+                            const a = (Math.PI * 2 / 8) * i + this.moonAngle;
+                            const mx = this.x + Math.cos(a) * (barrierR - 40);
+                            const my = this.y + Math.sin(a) * (barrierR - 40);
+                            // 月亮
+                            ctx.fillStyle = `rgba(255,255,200,${0.7 + p * 0.3})`;
+                            ctx.beginPath(); ctx.arc(mx, my, 18, 0, Math.PI * 2); ctx.fill();
+                            // 月相阴影
+                            ctx.fillStyle = `rgba(100,80,60,${0.5 + Math.sin(a) * 0.3})`;
+                            ctx.beginPath(); ctx.arc(mx + 6, my, 14, 0, Math.PI * 2); ctx.fill();
                         }
-                        ctx.fillStyle = '#ccaaff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-                        ctx.fillText('⚠️ 新月爆裂！ ⚠️', this.x, this.y - 140);
+                        ctx.strokeStyle = '#ffeeaa'; ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, barrierR - p * 60, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#ffeeaa'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌙 月相屏障！ 🌙', this.x, this.y - barrierR - 15);
+                        ctx.font = 'bold 18px Arial'; ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - barrierR + 10);
                     }
                 });
                 setTimeout(() => {
-                    if (this.player.screenShake) { this.player.screenShake.intensity = 25; this.player.screenShake.duration = 0.5; }
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 40; this.player.screenShake.duration = 0.8; }
                     const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                    if (dist < 120) this.player.takeDamage ? this.player.takeDamage(dmg * 2) : (this.player.hp -= dmg * 2);
-                    // 4道新月斩
+                    if (dist < barrierR) this.player.takeDamage ? this.player.takeDamage(dmg * 2.5) : (this.player.hp -= dmg * 2.5);
+                    // 8道月光飞刃
+                    for (let i = 0; i < 8; i++) {
+                        const a = (Math.PI * 2 / 8) * i;
+                        this.spawnProjectile({ x: this.x + Math.cos(a) * (barrierR - 40), y: this.y + Math.sin(a) * (barrierR - 40), vx: Math.cos(a) * 400, vy: Math.sin(a) * 400, radius: 16, damage: dmg * 0.8, lifetime: 1.2, color: '#ffeeaa', isEnemy: true });
+                    }
+                }, 1600);
+                break;
+                
+            case 'SILVER_NOVA':
+                // 银月新星 - 巨型满月坠落
+                const novaR = 200; // 增大范围
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: novaR, damage: 0, lifetime: 2.0, maxLife: 2.0, boss: this, moonFallY: -150,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.moonFallY = -150 + (1 - this.life / this.maxLife) * 200; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        // 危险区域
+                        ctx.fillStyle = `rgba(255,255,220,${0.1 + p * 0.25})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, novaR, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#ffeeaa'; ctx.lineWidth = 5; ctx.setLineDash([15, 8]);
+                        ctx.beginPath(); ctx.arc(this.x, this.y, novaR, 0, Math.PI * 2); ctx.stroke();
+                        ctx.setLineDash([]);
+                        // 巨型月亮下落
+                        const moonSize = 70 + p * 50;
+                        ctx.fillStyle = `rgba(255,255,200,${0.5 + p * 0.5})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y + this.moonFallY, moonSize, 0, Math.PI * 2); ctx.fill();
+                        // 月球表面纹理
+                        ctx.fillStyle = `rgba(200,200,180,0.4)`;
+                        ctx.beginPath(); ctx.arc(this.x - moonSize * 0.3, this.y + this.moonFallY - moonSize * 0.2, moonSize * 0.3, 0, Math.PI * 2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(this.x + moonSize * 0.4, this.y + this.moonFallY + moonSize * 0.1, moonSize * 0.25, 0, Math.PI * 2); ctx.fill();
+                        // 月光粒子
+                        for (let i = 0; i < 16; i++) {
+                            const a = (Math.PI * 2 / 16) * i + Date.now() / 250;
+                            const d = novaR - p * 150;
+                            ctx.fillStyle = `rgba(255,255,200,${p * 0.7})`;
+                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * d, this.y + Math.sin(a) * d, 6 + p * 4, 0, Math.PI * 2); ctx.fill();
+                        }
+                        ctx.fillStyle = '#ffeeaa'; ctx.font = 'bold 26px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌕 银月坠落！快逃！ 🌕', this.x, this.y - novaR - 25);
+                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px Arial';
+                        ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - novaR);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 60; this.player.screenShake.duration = 1.2; }
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < novaR) this.player.takeDamage ? this.player.takeDamage(dmg * 3.5) : (this.player.hp -= dmg * 3.5);
+                    // 月光冲击波
+                    for (let ring = 0; ring < 5; ring++) {
+                        setTimeout(() => {
+                            this.spawnProjectile({
+                                x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, maxRadius: 300, damage: 0, lifetime: 0.6, maxLife: 0.6,
+                                update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.strokeStyle = `rgba(255,255,200,${this.life / this.maxLife})`; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); }
+                            });
+                        }, ring * 100);
+                    }
+                    // 月光弹幕
+                    for (let i = 0; i < 24; i++) {
+                        const a = (Math.PI * 2 / 24) * i;
+                        this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350, radius: 14, damage: dmg * 0.5, lifetime: 1.5, color: '#ffeeaa', isEnemy: true });
+                    }
+                }, 2000);
+                break;
+                
+            case 'HUNT_COUNTER':
+                // 月影反击 - 月亮快速砸下
+                const counterR = 130; // 增大范围
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: counterR, damage: 0, lifetime: 0.8, maxLife: 0.8, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.fillStyle = `rgba(255,255,220,${0.15 + p * 0.2})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, counterR, 0, Math.PI * 2); ctx.fill();
+                        // 快速月亮
+                        ctx.fillStyle = `rgba(255,255,200,${0.6 + p * 0.4})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y - 80 + p * 100, 35 + p * 15, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#ffeeaa'; ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, counterR - p * 60, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#ffeeaa'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌙 月影反击！ 🌙', this.x, this.y - counterR - 15);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 0.5; }
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < counterR) this.player.takeDamage ? this.player.takeDamage(dmg * 2) : (this.player.hp -= dmg * 2);
+                    // 月光斩击
                     for (let i = 0; i < 4; i++) {
-                        const a = (Math.PI / 2) * i;
-                        this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350, radius: 18, damage: dmg * 0.7, lifetime: 1, color: '#ccaaff', isEnemy: true });
+                        setTimeout(() => {
+                            const a = Math.atan2(this.player.y - this.y, this.player.x - this.x) + (i - 1.5) * 0.35;
+                            for (let j = -1; j <= 1; j++) {
+                                this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a + j * 0.15) * 480, vy: Math.sin(a + j * 0.15) * 480, radius: 12, damage: dmg * 0.5, lifetime: 1, color: '#ffeeaa', isEnemy: true });
+                            }
+                        }, i * 120);
                     }
                 }, 800);
                 break;
                 
-            case 'MOON_REPEL':
-                // 月之斥力 - 击退型防御
-                this.spawnProjectile({
-                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 100, damage: 0, lifetime: 1.0, maxLife: 1.0, boss: this,
-                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                    draw(ctx) {
-                        const p = 1 - this.life / this.maxLife;
-                        ctx.strokeStyle = `rgba(100,200,255,${0.6 + Math.sin(Date.now() / 60) * 0.2})`;
-                        ctx.lineWidth = 8; ctx.setLineDash([15, 8]);
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 100 - p * 50, 0, Math.PI * 2); ctx.stroke();
-                        ctx.setLineDash([]);
-                        ctx.fillStyle = '#66ccff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-                        ctx.fillText('⚠️ 月之斥力！ ⚠️', this.x, this.y - 120);
-                    }
-                });
-                setTimeout(() => {
-                    if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 0.6; }
-                    const dx = this.player.x - this.x, dy = this.player.y - this.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 100) {
-                        this.player.takeDamage ? this.player.takeDamage(dmg * 1.5) : (this.player.hp -= dmg * 1.5);
-                        // 击退玩家
-                        const angle = Math.atan2(dy, dx);
-                        this.player.x += Math.cos(angle) * 150;
-                        this.player.y += Math.sin(angle) * 150;
-                    }
-                    // 扩散波
-                    for (let ring = 0; ring < 2; ring++) {
-                        this.spawnProjectile({
-                            x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, maxRadius: 200, damage: 0, lifetime: 0.4, maxLife: 0.4, ring: ring,
-                            update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                            draw(ctx) { ctx.strokeStyle = `rgba(100,200,255,${this.life / this.maxLife})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); }
-                        });
-                    }
-                }, 1000);
-                break;
-                
-            case 'ARTEMIS_BARRIER':
-                // 阿尔忒弥斯屏障 - 旋转刃防御
-                this.spawnProjectile({
-                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 130, damage: 0, lifetime: 1.5, maxLife: 1.5, boss: this, bladeAngle: 0,
-                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.bladeAngle += dt * 4; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                    draw(ctx) {
-                        ctx.fillStyle = `rgba(255,150,200,${0.15 + Math.sin(Date.now() / 50) * 0.08})`;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 130, 0, Math.PI * 2); ctx.fill();
-                        // 旋转刀刃
-                        for (let i = 0; i < 6; i++) {
-                            const a = (Math.PI * 2 / 6) * i + this.bladeAngle;
-                            ctx.save(); ctx.translate(this.x + Math.cos(a) * 90, this.y + Math.sin(a) * 90); ctx.rotate(a);
-                            ctx.fillStyle = '#ff88cc'; ctx.beginPath(); ctx.moveTo(25, 0); ctx.lineTo(-10, -8); ctx.lineTo(-10, 8); ctx.closePath(); ctx.fill();
-                            ctx.restore();
-                        }
-                        ctx.fillStyle = '#ff88cc'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-                        ctx.fillText('⚠️ 女神屏障！ ⚠️', this.x, this.y - 150);
-                    }
-                });
-                setTimeout(() => {
-                    if (this.player.screenShake) { this.player.screenShake.intensity = 28; this.player.screenShake.duration = 0.7; }
-                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                    if (dist < 130) this.player.takeDamage ? this.player.takeDamage(dmg * 2.2) : (this.player.hp -= dmg * 2.2);
-                    // 6道飞刃
-                    for (let i = 0; i < 6; i++) {
-                        const a = (Math.PI * 2 / 6) * i;
-                        this.spawnProjectile({ x: this.x + Math.cos(a) * 90, y: this.y + Math.sin(a) * 90, vx: Math.cos(a) * 400, vy: Math.sin(a) * 400, radius: 14, damage: dmg * 0.8, lifetime: 1.2, color: '#ff88cc', isEnemy: true });
-                    }
-                }, 1500);
-                break;
-                
-            case 'SILVER_NOVA':
-                // 银光新星 - 超大范围爆炸
-                this.spawnProjectile({
-                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 180, damage: 0, lifetime: 1.8, maxLife: 1.8, boss: this,
-                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                    draw(ctx) {
-                        const p = 1 - this.life / this.maxLife;
-                        ctx.fillStyle = `rgba(220,220,255,${0.1 + p * 0.2})`;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 180, 0, Math.PI * 2); ctx.fill();
-                        // 收缩光环
-                        ctx.strokeStyle = '#ddddff'; ctx.lineWidth = 5;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 180 - p * 150, 0, Math.PI * 2); ctx.stroke();
-                        // 聚集粒子
-                        for (let i = 0; i < 12; i++) {
-                            const a = (Math.PI * 2 / 12) * i + Date.now() / 300;
-                            const d = 180 - p * 160;
-                            ctx.fillStyle = `rgba(255,255,255,${p})`;
-                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * d, this.y + Math.sin(a) * d, 5 + p * 5, 0, Math.PI * 2); ctx.fill();
-                        }
-                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
-                        ctx.fillText('☀️ 银光新星蓄力中！ ☀️', this.x, this.y - 200);
-                        ctx.font = 'bold 18px Arial'; ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - 175);
-                    }
-                });
-                setTimeout(() => {
-                    if (this.player.screenShake) { this.player.screenShake.intensity = 45; this.player.screenShake.duration = 1.0; }
-                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                    if (dist < 180) this.player.takeDamage ? this.player.takeDamage(dmg * 3) : (this.player.hp -= dmg * 3);
-                    // 爆炸波纹
-                    for (let ring = 0; ring < 4; ring++) {
-                        setTimeout(() => {
-                            this.spawnProjectile({
-                                x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, maxRadius: 250, damage: 0, lifetime: 0.5, maxLife: 0.5,
-                                update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                                draw(ctx) { ctx.strokeStyle = `rgba(255,255,255,${this.life / this.maxLife})`; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); }
-                            });
-                        }, ring * 100);
-                    }
-                }, 1800);
-                break;
-                
-            case 'HUNT_COUNTER':
-                // 猎人反击 - 快速近战连击
-                this.spawnProjectile({
-                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 100, damage: 0, lifetime: 0.6, maxLife: 0.6, boss: this,
-                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                    draw(ctx) {
-                        ctx.strokeStyle = `rgba(255,100,100,${0.8})`;
-                        ctx.lineWidth = 4; ctx.setLineDash([8, 4]);
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 100, 0, Math.PI * 2); ctx.stroke();
-                        ctx.setLineDash([]);
-                        ctx.fillStyle = '#ff6666'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
-                        ctx.fillText('⚡ 猎人反击！ ⚡', this.x, this.y - 120);
-                    }
-                });
-                setTimeout(() => {
-                    if (this.player.screenShake) { this.player.screenShake.intensity = 20; this.player.screenShake.duration = 0.4; }
-                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                    if (dist < 100) this.player.takeDamage ? this.player.takeDamage(dmg * 1.8) : (this.player.hp -= dmg * 1.8);
-                    // 3次快速斩击
-                    for (let i = 0; i < 3; i++) {
-                        setTimeout(() => {
-                            const a = Math.atan2(this.player.y - this.y, this.player.x - this.x) + (i - 1) * 0.4;
-                            for (let j = -1; j <= 1; j++) {
-                                this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a + j * 0.2) * 500, vy: Math.sin(a + j * 0.2) * 500, radius: 10, damage: dmg * 0.5, lifetime: 0.8, color: '#ff6666', isEnemy: true });
-                            }
-                        }, i * 150);
-                    }
-                }, 600);
-                break;
-                
             case 'MOONFALL_SLAM':
-                // 月陨冲击 - 跳跃砸地
+                // 月陨冲击 - 巨月砸地
+                const slamR = 170; // 增大范围
                 this.spawnProjectile({
-                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 140, damage: 0, lifetime: 1.3, maxLife: 1.3, boss: this, targetX: this.player.x, targetY: this.player.y,
-                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: slamR, damage: 0, lifetime: 1.5, maxLife: 1.5, boss: this, targetX: this.player.x, targetY: this.player.y, fallY: -120,
+                    update(dt) { this.fallY = -120 + (1 - this.life / this.maxLife) * 170; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) {
                         const p = 1 - this.life / this.maxLife;
                         // 落点预警
-                        ctx.fillStyle = `rgba(200,100,255,${0.15 + p * 0.2})`;
-                        ctx.beginPath(); ctx.arc(this.targetX, this.targetY, 140 - p * 40, 0, Math.PI * 2); ctx.fill();
-                        ctx.strokeStyle = '#cc66ff'; ctx.lineWidth = 4; ctx.setLineDash([12, 6]);
-                        ctx.beginPath(); ctx.arc(this.targetX, this.targetY, 140, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = `rgba(255,255,220,${0.1 + p * 0.25})`;
+                        ctx.beginPath(); ctx.arc(this.targetX, this.targetY, slamR, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#ffeeaa'; ctx.lineWidth = 5; ctx.setLineDash([15, 8]);
+                        ctx.beginPath(); ctx.arc(this.targetX, this.targetY, slamR, 0, Math.PI * 2); ctx.stroke();
                         ctx.setLineDash([]);
-                        ctx.fillStyle = '#cc66ff'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
-                        ctx.fillText('💥 月陨冲击！ 💥', this.targetX, this.targetY - 160);
+                        // 下落的月亮
+                        const moonSize = 55 + p * 35;
+                        ctx.fillStyle = `rgba(255,255,200,${0.5 + p * 0.5})`;
+                        ctx.beginPath(); ctx.arc(this.targetX, this.targetY + this.fallY, moonSize, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = `rgba(200,200,180,0.4)`;
+                        ctx.beginPath(); ctx.arc(this.targetX + moonSize * 0.25, this.targetY + this.fallY, moonSize * 0.7, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = '#ffeeaa'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌙 月陨冲击！ 🌙', this.targetX, this.targetY - slamR - 20);
+                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 18px Arial';
+                        ctx.fillText(`${this.life.toFixed(1)}秒`, this.targetX, this.targetY - slamR + 5);
                     }
                 });
                 const slamTarget = { x: this.player.x, y: this.player.y };
                 setTimeout(() => {
                     this.x = slamTarget.x; this.y = slamTarget.y;
-                    if (this.player.screenShake) { this.player.screenShake.intensity = 40; this.player.screenShake.duration = 0.9; }
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 50; this.player.screenShake.duration = 1.0; }
                     const dist = Math.sqrt((this.player.x - slamTarget.x) ** 2 + (this.player.y - slamTarget.y) ** 2);
-                    if (dist < 140) this.player.takeDamage ? this.player.takeDamage(dmg * 2.5) : (this.player.hp -= dmg * 2.5);
-                    // 冲击波
-                    for (let i = 0; i < 12; i++) {
-                        const a = (Math.PI * 2 / 12) * i;
-                        this.spawnProjectile({ x: slamTarget.x, y: slamTarget.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300, radius: 15, damage: dmg * 0.6, lifetime: 1, color: '#cc66ff', isEnemy: true });
+                    if (dist < slamR) this.player.takeDamage ? this.player.takeDamage(dmg * 2.8) : (this.player.hp -= dmg * 2.8);
+                    // 月光冲击波
+                    for (let i = 0; i < 16; i++) {
+                        const a = (Math.PI * 2 / 16) * i;
+                        this.spawnProjectile({ x: slamTarget.x, y: slamTarget.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350, radius: 16, damage: dmg * 0.6, lifetime: 1.2, color: '#ffeeaa', isEnemy: true });
                     }
-                }, 1300);
+                }, 1500);
                 break;
                 
             case 'STARLIGHT_BURST':
-                // 星光迸发 - 多段小范围爆炸
-                for (let burst = 0; burst < 5; burst++) {
+                // 星月连击 - 多段月亮砸下
+                const burstR = 110; // 增大范围
+                for (let burst = 0; burst < 4; burst++) {
                     setTimeout(() => {
                         this.spawnProjectile({
-                            x: this.x, y: this.y, vx: 0, vy: 0, radius: 80, damage: 0, lifetime: 0.5, maxLife: 0.5, boss: this,
-                            update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            x: this.x, y: this.y, vx: 0, vy: 0, radius: burstR, damage: 0, lifetime: 0.6, maxLife: 0.6, boss: this, moonY: -60,
+                            update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.moonY = -60 + (1 - this.life / this.maxLife) * 80; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                             draw(ctx) {
                                 const p = 1 - this.life / this.maxLife;
-                                ctx.fillStyle = `rgba(255,255,150,${0.3 - p * 0.2})`;
-                                ctx.beginPath(); ctx.arc(this.x, this.y, 80, 0, Math.PI * 2); ctx.fill();
-                                ctx.strokeStyle = '#ffff88'; ctx.lineWidth = 3;
-                                ctx.beginPath(); ctx.arc(this.x, this.y, 80 - p * 60, 0, Math.PI * 2); ctx.stroke();
+                                ctx.fillStyle = `rgba(255,255,220,${0.2 + p * 0.15})`;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, burstR, 0, Math.PI * 2); ctx.fill();
+                                // 小月亮
+                                ctx.fillStyle = `rgba(255,255,200,${0.6 + p * 0.4})`;
+                                ctx.beginPath(); ctx.arc(this.x, this.y + this.moonY, 28 + p * 12, 0, Math.PI * 2); ctx.fill();
+                                ctx.strokeStyle = '#ffeeaa'; ctx.lineWidth = 3;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, burstR - p * 50, 0, Math.PI * 2); ctx.stroke();
                             }
                         });
                         setTimeout(() => {
-                            if (this.player.screenShake) { this.player.screenShake.intensity = 15; this.player.screenShake.duration = 0.3; }
+                            if (this.player.screenShake) { this.player.screenShake.intensity = 22; this.player.screenShake.duration = 0.4; }
                             const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                            if (dist < 80) this.player.takeDamage ? this.player.takeDamage(dmg * 1.2) : (this.player.hp -= dmg * 1.2);
-                            // 星光散射
-                            for (let i = 0; i < 8; i++) {
-                                const a = (Math.PI * 2 / 8) * i + burst * 0.3;
-                                this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350, radius: 8, damage: dmg * 0.4, lifetime: 0.8, color: '#ffff88', isEnemy: true });
+                            if (dist < burstR) this.player.takeDamage ? this.player.takeDamage(dmg * 1.5) : (this.player.hp -= dmg * 1.5);
+                            // 月光散射
+                            for (let i = 0; i < 10; i++) {
+                                const a = (Math.PI * 2 / 10) * i + burst * 0.25;
+                                this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 380, vy: Math.sin(a) * 380, radius: 10, damage: dmg * 0.4, lifetime: 1, color: '#ffeeaa', isEnemy: true });
                             }
-                        }, 500);
-                    }, burst * 600);
+                        }, 600);
+                    }, burst * 700);
                 }
                 break;
                 
             case 'DIVINE_REPULSE':
-                // 神圣斥退 - 终极近身防御
+                // 月神降临 - 终极巨月坠落
+                const divineR = 230; // 增大范围
                 this.spawnProjectile({
-                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 200, damage: 0, lifetime: 2.0, maxLife: 2.0, boss: this, pulsePhase: 0,
-                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.pulsePhase += dt * 3; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: divineR, damage: 0, lifetime: 2.2, maxLife: 2.2, boss: this, moonY: -180, pulsePhase: 0,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.moonY = -180 + (1 - this.life / this.maxLife) * 230; this.pulsePhase += dt * 2.5; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) {
                         const p = 1 - this.life / this.maxLife;
-                        const pulse = Math.sin(this.pulsePhase) * 0.3 + 0.7;
-                        // 多层光环
+                        const pulse = Math.sin(this.pulsePhase) * 0.2 + 0.8;
+                        // 危险区域
+                        ctx.fillStyle = `rgba(255,255,220,${0.1 + p * 0.3})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, divineR, 0, Math.PI * 2); ctx.fill();
+                        // 多层月光环
                         for (let r = 0; r < 3; r++) {
-                            ctx.strokeStyle = `rgba(255,200,255,${pulse * (0.6 - r * 0.15)})`;
+                            ctx.strokeStyle = `rgba(255,255,200,${pulse * (0.5 - r * 0.12)})`;
                             ctx.lineWidth = 6 - r * 1.5;
-                            ctx.beginPath(); ctx.arc(this.x, this.y, 200 - r * 40 - p * 80, 0, Math.PI * 2); ctx.stroke();
+                            ctx.beginPath(); ctx.arc(this.x, this.y, divineR - r * 35 - p * 70, 0, Math.PI * 2); ctx.stroke();
                         }
-                        ctx.fillStyle = `rgba(255,180,255,${0.1 + p * 0.15})`;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, 200, 0, Math.PI * 2); ctx.fill();
-                        // 能量粒子
-                        for (let i = 0; i < 16; i++) {
-                            const a = (Math.PI * 2 / 16) * i + Date.now() / 400;
-                            const d = 200 - p * 180;
-                            ctx.fillStyle = `rgba(255,255,255,${p * pulse})`;
-                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * d, this.y + Math.sin(a) * d, 4 + p * 6, 0, Math.PI * 2); ctx.fill();
+                        // 巨型月亮下落
+                        const moonSize = 90 + p * 60;
+                        ctx.fillStyle = `rgba(255,255,200,${0.4 + p * 0.6})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y + this.moonY, moonSize, 0, Math.PI * 2); ctx.fill();
+                        // 月球纹理
+                        ctx.fillStyle = `rgba(200,200,180,0.5)`;
+                        ctx.beginPath(); ctx.arc(this.x - moonSize * 0.35, this.y + this.moonY - moonSize * 0.15, moonSize * 0.35, 0, Math.PI * 2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(this.x + moonSize * 0.3, this.y + this.moonY + moonSize * 0.2, moonSize * 0.3, 0, Math.PI * 2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(this.x - moonSize * 0.1, this.y + this.moonY + moonSize * 0.35, moonSize * 0.25, 0, Math.PI * 2); ctx.fill();
+                        // 月光粒子
+                        for (let i = 0; i < 20; i++) {
+                            const a = (Math.PI * 2 / 20) * i + Date.now() / 350;
+                            const d = divineR - p * 200;
+                            ctx.fillStyle = `rgba(255,255,200,${p * pulse * 0.8})`;
+                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * d, this.y + Math.sin(a) * d, 5 + p * 7, 0, Math.PI * 2); ctx.fill();
                         }
-                        ctx.fillStyle = '#ffccff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
-                        ctx.fillText('✨ 神圣斥退！远离女神！ ✨', this.x, this.y - 220);
-                        ctx.font = 'bold 20px Arial'; ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - 195);
+                        ctx.fillStyle = '#ffeeaa'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌕 月神降临！快逃！ 🌕', this.x, this.y - divineR - 25);
+                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px Arial';
+                        ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - divineR);
                     }
                 });
                 setTimeout(() => {
-                    if (this.player.screenShake) { this.player.screenShake.intensity = 55; this.player.screenShake.duration = 1.2; }
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 70; this.player.screenShake.duration = 1.5; }
                     const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                    if (dist < 200) {
-                        this.player.takeDamage ? this.player.takeDamage(dmg * 3.5) : (this.player.hp -= dmg * 3.5);
-                        // 强力击退
+                    if (dist < divineR) {
+                        this.player.takeDamage ? this.player.takeDamage(dmg * 4) : (this.player.hp -= dmg * 4);
                         const angle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
-                        this.player.x += Math.cos(angle) * 250;
-                        this.player.y += Math.sin(angle) * 250;
+                        this.player.x += Math.cos(angle) * 300;
+                        this.player.y += Math.sin(angle) * 300;
                     }
-                    // 全方位弹幕
-                    for (let wave = 0; wave < 3; wave++) {
+                    // 月光冲击波
+                    for (let wave = 0; wave < 4; wave++) {
                         setTimeout(() => {
-                            for (let i = 0; i < 24; i++) {
-                                const a = (Math.PI * 2 / 24) * i + wave * 0.13;
-                                this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * (350 + wave * 50), vy: Math.sin(a) * (350 + wave * 50), radius: 10, damage: dmg * 0.5, lifetime: 1.5, color: '#ffccff', isEnemy: true });
+                            this.spawnProjectile({
+                                x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, maxRadius: 350, damage: 0, lifetime: 0.7, maxLife: 0.7,
+                                update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.strokeStyle = `rgba(255,255,200,${this.life / this.maxLife})`; ctx.lineWidth = 12; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); }
+                            });
+                            for (let i = 0; i < 28; i++) {
+                                const a = (Math.PI * 2 / 28) * i + wave * 0.12;
+                                this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * (320 + wave * 50), vy: Math.sin(a) * (320 + wave * 50), radius: 12, damage: dmg * 0.5, lifetime: 1.5, color: '#ffeeaa', isEnemy: true });
                             }
-                        }, wave * 200);
+                        }, wave * 180);
                     }
-                }, 2000);
+                }, 2200);
+                break;
+                
+            case 'CRESCENT_SLASH':
+                // 新月斩 - 3阶段30%概率，向四周发射大量残月弹幕
+                // 30%概率释放检查
+                if (this.phase < 3 || Math.random() > 0.3) {
+                    // 不满足条件，选择其他技能
+                    const fallbackSkills = this.phase3Skills.filter(s => s !== 'CRESCENT_SLASH');
+                    this.currentSkill = fallbackSkills[Math.floor(Math.random() * fallbackSkills.length)];
+                    this.executeAttack();
+                    return;
+                }
+                
+                // 释放状态 - boss停止移动
+                this.isCastingCrescent = true;
+                const slashDuration = 2.0; // 总释放时间
+                
+                // 预警动画
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 350, damage: 0, lifetime: slashDuration, maxLife: slashDuration, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        // 危险区域扩散
+                        ctx.fillStyle = `rgba(255,200,100,${0.08 + p * 0.1})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 100 + p * 250, 0, Math.PI * 2); ctx.fill();
+                        // 箭头预警 (8个方向)
+                        for (let i = 0; i < 8; i++) {
+                            const a = (Math.PI * 2 / 8) * i;
+                            const dist = 80 + p * 200;
+                            const ax = this.x + Math.cos(a) * dist;
+                            const ay = this.y + Math.sin(a) * dist;
+                            // 箭头
+                            ctx.save();
+                            ctx.translate(ax, ay);
+                            ctx.rotate(a);
+                            ctx.fillStyle = `rgba(255,180,80,${0.5 + p * 0.5})`;
+                            ctx.beginPath();
+                            ctx.moveTo(25, 0);
+                            ctx.lineTo(-15, -12);
+                            ctx.lineTo(-8, 0);
+                            ctx.lineTo(-15, 12);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.restore();
+                        }
+                        // 中心蓄力月亮
+                        const moonSize = 40 + p * 30;
+                        ctx.fillStyle = `rgba(255,230,150,${0.6 + p * 0.4})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, moonSize, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = `rgba(200,180,100,0.5)`;
+                        ctx.beginPath(); ctx.arc(this.x + moonSize * 0.3, this.y, moonSize * 0.7, 0, Math.PI * 2); ctx.fill();
+                        // 警告文字
+                        ctx.fillStyle = '#ffcc00'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠️ 请远离Boss！ ⚠️', this.x, this.y - 120);
+                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px Arial';
+                        ctx.fillText(`新月斩蓄力中 ${this.life.toFixed(1)}秒`, this.x, this.y - 90);
+                    }
+                });
+                
+                // 屏幕抖动
+                if (this.player.screenShake) { this.player.screenShake.intensity = 15; this.player.screenShake.duration = slashDuration; }
+                
+                // 释放弹幕 (分多波)
+                const waveCount = 5;
+                for (let wave = 0; wave < waveCount; wave++) {
+                    setTimeout(() => {
+                        // 每波屏幕抖动
+                        if (this.player.screenShake) { this.player.screenShake.intensity = 25 + wave * 5; this.player.screenShake.duration = 0.4; }
+                        
+                        // 每波发射残月弹幕
+                        const bulletCount = 12 + wave * 2;
+                        for (let i = 0; i < bulletCount; i++) {
+                            const baseAngle = (Math.PI * 2 / bulletCount) * i + wave * 0.15;
+                            const speed = 280 + wave * 30;
+                            const bx = this.x, by = this.y;
+                            
+                            // 残月形弹幕
+                            this.spawnProjectile({
+                                x: bx, y: by, 
+                                vx: Math.cos(baseAngle) * speed, 
+                                vy: Math.sin(baseAngle) * speed,
+                                radius: 22, damage: dmg * 0.6, lifetime: 2.5, maxLife: 2.5, 
+                                rotation: baseAngle, isEnemy: true, startX: bx, startY: by, maxDist: 450,
+                                update(dt) { 
+                                    this.x += this.vx * dt; 
+                                    this.y += this.vy * dt; 
+                                    this.life -= dt;
+                                    // 远距离消失
+                                    const traveled = Math.sqrt((this.x - this.startX) ** 2 + (this.y - this.startY) ** 2);
+                                    if (traveled > this.maxDist || this.life <= 0) this.markedForDeletion = true;
+                                },
+                                draw(ctx) {
+                                    const alpha = Math.min(1, this.life / this.maxLife * 2);
+                                    ctx.save();
+                                    ctx.translate(this.x, this.y);
+                                    ctx.rotate(this.rotation + Math.PI / 2);
+                                    // 残月形状
+                                    ctx.fillStyle = `rgba(255,230,150,${alpha})`;
+                                    ctx.beginPath();
+                                    ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                                    ctx.fill();
+                                    // 阴影部分形成残月
+                                    ctx.fillStyle = `rgba(80,60,30,${alpha * 0.8})`;
+                                    ctx.beginPath();
+                                    ctx.arc(8, 0, 14, 0, Math.PI * 2);
+                                    ctx.fill();
+                                    // 发光效果
+                                    ctx.strokeStyle = `rgba(255,200,100,${alpha * 0.6})`;
+                                    ctx.lineWidth = 2;
+                                    ctx.beginPath();
+                                    ctx.arc(0, 0, 20, 0, Math.PI * 2);
+                                    ctx.stroke();
+                                    ctx.restore();
+                                }
+                            });
+                        }
+                    }, (slashDuration * 1000 / waveCount) * wave + 400);
+                }
+                
+                // 释放完成后恢复移动
+                setTimeout(() => {
+                    this.isCastingCrescent = false;
+                    // 最终爆发屏幕抖动
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 45; this.player.screenShake.duration = 0.8; }
+                }, slashDuration * 1000 + 500);
                 break;
         }
     }

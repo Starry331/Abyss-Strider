@@ -46,7 +46,7 @@ export class BossRushScene {
         this.pickups = [];
         this.pickupSpawnTimer = 0;
         this.pickupSpawnInterval = 5; // 每5秒尝试生成
-        this.healthPackChance = 0.32; // 血包概率32%（小幅提升）
+        this.healthPackChance = 0.38; // 血包概率38%
         this.buffChance = 0.15; // 限时buff概率15%
         
         this.initBackground();
