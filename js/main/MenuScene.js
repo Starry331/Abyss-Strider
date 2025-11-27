@@ -321,7 +321,7 @@ export class MenuScene {
         
         bossData.forEach(boss => {
             const card = document.createElement('div');
-            const isWide = boss.wideImage && boss.unlocked;
+            const isWide = boss.wideImage; // 宽图无论解锁与否都显示16:9
             card.className = `gallery-card ${boss.unlocked ? '' : 'locked'} ${isWide ? 'wide' : ''}`;
             
             const levelText = boss.isMutated ? `Lv${boss.level} 异化` : `Lv${boss.level}`;
@@ -345,11 +345,11 @@ export class MenuScene {
                 <div class="gallery-title">${boss.title}</div>
                 ${boss.isMutated ? '<div class="gallery-mutated">⚡ 异化形态</div>' : ''}
                 <div class="gallery-kills">${killText}</div>
-                ${isWide ? '<div class="gallery-preview-hint">点击查看大图</div>' : ''}
+                ${isWide && boss.unlocked ? '<div class="gallery-preview-hint">点击查看大图</div>' : ''}
             `;
             
-            // Lv6-Lv7支持大图预览
-            if (isWide) {
+            // 解锁的宽图支持大图预览
+            if (isWide && boss.unlocked) {
                 card.addEventListener('click', () => this.showImagePreview(boss));
             }
             
