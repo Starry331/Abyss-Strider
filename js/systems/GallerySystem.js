@@ -22,8 +22,8 @@ export class GallerySystem {
             { id: 'zeus', level: 4, name: '天穹之王·宙斯', title: 'Zeus', isMutated: false, image: 'zeus.png', lockedImage: 'Zeus locked.png' },
             { id: 'zeus_mutated', level: 4, name: '暴君宙斯', title: 'Tyrant Zeus', isMutated: true, image: 'evil zeus.png', lockedImage: 'Zeus locked.png' },
             // Lv5
-            { id: 'arthur', level: 5, name: '圣剑王·亚瑟', title: 'King Arthur', isMutated: false, image: 'asur.PNG', lockedImage: 'Zeus locked.png' },
-            { id: 'arthur_mutated', level: 5, name: '堕落骑士·莫德雷德', title: 'Mordred', isMutated: true, image: 'evil asur.PNG', lockedImage: 'Zeus locked.png' },
+            { id: 'arthur', level: 5, name: '圣剑王·亚瑟', title: 'King Arthur', isMutated: false, image: 'asur.PNG', lockedImage: 'asur lock.PNG' },
+            { id: 'arthur_mutated', level: 5, name: '堕落骑士·莫德雷德', title: 'Mordred', isMutated: true, image: 'evil asur.PNG', lockedImage: 'asur lock.PNG' },
             // Lv6 (Boss战专属) - 16:9大图
             { id: 'poseidon', level: 6, name: '鬼化波塞冬', title: 'Ghost Poseidon', isMutated: false, image: 'bsd.PNG', wideImage: true, lockedImage: 'bsd locked.PNG' },
             // Lv7 (Boss战专属) - 16:9大图
