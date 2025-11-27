@@ -1,4 +1,4 @@
-// 画廊系统 - Boss图鉴
+// 画廊系统 - Boss图鉴 v1.1
 export class GallerySystem {
     constructor() {
         this.storageKey = 'abyssStrider_bossKills';
