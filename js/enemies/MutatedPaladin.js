@@ -53,11 +53,13 @@ export class MutatedPaladinBoss {
                 }); } break;
             case 'SHADOW_DASH': const target = { ...this.dashTarget };
                 // 削弱：5段冲刺，间隔更长，碰撞范围更小
+                const player = this.player; // 保存引用
                 for (let i = 0; i < 5; i++) { setTimeout(() => {
+                    if (!player || !this.player) return; // 安全检查
                     this.dashTrail.push({ x: this.x, y: this.y, life: 0.5 });
                     this.x += (target.x - this.x) / (5 - i); this.y += (target.y - this.y) / (5 - i);
-                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                    if (dist < 45) this.player.takeDamage(this.calcDamage(this.damage * 0.9).damage);
+                    const dist = Math.sqrt((player.x - this.x) ** 2 + (player.y - this.y) ** 2);
+                    if (dist < 45 && player.hp) player.hp -= this.calcDamage(this.damage * 0.9).damage;
                 }, i * 60); }
                 // 削弱：6个投射物，伤害降低
                 setTimeout(() => { for (let j = 0; j < 6; j++) { const sa = (Math.PI * 2 / 6) * j;
@@ -93,9 +95,10 @@ export class MutatedPaladinBoss {
             case 'DARK_VORTEX': this.combatSystem.spawnProjectile({ x: this.player.x, y: this.player.y, radius: 180, damage: 0, owner: 'enemy', life: 3, maxLife: 3,
                 player: this.player, dmg: this.damage * 0.4,
                 update(dt) { this.life -= dt;
+                    if (!this.player) return;
                     const dx = this.x - this.player.x, dy = this.y - this.player.y, dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist > 15 && dist < this.radius) { this.player.x += (dx / dist) * 100 * dt; this.player.y += (dy / dist) * 100 * dt;
-                        if (Math.random() < dt * 2) this.player.takeDamage(this.dmg); }
+                        if (Math.random() < dt * 2 && this.player.hp) this.player.hp -= this.dmg; }
                     if (this.life <= 0) this.markedForDeletion = true; },
                 draw(ctx) { const time = Date.now() / 1000, alpha = this.life / this.maxLife;
                     ctx.fillStyle = `rgba(51,0,51,${alpha * 0.5})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
@@ -103,7 +106,8 @@ export class MutatedPaladinBoss {
                         ctx.setLineDash([10, 5]); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius - r * 30, time * 5 + r, time * 5 + r + Math.PI * 1.6); ctx.stroke(); }
                     ctx.setLineDash([]); }
             }); break;
-            case 'CURSE_MARK': for (let i = 0; i < 5; i++) { const mx = this.player.x + (Math.random() - 0.5) * 300, my = this.player.y + (Math.random() - 0.5) * 300;
+            case 'CURSE_MARK': const cursePlayer = this.player;
+                for (let i = 0; i < 5; i++) { const mx = this.player.x + (Math.random() - 0.5) * 300, my = this.player.y + (Math.random() - 0.5) * 300;
                 this.combatSystem.spawnProjectile({ x: mx, y: my, radius: 50, damage: 0, owner: 'enemy', life: 1.5, maxLife: 1.5, dmg: this.damage * 1.5,
                     update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) { const alpha = this.life / this.maxLife, prog = 1 - alpha;
@@ -111,8 +115,10 @@ export class MutatedPaladinBoss {
                         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * prog, 0, Math.PI * 2); ctx.stroke();
                         if (prog > 0.9) { ctx.fillStyle = `rgba(255,0,255,${(prog - 0.9) * 10})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); } }
                 });
-                setTimeout(() => { const dist = Math.sqrt((this.player.x - mx) ** 2 + (this.player.y - my) ** 2);
-                    if (dist < 60) this.player.takeDamage(this.damage * 1.5); }, 1500); } break;
+                const curseDmg = this.damage * 1.5;
+                setTimeout(() => { if (!cursePlayer || !cursePlayer.hp) return;
+                    const dist = Math.sqrt((cursePlayer.x - mx) ** 2 + (cursePlayer.y - my) ** 2);
+                    if (dist < 60) cursePlayer.hp -= curseDmg; }, 1500); } break;
             case 'MORDRED_FURY': if (this.player.screenShake) { this.player.screenShake.intensity = 25; this.player.screenShake.duration = 3; }
                 for (let w = 0; w < 5; w++) { setTimeout(() => { for (let i = 0; i < 14; i++) { const a = (Math.PI * 2 / 14) * i + w * 0.15;
                     this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * (380 + w * 40), vy: Math.sin(a) * (380 + w * 40),
@@ -124,8 +130,9 @@ export class MutatedPaladinBoss {
             case 'DARK_APOCALYPSE': if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 4; }
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 250, damage: 0, owner: 'enemy', life: 2, maxLife: 2,
                     player: this.player, dmg: this.damage * 0.6,
-                    update(dt) { this.life -= dt; const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                        if (dist < this.radius && Math.random() < dt * 3) this.player.takeDamage(this.dmg);
+                    update(dt) { this.life -= dt; if (!this.player) return;
+                        const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                        if (dist < this.radius && Math.random() < dt * 3 && this.player.hp) this.player.hp -= this.dmg;
                         if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) { const time = Date.now() / 1000, alpha = this.life / this.maxLife;
                         ctx.fillStyle = `rgba(30,0,30,${alpha * 0.6})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
