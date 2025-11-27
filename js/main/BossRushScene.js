@@ -1002,25 +1002,26 @@ export class BossRushScene {
             
             // 检查玩家投射物对Boss的伤害
             this.combatSystem.projectiles.forEach(proj => {
-                if (!proj.isEnemy && proj.lifetime > 0) {
+                if (proj.owner !== 'enemy' && !proj.isEnemy && !proj.markedForDeletion) {
                     const dx = this.activeBoss.x - proj.x;
                     const dy = this.activeBoss.y - proj.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < proj.radius + this.activeBoss.radius) {
-                        this.activeBoss.hp -= proj.damage;
-                        proj.lifetime = 0; // 销毁投射物
+                    if (dist < (proj.radius || 10) + (this.activeBoss.radius || 50)) {
+                        this.activeBoss.hp -= (proj.damage || 10);
+                        proj.markedForDeletion = true;
+                        proj.lifetime = 0;
                     }
                 }
             });
             
             // 检查Boss投射物对玩家的伤害
             this.combatSystem.projectiles.forEach(proj => {
-                if (proj.isEnemy && proj.lifetime > 0) {
+                if ((proj.owner === 'enemy' || proj.isEnemy) && !proj.markedForDeletion) {
                     const dx = this.player.x - proj.x;
                     const dy = this.player.y - proj.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < proj.radius + this.player.radius) {
-                        proj.lifetime = 0;
+                    if (dist < (proj.radius || 10) + (this.player.radius || 15)) {
+                        proj.markedForDeletion = true;
                         
                         // 无敌时间检测
                         if (this.player.invincibleTime && this.player.invincibleTime > 0) {
