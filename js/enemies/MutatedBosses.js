@@ -1,6 +1,198 @@
 /**
- * 异化Boss系统 - Lv2-Lv4
+ * 异化Boss系统 - Lv1-Lv4
  */
+
+// Lv1 异化猴王 - 0.9倍血量, 1.1倍伤害
+export class MutatedMonkeyBoss {
+    constructor(x, y, player, combatSystem) {
+        this.x = x; this.y = y; this.player = player; this.combatSystem = combatSystem;
+        this.level = 1; this.name = '噬魂猿魔'; this.isMutated = true;
+        this.maxHp = Math.round(300 * 0.9); this.hp = this.maxHp;
+        this.radius = 48; this.color = '#4a0080';
+        this.damage = Math.round(15 * 1.1);
+        this.telegraphDuration = 1.1; this.attackCooldown = 1.5;
+        this.state = 'IDLE'; this.timer = 0; this.currentSkill = null; this.phase = 1;
+        this.dashTarget = { x: 0, y: 0 };
+        this.skills = ['SHADOW_DASH', 'SOUL_THROW', 'DARK_WHIP', 'VOID_LEAP', 'CURSE_TRAP', 'SOUL_RAIN'];
+        this.phase2Skills = [...this.skills, 'DARK_FRENZY', 'DEMON_RAGE'];
+    }
+    update(deltaTime) {
+        if (this.state === 'IDLE') {
+            const dx = this.player.x - this.x, dy = this.player.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const spd = this.phase === 2 ? 75 : 55;
+            if (dist > 200) { this.x += (dx / dist) * spd * deltaTime; this.y += (dy / dist) * spd * deltaTime; }
+        }
+        switch (this.state) {
+            case 'IDLE': this.timer += deltaTime;
+                if (this.timer >= this.attackCooldown) { this.timer = 0; this.state = 'TELEGRAPH';
+                    const skills = this.phase === 2 ? this.phase2Skills : this.skills;
+                    this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
+                    if (['SHADOW_DASH', 'VOID_LEAP'].includes(this.currentSkill)) 
+                        this.dashTarget = { x: this.player.x, y: this.player.y };
+                } break;
+            case 'TELEGRAPH': this.timer += deltaTime;
+                if (this.timer >= this.telegraphDuration) { this.timer = 0; this.state = 'ATTACK'; this.executeAttack(); } break;
+            case 'ATTACK': this.timer += deltaTime;
+                if (this.timer >= 0.5) { this.timer = 0; this.state = 'IDLE'; } break;
+        }
+        if (this.hp < this.maxHp * 0.5 && this.phase === 1) { this.phase = 2; this.telegraphDuration = 0.9; }
+    }
+    executeAttack() {
+        const angle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+        const dmg = this.damage;
+        switch (this.currentSkill) {
+            case 'SHADOW_DASH':
+                this.x = this.dashTarget.x; this.y = this.dashTarget.y;
+                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 70, damage: dmg, owner: 'enemy', life: 0.3, maxLife: 0.3,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { ctx.fillStyle = `rgba(80,0,120,${this.life/this.maxLife*0.6})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                }); break;
+            case 'SOUL_THROW':
+                for (let i = 0; i < 5; i++) { const a = angle + (i - 2) * 0.25;
+                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320, radius: 10, damage: dmg, owner: 'enemy',
+                        update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
+                        draw(ctx) { ctx.fillStyle = '#8000ff'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                    }); } break;
+            case 'DARK_WHIP':
+                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 90, damage: dmg + 3, owner: 'enemy', life: 0.35, maxLife: 0.35,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const a = this.life / this.maxLife; ctx.strokeStyle = `rgba(128,0,255,${a})`; ctx.lineWidth = 12;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, -(1-a)*Math.PI, (1-a)*Math.PI); ctx.stroke(); }
+                }); break;
+            case 'VOID_LEAP':
+                setTimeout(() => { this.x = this.dashTarget.x; this.y = this.dashTarget.y;
+                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 110, damage: dmg + 5, owner: 'enemy', life: 0.4, maxLife: 0.4,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { const a = this.life / this.maxLife; ctx.fillStyle = `rgba(60,0,100,${a*0.5})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius*(1-a*0.3), 0, Math.PI * 2); ctx.fill(); }
+                    }); }, 250); break;
+            case 'CURSE_TRAP':
+                for (let i = 0; i < 3; i++) { const tx = this.player.x + (Math.random() - 0.5) * 140, ty = this.player.y + (Math.random() - 0.5) * 140;
+                    setTimeout(() => { this.combatSystem.spawnProjectile({ x: tx, y: ty, radius: 55, damage: dmg - 2, owner: 'enemy', life: 2.5, maxLife: 2.5,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { const a = Math.min(1, this.life / this.maxLife * 2); ctx.fillStyle = `rgba(80,0,80,${a*0.4})`; ctx.strokeStyle = `rgba(150,0,150,${a})`;
+                            ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+                    }); }, i * 150); } break;
+            case 'SOUL_RAIN':
+                for (let i = 0; i < 6; i++) { const rx = this.player.x + (Math.random() - 0.5) * 200, ry = this.player.y + (Math.random() - 0.5) * 200;
+                    setTimeout(() => { this.combatSystem.spawnProjectile({ x: rx, y: ry, radius: 35, damage: dmg, owner: 'enemy', life: 0.6, maxLife: 0.6,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { const a = this.life / this.maxLife; ctx.fillStyle = `rgba(100,0,150,${a*0.7})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                    }); }, i * 80); } break;
+            case 'DARK_FRENZY':
+                for (let i = 0; i < 8; i++) { setTimeout(() => { const fa = (Math.PI * 2 / 8) * i;
+                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(fa) * 420, vy: Math.sin(fa) * 420, radius: 9, damage: dmg, owner: 'enemy',
+                        update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
+                        draw(ctx) { ctx.fillStyle = '#a000ff'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                    }); }, i * 80); } break;
+            case 'DEMON_RAGE':
+                this.x += Math.cos(angle) * 180; this.y += Math.sin(angle) * 180;
+                for (let w = 0; w < 3; w++) { setTimeout(() => {
+                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 100 + w * 30, damage: w === 0 ? dmg + 8 : 0, owner: 'enemy', life: 0.5, maxLife: 0.5,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { const a = this.life / this.maxLife; ctx.strokeStyle = `rgba(150,0,200,${a*0.8})`; ctx.lineWidth = 4;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - a * 0.3), 0, Math.PI * 2); ctx.stroke(); }
+                    }); }, w * 120); } break;
+        }
+    }
+    takeDamage(amount) { this.hp -= amount; if (this.hp <= 0) this.hp = 0; }
+    draw(ctx) {
+        const time = Date.now() / 1000;
+        const isRage = this.phase === 2;
+        
+        // 暗紫邪恶光环
+        ctx.fillStyle = isRage ? 'rgba(120,0,180,0.3)' : 'rgba(80,0,120,0.2)';
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2); ctx.fill();
+        
+        // 灵魂粒子
+        for (let i = 0; i < 6; i++) {
+            const pa = time * 2 + i * 1.05;
+            const px = this.x + Math.cos(pa) * (this.radius + 15);
+            const py = this.y + Math.sin(pa) * (this.radius + 15) - Math.sin(time * 4 + i) * 10;
+            ctx.fillStyle = `rgba(180,0,255,${0.6 + Math.sin(time * 5 + i) * 0.3})`;
+            ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+        }
+        
+        // 恶魔尾巴
+        ctx.strokeStyle = isRage ? '#6a0099' : '#3a0066';
+        ctx.lineWidth = 10; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(this.x + this.radius * 0.6, this.y + 12);
+        ctx.bezierCurveTo(this.x + this.radius + 15, this.y + 25 + Math.sin(time * 3) * 8, this.x + this.radius + 35, this.y - 5, this.x + this.radius + 55, this.y - 20 + Math.sin(time * 4) * 6);
+        ctx.stroke();
+        // 尾巴尖刺
+        ctx.fillStyle = isRage ? '#cc00ff' : '#8000aa';
+        ctx.beginPath(); ctx.moveTo(this.x + this.radius + 50, this.y - 15); ctx.lineTo(this.x + this.radius + 70, this.y - 30 + Math.sin(time * 4) * 4); ctx.lineTo(this.x + this.radius + 55, this.y - 22); ctx.closePath(); ctx.fill();
+        
+        // 恶魔尖耳
+        ctx.fillStyle = isRage ? '#5a0088' : '#3a0055';
+        ctx.beginPath(); ctx.moveTo(this.x - 22, this.y - 12); ctx.lineTo(this.x - 42, this.y - 52); ctx.lineTo(this.x - 32, this.y - 18); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(this.x + 22, this.y - 12); ctx.lineTo(this.x + 42, this.y - 52); ctx.lineTo(this.x + 32, this.y - 18); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = isRage ? '#aa00dd' : '#7700aa';
+        ctx.beginPath(); ctx.moveTo(this.x - 25, this.y - 18); ctx.lineTo(this.x - 38, this.y - 42); ctx.lineTo(this.x - 30, this.y - 20); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(this.x + 25, this.y - 18); ctx.lineTo(this.x + 38, this.y - 42); ctx.lineTo(this.x + 30, this.y - 20); ctx.closePath(); ctx.fill();
+        
+        // 身体
+        ctx.fillStyle = isRage ? '#4a0077' : '#2a0044';
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = isRage ? '#7700aa' : '#440066'; ctx.lineWidth = 3; ctx.stroke();
+        
+        // 诅咒符文
+        ctx.strokeStyle = isRage ? '#cc00ff' : '#8800cc'; ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+            const ra = time * 0.8 + i * Math.PI / 2;
+            const rx = this.x + Math.cos(ra) * 18, ry = this.y + Math.sin(ra) * 18;
+            ctx.beginPath(); ctx.moveTo(rx - 4, ry - 4); ctx.lineTo(rx + 4, ry + 4); ctx.moveTo(rx + 4, ry - 4); ctx.lineTo(rx - 4, ry + 4); ctx.stroke();
+        }
+        
+        // 脸部
+        ctx.fillStyle = isRage ? '#6a3080' : '#4a2060';
+        ctx.beginPath(); ctx.ellipse(this.x, this.y - 4, 18, 14, 0, 0, Math.PI * 2); ctx.fill();
+        
+        // 邪眼
+        ctx.fillStyle = isRage ? '#ff00ff' : '#cc00cc';
+        ctx.beginPath(); ctx.ellipse(this.x - 8, this.y - 5, 5, 4, -0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 8, this.y - 5, 5, 4, 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.ellipse(this.x - 8, this.y - 5, 2, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 8, this.y - 5, 2, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+        
+        // V型凶眉
+        ctx.strokeStyle = isRage ? '#ff00aa' : '#aa0066'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(this.x - 15, this.y - 10); ctx.lineTo(this.x - 5, this.y - 15); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(this.x + 15, this.y - 10); ctx.lineTo(this.x + 5, this.y - 15); ctx.stroke();
+        
+        // 獠牙
+        ctx.fillStyle = '#eee';
+        ctx.beginPath(); ctx.moveTo(this.x - 8, this.y + 8); ctx.lineTo(this.x - 6, this.y + 20); ctx.lineTo(this.x - 4, this.y + 8); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(this.x + 8, this.y + 8); ctx.lineTo(this.x + 6, this.y + 20); ctx.lineTo(this.x + 4, this.y + 8); ctx.closePath(); ctx.fill();
+        
+        // Phase2 邪恶光环
+        if (isRage) {
+            ctx.strokeStyle = `rgba(200,0,255,${0.5 + Math.sin(time * 6) * 0.3})`; ctx.lineWidth = 3; ctx.setLineDash([10, 5]);
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 18 + Math.sin(time * 4) * 6, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        }
+        
+        // 技能指示器
+        if (this.state === 'TELEGRAPH') this.drawSkillIndicator(ctx);
+    }
+    drawSkillIndicator(ctx) {
+        if (!this.currentSkill) return;
+        const time = Date.now() / 1000;
+        const pulse = 0.5 + Math.sin(time * 6) * 0.3;
+        ctx.save();
+        ctx.fillStyle = `rgba(150,0,200,${pulse * 0.4})`;
+        ctx.strokeStyle = `rgba(200,0,255,${pulse})`;
+        ctx.lineWidth = 3;
+        if (['SHADOW_DASH', 'VOID_LEAP'].includes(this.currentSkill)) {
+            const tx = this.dashTarget.x, ty = this.dashTarget.y;
+            ctx.beginPath(); ctx.arc(tx, ty, 60, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(tx, ty); ctx.stroke();
+        } else {
+            ctx.beginPath(); ctx.arc(this.player.x, this.player.y, 80, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
 
 // Lv2 异化冰龙
 export class MutatedIceDragonBoss {

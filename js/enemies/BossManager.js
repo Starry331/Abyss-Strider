@@ -11,9 +11,9 @@ export class BossManager {
         this.onBossSpawn = null;
         this.onBossDeath = null;
         
-        // 异化Boss几率 (Lv1不异化)
+        // 异化Boss几率
         this.mutationChances = {
-            1: 0,      // Lv1 无异化
+            1: 0.03,   // Lv1 3% - 噬魂猿魔
             2: 0.03,   // Lv2 3%
             3: 0.04,   // Lv3 4%
             4: 0.03,   // Lv4 3%
