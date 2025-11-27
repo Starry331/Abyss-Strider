@@ -251,12 +251,20 @@ export class BossRushScene {
         this.combatSystem.projectiles = [];
         this.combatSystem.player = this.player;
         
-        // 重置武器系统
+        // 绑定武器系统到玩家
         if (this.weaponSystem) {
+            this.player.setWeaponSystem(this.weaponSystem);
             this.weaponSystem.cooldownTimer = 0;
             // 重置武器等级
             this.weaponSystem.weapons.forEach(w => w.upgradeLevel = 1);
+            // 初始化武器显示
+            const weapon = this.weaponSystem.currentWeapon;
+            const weaponIcon = document.getElementById('weapon-icon');
+            const weaponName = document.getElementById('weapon-name');
+            if (weaponIcon) weaponIcon.textContent = weapon.icon || '🗡️';
+            if (weaponName) weaponName.textContent = weapon.cnName || weapon.name;
         }
+        this.lastSwitchState = false; // 武器切换状态
         
         // 清空特效
         if (this.effectManager) {
@@ -932,6 +940,20 @@ export class BossRushScene {
         
         // 更新武器系统并处理攻击
         if (this.weaponSystem) {
+            // 处理武器切换 (Q键)
+            const input = this.inputManager.getInput();
+            if (input.switchWeapon && !this.lastSwitchState) {
+                this.weaponSystem.switchWeapon();
+                if (this.audioManager) this.audioManager.playSound('menu_click');
+                // 更新武器显示
+                const weapon = this.weaponSystem.currentWeapon;
+                const weaponIcon = document.getElementById('weapon-icon');
+                const weaponName = document.getElementById('weapon-name');
+                if (weaponIcon) weaponIcon.textContent = weapon.icon || '🗡️';
+                if (weaponName) weaponName.textContent = weapon.cnName || weapon.name;
+            }
+            this.lastSwitchState = input.switchWeapon;
+            
             this.weaponSystem.update(deltaTime, this.player);
             
             // 处理武器攻击Boss（自动攻击）
