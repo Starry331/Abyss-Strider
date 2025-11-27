@@ -794,24 +794,50 @@ class MonkeyBoss extends BaseBoss {
                 
             case 'JUNGLE_LEAP':
                 // 跳跃预警 - 起跳点+落点
-                this.drawDashIndicator(ctx, this.player.x, this.player.y, '255, 140, 0');
                 this.drawAOEIndicator(ctx, this.player.x, this.player.y, 100, '139, 69, 19');
                 // 跳跃弧线
-                ctx.strokeStyle = `rgba(255, 140, 0, ${pulseAlpha})`;
-                ctx.lineWidth = 3;
+                ctx.strokeStyle = `rgba(255, 140, 0, ${pulseAlpha + 0.3})`;
+                ctx.lineWidth = 4;
                 ctx.setLineDash([10, 5]);
                 ctx.beginPath();
                 ctx.moveTo(this.x, this.y);
                 const midX = (this.x + this.player.x) / 2;
-                const midY = Math.min(this.y, this.player.y) - 80;
+                const midY = Math.min(this.y, this.player.y) - 100;
                 ctx.quadraticCurveTo(midX, midY, this.player.x, this.player.y);
                 ctx.stroke();
                 ctx.setLineDash([]);
-                // 落地警告
-                ctx.fillStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.2})`;
-                ctx.font = 'bold 24px Arial';
+                // 沿弧线的多个箭头
+                for (let t = 0.3; t <= 0.9; t += 0.3) {
+                    const t2 = t * t;
+                    const mt = 1 - t;
+                    const mt2 = mt * mt;
+                    const arrowX = mt2 * this.x + 2 * mt * t * midX + t2 * this.player.x;
+                    const arrowY = mt2 * this.y + 2 * mt * t * midY + t2 * this.player.y;
+                    // 计算切线方向
+                    const dx = 2 * mt * (midX - this.x) + 2 * t * (this.player.x - midX);
+                    const dy = 2 * mt * (midY - this.y) + 2 * t * (this.player.y - midY);
+                    const arrowAngle = Math.atan2(dy, dx);
+                    ctx.fillStyle = `rgba(255, 140, 0, ${pulseAlpha + 0.4 - t * 0.2})`;
+                    ctx.beginPath();
+                    ctx.moveTo(arrowX + Math.cos(arrowAngle) * 12, arrowY + Math.sin(arrowAngle) * 12);
+                    ctx.lineTo(arrowX + Math.cos(arrowAngle + 2.5) * 10, arrowY + Math.sin(arrowAngle + 2.5) * 10);
+                    ctx.lineTo(arrowX + Math.cos(arrowAngle - 2.5) * 10, arrowY + Math.sin(arrowAngle - 2.5) * 10);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                // 落地大箭头
+                ctx.fillStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.5})`;
+                ctx.beginPath();
+                ctx.moveTo(this.player.x, this.player.y - 30);
+                ctx.lineTo(this.player.x - 15, this.player.y - 50);
+                ctx.lineTo(this.player.x + 15, this.player.y - 50);
+                ctx.closePath();
+                ctx.fill();
+                // 落地警告文字
+                ctx.fillStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.3})`;
+                ctx.font = 'bold 18px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('💥', this.player.x, this.player.y - 60);
+                ctx.fillText('落地!', this.player.x, this.player.y - 55);
                 break;
                 
             case 'FRENZY':
