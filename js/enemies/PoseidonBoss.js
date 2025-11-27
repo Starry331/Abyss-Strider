@@ -17,7 +17,7 @@ export class GhostPoseidonBoss {
         this.isBossRush = true;
         
         // 基础属性 (大幅增强)
-        this.maxHp = 8000; // 超大血量
+        this.maxHp = 12000; // 增强血量
         this.hp = this.maxHp;
         this.radius = 70;
         this.color = '#0066aa';
@@ -46,7 +46,9 @@ export class GhostPoseidonBoss {
             'OCEAN_BURST',       // 海洋爆发
             'DEPTH_CHARGE',      // 深渊冲击
             'PRESSURE_CRUSH',    // 水压碾压
-            'OCEAN_FURY'         // 海洋狂怒
+            'OCEAN_FURY',        // 海洋狂怒
+            'TRIDENT_SHIELD',    // 近身防御1
+            'WATER_BARRIER'      // 近身防御2
         ];
         
         // 二阶段技能（全部强力技能）
@@ -65,7 +67,13 @@ export class GhostPoseidonBoss {
             'TIDAL_PRISON',      // 潮汐牢笼
             'ABYSSAL_SPEAR',     // 深渊之矛
             'PRESSURE_CRUSH',    // 水压碾压
-            'OCEAN_FURY'         // 海洋狂怒
+            'OCEAN_FURY',        // 海洋狂怒
+            'TRIDENT_SHIELD',    // 近身防御1
+            'WATER_BARRIER',     // 近身防御2
+            'OCEAN_REPEL',       // 近身防御3
+            'TIDAL_BURST',       // 近身防御4
+            'KRAKEN_GUARD',      // 近身防御5
+            'ABYSSAL_NOVA'       // 近身防御6
         ];
         
         // 秒杀技能真空期
@@ -826,6 +834,212 @@ export class GhostPoseidonBoss {
                         }
                     });
                 }, 1000);
+                break;
+                
+            case 'TRIDENT_SHIELD':
+                // 三叉戟护盾 - 近身高伤防御
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 140, damage: 0, lifetime: 1.2, maxLife: 1.2, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.fillStyle = `rgba(0,150,200,${0.2 + Math.sin(Date.now() / 50) * 0.1})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 140, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#00aaff'; ctx.lineWidth = 4; ctx.setLineDash([12, 6]);
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 140 - p * 90, 0, Math.PI * 2); ctx.stroke();
+                        ctx.setLineDash([]);
+                        // 三叉戟形状
+                        for (let i = 0; i < 3; i++) {
+                            const a = (Math.PI * 2 / 3) * i + Date.now() / 200;
+                            ctx.save(); ctx.translate(this.x + Math.cos(a) * 100, this.y + Math.sin(a) * 100); ctx.rotate(a);
+                            ctx.fillStyle = '#00ddff'; ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill();
+                            ctx.restore();
+                        }
+                        ctx.fillStyle = '#00aaff'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🔱 三叉戟护盾！ 🔱', this.x, this.y - 160);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 35; this.player.screenShake.duration = 0.8; }
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < 140) this.player.takeDamage ? this.player.takeDamage(dmg * 2.5) : (this.player.hp -= dmg * 2.5);
+                    for (let i = 0; i < 12; i++) {
+                        const a = (Math.PI * 2 / 12) * i;
+                        this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 400, vy: Math.sin(a) * 400, radius: 14, damage: dmg * 0.7, lifetime: 1.2, color: '#00aaff', isEnemy: true });
+                    }
+                }, 1200);
+                break;
+                
+            case 'WATER_BARRIER':
+                // 水之屏障 - 快速反击
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 100, damage: 0, lifetime: 0.8, maxLife: 0.8, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        ctx.fillStyle = `rgba(0,200,255,${0.25 + Math.sin(Date.now() / 40) * 0.1})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 100, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#00ccff'; ctx.lineWidth = 5;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 100, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#00ccff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠️ 水之屏障！ ⚠️', this.x, this.y - 120);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 25; this.player.screenShake.duration = 0.5; }
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < 100) this.player.takeDamage ? this.player.takeDamage(dmg * 2) : (this.player.hp -= dmg * 2);
+                    for (let i = 0; i < 8; i++) {
+                        const a = (Math.PI * 2 / 8) * i;
+                        this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350, radius: 12, damage: dmg * 0.6, lifetime: 1, color: '#00ccff', isEnemy: true });
+                    }
+                }, 800);
+                break;
+                
+            case 'OCEAN_REPEL':
+                // 海洋斥力 - 击退型
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 120, damage: 0, lifetime: 1.0, maxLife: 1.0, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.strokeStyle = `rgba(0,180,220,${0.7})`;
+                        ctx.lineWidth = 6; ctx.setLineDash([10, 5]);
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 120 - p * 70, 0, Math.PI * 2); ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = '#00bbdd'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌊 海洋斥力！ 🌊', this.x, this.y - 140);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 0.6; }
+                    const dx = this.player.x - this.x, dy = this.player.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        this.player.takeDamage ? this.player.takeDamage(dmg * 1.8) : (this.player.hp -= dmg * 1.8);
+                        const angle = Math.atan2(dy, dx);
+                        this.player.x += Math.cos(angle) * 180;
+                        this.player.y += Math.sin(angle) * 180;
+                    }
+                    for (let ring = 0; ring < 3; ring++) {
+                        this.spawnProjectile({
+                            x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, maxRadius: 220, damage: 0, lifetime: 0.5, maxLife: 0.5,
+                            update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.strokeStyle = `rgba(0,200,255,${this.life / this.maxLife})`; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); }
+                        });
+                    }
+                }, 1000);
+                break;
+                
+            case 'TIDAL_BURST':
+                // 潮汐爆发 - 大范围
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 160, damage: 0, lifetime: 1.5, maxLife: 1.5, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.fillStyle = `rgba(0,100,180,${0.15 + p * 0.15})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 160, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#0088cc'; ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 160 - p * 120, 0, Math.PI * 2); ctx.stroke();
+                        for (let i = 0; i < 8; i++) {
+                            const a = (Math.PI * 2 / 8) * i + Date.now() / 300;
+                            const d = 160 - p * 140;
+                            ctx.fillStyle = `rgba(0,200,255,${p})`;
+                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * d, this.y + Math.sin(a) * d, 6, 0, Math.PI * 2); ctx.fill();
+                        }
+                        ctx.fillStyle = '#00aaff'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🌊 潮汐爆发！ 🌊', this.x, this.y - 180);
+                        ctx.font = 'bold 18px Arial'; ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - 155);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 40; this.player.screenShake.duration = 1.0; }
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < 160) this.player.takeDamage ? this.player.takeDamage(dmg * 2.8) : (this.player.hp -= dmg * 2.8);
+                    for (let i = 0; i < 16; i++) {
+                        const a = (Math.PI * 2 / 16) * i;
+                        this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 380, vy: Math.sin(a) * 380, radius: 14, damage: dmg * 0.6, lifetime: 1.3, color: '#0088cc', isEnemy: true });
+                    }
+                }, 1500);
+                break;
+                
+            case 'KRAKEN_GUARD':
+                // 克拉肯守护 - 触手防御
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 130, damage: 0, lifetime: 1.3, maxLife: 1.3, boss: this, tentacleAngle: 0,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.tentacleAngle += dt * 3; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        ctx.fillStyle = `rgba(80,0,120,${0.2 + Math.sin(Date.now() / 60) * 0.1})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 130, 0, Math.PI * 2); ctx.fill();
+                        // 触手
+                        for (let i = 0; i < 6; i++) {
+                            const a = (Math.PI * 2 / 6) * i + this.tentacleAngle;
+                            ctx.strokeStyle = '#8800aa'; ctx.lineWidth = 8;
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + Math.cos(a) * 40, this.y + Math.sin(a) * 40);
+                            ctx.quadraticCurveTo(this.x + Math.cos(a + 0.3) * 80, this.y + Math.sin(a + 0.3) * 80, this.x + Math.cos(a) * 120, this.y + Math.sin(a) * 120);
+                            ctx.stroke();
+                        }
+                        ctx.fillStyle = '#aa00cc'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🦑 克拉肯守护！ 🦑', this.x, this.y - 150);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 35; this.player.screenShake.duration = 0.8; }
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < 130) this.player.takeDamage ? this.player.takeDamage(dmg * 2.3) : (this.player.hp -= dmg * 2.3);
+                    // 触手攻击
+                    for (let i = 0; i < 6; i++) {
+                        const a = (Math.PI * 2 / 6) * i;
+                        this.spawnProjectile({ x: this.x + Math.cos(a) * 120, y: this.y + Math.sin(a) * 120, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300, radius: 18, damage: dmg * 0.8, lifetime: 1.2, color: '#8800aa', isEnemy: true });
+                    }
+                }, 1300);
+                break;
+                
+            case 'ABYSSAL_NOVA':
+                // 深渊新星 - 终极近身防御
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 180, damage: 0, lifetime: 2.0, maxLife: 2.0, boss: this, pulsePhase: 0,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.pulsePhase += dt * 2.5; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        const pulse = Math.sin(this.pulsePhase) * 0.3 + 0.7;
+                        for (let r = 0; r < 3; r++) {
+                            ctx.strokeStyle = `rgba(0,150,200,${pulse * (0.5 - r * 0.12)})`;
+                            ctx.lineWidth = 5 - r;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, 180 - r * 35 - p * 60, 0, Math.PI * 2); ctx.stroke();
+                        }
+                        ctx.fillStyle = `rgba(0,100,150,${0.1 + p * 0.15})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 180, 0, Math.PI * 2); ctx.fill();
+                        for (let i = 0; i < 12; i++) {
+                            const a = (Math.PI * 2 / 12) * i + Date.now() / 350;
+                            const d = 180 - p * 160;
+                            ctx.fillStyle = `rgba(0,255,255,${p * pulse})`;
+                            ctx.beginPath(); ctx.arc(this.x + Math.cos(a) * d, this.y + Math.sin(a) * d, 4 + p * 5, 0, Math.PI * 2); ctx.fill();
+                        }
+                        ctx.fillStyle = '#00ddff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('💀 深渊新星！远离海神！ 💀', this.x, this.y - 200);
+                        ctx.font = 'bold 20px Arial'; ctx.fillText(`${this.life.toFixed(1)}秒`, this.x, this.y - 175);
+                    }
+                });
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 50; this.player.screenShake.duration = 1.2; }
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < 180) {
+                        this.player.takeDamage ? this.player.takeDamage(dmg * 3.5) : (this.player.hp -= dmg * 3.5);
+                        const angle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                        this.player.x += Math.cos(angle) * 220;
+                        this.player.y += Math.sin(angle) * 220;
+                    }
+                    for (let wave = 0; wave < 3; wave++) {
+                        setTimeout(() => {
+                            for (let i = 0; i < 20; i++) {
+                                const a = (Math.PI * 2 / 20) * i + wave * 0.1;
+                                this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * (320 + wave * 40), vy: Math.sin(a) * (320 + wave * 40), radius: 12, damage: dmg * 0.5, lifetime: 1.5, color: '#00bbdd', isEnemy: true });
+                            }
+                        }, wave * 180);
+                    }
+                }, 2000);
                 break;
         }
     }
