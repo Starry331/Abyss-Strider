@@ -52,7 +52,8 @@ export class BerserkArtemisBoss {
             'CRESCENT_BURST',    // 近身防御2
             'CRESCENT_BURST',    // 近身防御2 x2
             'MOON_REPEL',        // 近身防御3
-            'MOON_REPEL'         // 近身防御3 x2
+            'MOON_REPEL',        // 近身防御3 x2
+            'LUNAR_ESCAPE'       // 月神逃脱 (20%概率)
         ];
         
         // 二阶段技能（强力技能 + 增加近身技能概率）
@@ -75,7 +76,8 @@ export class BerserkArtemisBoss {
             'SILVER_NOVA',       // 近身防御5
             'SILVER_NOVA',       // 近身防御5 x2
             'HUNT_COUNTER',      // 近身防御6
-            'HUNT_COUNTER'       // 近身防御6 x2
+            'HUNT_COUNTER',      // 近身防御6 x2
+            'LUNAR_ESCAPE'       // 月神逃脱 (20%概率)
         ];
         
         // 三阶段技能（全部强力技能 + 增加近身技能概率）
@@ -105,12 +107,18 @@ export class BerserkArtemisBoss {
             'DIVINE_REPULSE',    // 近身防御9 x2
             'CRESCENT_SLASH',    // 新月斩
             'CRESCENT_SLASH',    // 新月斩 x2
+            'LUNAR_ESCAPE',      // 月神逃脱 (20%概率)
             'LUNAR_EXECUTION',   // 秒杀技1
             'STAR_MOON_DOOM'     // 秒杀技2
         ];
         
         // 新月斩释放状态
         this.isCastingCrescent = false;
+        
+        // 月神逃脱（远距离位移技能）
+        this.damageHistory = []; // 伤害记录 [{time, damage}]
+        this.lastEscapeTime = 0; // 上次逃脱时间
+        this.escapeTriggered = false; // 是否已触发强制逃脱
         
         // 秒杀技能真空期
         this.executionCooldown = 0;
@@ -209,6 +217,22 @@ export class BerserkArtemisBoss {
             this.phase = 2;
             this.attackCooldown = 0.55;
             console.log('☠️ 阿尔忒弥斯进入狂暴阶段！解锁强力技能！');
+        }
+        
+        // 清理5秒前的伤害记录
+        const now = Date.now();
+        this.damageHistory = this.damageHistory.filter(d => now - d.time < 5000);
+        
+        // 计算5秒内总伤害
+        const recentDamage = this.damageHistory.reduce((sum, d) => sum + d.damage, 0);
+        
+        // 强制触发月神逃脱 (5秒内受到超过2500伤害)
+        if (recentDamage >= 2500 && !this.escapeTriggered && now - this.lastEscapeTime > 3000) {
+            this.escapeTriggered = true;
+            this.lastEscapeTime = now;
+            this.damageHistory = []; // 清空伤害记录
+            console.log('🌙 阿尔忒弥斯触发月神逃脱！');
+            this.executeForcedEscape(); // 强制逃脱不占用攻击间隔
         }
         
         // 秒杀技能后的真空期
@@ -1594,7 +1618,151 @@ export class BerserkArtemisBoss {
                     if (this.player.screenShake) { this.player.screenShake.intensity = 45; this.player.screenShake.duration = 0.8; }
                 }, slashDuration * 1000 + 500);
                 break;
+                
+            case 'LUNAR_ESCAPE':
+                // 月神逃脱 - 远距离位移技能 (20%概率)
+                if (Math.random() > 0.2) {
+                    // 不释放，选择其他技能
+                    let skills = this.phase === 3 ? this.phase3Skills : (this.phase === 2 ? this.phase2Skills : this.skills);
+                    skills = skills.filter(s => s !== 'LUNAR_ESCAPE');
+                    this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
+                    this.executeAttack();
+                    return;
+                }
+                this.performLunarEscape(false); // 普通释放
+                break;
         }
+    }
+    
+    // 执行月神逃脱技能
+    performLunarEscape(isForced) {
+        const dmg = this.damage;
+        const precastDelay = 0.1; // 0.1秒前摇
+        const escapeDuration = 1.2;
+        
+        // 计算逃脱方向（远离玩家）
+        const dx = this.x - this.player.x;
+        const dy = this.y - this.player.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const escapeDist = 300;
+        let targetX = this.x + (dx / dist) * escapeDist;
+        let targetY = this.y + (dy / dist) * escapeDist;
+        
+        // 边界检查
+        targetX = Math.max(100, Math.min(targetX, 700));
+        targetY = Math.max(100, Math.min(targetY, 500));
+        
+        const startX = this.x, startY = this.y;
+        
+        // 箭头预警动画（包含0.1秒前摇）
+        const totalDuration = precastDelay + escapeDuration;
+        this.spawnProjectile({
+            x: startX, y: startY, vx: 0, vy: 0, radius: 0, damage: 0, lifetime: totalDuration, maxLife: totalDuration,
+            targetX: targetX, targetY: targetY, boss: this,
+            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+            draw(ctx) {
+                const p = 1 - this.life / this.maxLife;
+                const angle = Math.atan2(this.targetY - this.boss.y, this.targetX - this.boss.x);
+                
+                // 路径线
+                ctx.strokeStyle = `rgba(255,200,100,${0.3 + p * 0.4})`;
+                ctx.lineWidth = 4;
+                ctx.setLineDash([15, 10]);
+                ctx.beginPath();
+                ctx.moveTo(this.boss.x, this.boss.y);
+                ctx.lineTo(this.targetX, this.targetY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 多个箭头沿路径
+                for (let i = 0; i < 4; i++) {
+                    const t = (p + i * 0.25) % 1;
+                    const ax = this.boss.x + (this.targetX - this.boss.x) * t;
+                    const ay = this.boss.y + (this.targetY - this.boss.y) * t;
+                    
+                    ctx.save();
+                    ctx.translate(ax, ay);
+                    ctx.rotate(angle);
+                    ctx.fillStyle = `rgba(255,220,100,${0.5 + p * 0.5})`;
+                    ctx.beginPath();
+                    ctx.moveTo(20, 0);
+                    ctx.lineTo(-10, -10);
+                    ctx.lineTo(-5, 0);
+                    ctx.lineTo(-10, 10);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+                
+                // 起点月亮
+                ctx.fillStyle = `rgba(255,255,200,${0.6 + p * 0.4})`;
+                ctx.beginPath();
+                ctx.arc(this.boss.x, this.boss.y, 35, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 终点月亮
+                ctx.fillStyle = `rgba(255,255,150,${0.3 + p * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(this.targetX, this.targetY, 45 + p * 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 警告文字
+                ctx.fillStyle = '#ffcc00';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🌙 月神逃脱！', this.boss.x, this.boss.y - 60);
+            }
+        });
+        
+        // 屏幕抖动
+        if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = totalDuration; }
+        
+        // 执行位移（0.1秒前摇后）
+        setTimeout(() => {
+            // 强力屏幕抖动
+            if (this.player.screenShake) { this.player.screenShake.intensity = 50; this.player.screenShake.duration = 0.6; }
+            
+            // 离开时的爆炸
+            for (let i = 0; i < 12; i++) {
+                const a = (Math.PI * 2 / 12) * i;
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
+                    radius: 14, damage: dmg * 0.5, lifetime: 1.2, color: '#ffeeaa', isEnemy: true
+                });
+            }
+            
+            // 移动到目标位置
+            this.x = targetX;
+            this.y = targetY;
+            
+            // 落地爆炸
+            for (let i = 0; i < 16; i++) {
+                const a = (Math.PI * 2 / 16) * i;
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350,
+                    radius: 12, damage: dmg * 0.4, lifetime: 1, color: '#ffeeaa', isEnemy: true
+                });
+            }
+            
+            // 如果是强制触发，立即释放一次其他技能
+            if (isForced) {
+                setTimeout(() => {
+                    let skills = this.phase === 3 ? this.phase3Skills : (this.phase === 2 ? this.phase2Skills : this.skills);
+                    skills = skills.filter(s => s !== 'LUNAR_ESCAPE' && s !== 'LUNAR_EXECUTION' && s !== 'STAR_MOON_DOOM');
+                    this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
+                    this.executeAttack();
+                }, 200);
+            }
+        }, totalDuration * 1000);
+    }
+    
+    // 强制触发月神逃脱（不占用攻击间隔）
+    executeForcedEscape() {
+        this.performLunarEscape(true);
+        // 重置触发状态
+        setTimeout(() => {
+            this.escapeTriggered = false;
+        }, 5000);
     }
     
     draw(ctx) {
@@ -1839,6 +2007,9 @@ export class BerserkArtemisBoss {
     }
     
     takeDamage(amount) {
+        // 记录伤害历史
+        this.damageHistory.push({ time: Date.now(), damage: amount });
+        
         this.hp -= amount;
         if (this.hp <= 0) {
             this.hp = 0;
