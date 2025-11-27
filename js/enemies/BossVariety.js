@@ -2462,6 +2462,15 @@ class ZeusBoss extends BaseBoss {
         this.attackCooldown = 1.2;
         this.skills = ['LIGHTNING_BOLT', 'THUNDER_DASH', 'CHAIN_LIGHTNING', 'STORM_CLOUD', 'THUNDER_CLAP', 'LIGHTNING_FIELD', 'DIVINE_STRIKE', 'SKY_FURY', 'THUNDER_PRISON', 'ZEUS_BARRIER', 'PLASMA_LANCE'];
         this.phase2Skills = [...this.skills, 'OLYMPUS_WRATH', 'THUNDERGOD_AVATAR', 'DIVINE_JUDGEMENT', 'STORM_CALLER', 'GODLY_SMITE', 'HEAVENS_FURY', 'THUNDER_APOCALYPSE'];
+        // 三阶段：神王之怒 - 血量25%以下触发
+        this.phase3Skills = [
+            ...this.phase2Skills,
+            'OLYMPUS_ANNIHILATION',    // 奥林匹斯毁灭：全屏雷电轰炸
+            'DIVINE_AVATAR',           // 神王化身：短暂无敌+强力连击
+            'STORM_EMPEROR',           // 风暴帝王：追踪雷电风暴（已削弱）
+            'HEAVENLY_EXECUTION',      // 天罚处刑：秒杀技（增强预警）
+            'OLYMPUS_JUDGEMENT'        // 众神审判：多段全屏轰炸
+        ];
         this.lightningAura = 0; // 闪电光环动画
     }
 
@@ -2480,7 +2489,7 @@ class ZeusBoss extends BaseBoss {
                 this.lightningAura += deltaTime;
                 if (this.timer >= (this.attackCooldown || 1.3)) {
                     this.state = 'TELEGRAPH';
-                    const pool = this.phase === 2 ? this.phase2Skills : this.skills;
+                    const pool = this.phase === 3 ? this.phase3Skills : (this.phase === 2 ? this.phase2Skills : this.skills);
                     this.currentSkill = pool[Math.floor(Math.random() * pool.length)];
                     this.dashTarget = { x: this.player.x, y: this.player.y };
                     this.timer = 0;
@@ -2496,7 +2505,23 @@ class ZeusBoss extends BaseBoss {
                 break;
         }
 
-        if (this.hp < this.maxHp * 0.5 && this.phase === 1) { this.phase = 2; this.telegraphDuration = 0.65; this.attackCooldown = 1.1; }
+        // 三阶段切换逻辑
+        if (this.hp <= this.maxHp * 0.25 && this.phase < 3) {
+            this.phase = 3;
+            this.telegraphDuration = 0.5;
+            this.attackCooldown = 0.8;
+            console.log('⚡ 宙斯进入神王之怒阶段！');
+            // 三阶段触发时的震屏效果
+            if (this.player.screenShake) {
+                this.player.screenShake.intensity = 25;
+                this.player.screenShake.duration = 2;
+            }
+        } else if (this.hp <= this.maxHp * 0.5 && this.phase === 1) {
+            this.phase = 2;
+            this.telegraphDuration = 0.65;
+            this.attackCooldown = 1.1;
+            console.log('⚡ 宙斯进入狂暴阶段！');
+        }
     }
 
     executeAttack() {
@@ -2953,20 +2978,248 @@ class ZeusBoss extends BaseBoss {
                     });
                 }, 2500);
                 break;
+                
+            // ===== 三阶段专属技能 =====
+            case 'OLYMPUS_ANNIHILATION':
+                // 奥林匹斯毁灭 - 全屏雷电轰炸
+                if (this.player.screenShake) { this.player.screenShake.intensity = 40; this.player.screenShake.duration = 5; }
+                for (let wave = 0; wave < 8; wave++) {
+                    setTimeout(() => {
+                        // 环形雷电
+                        for (let i = 0; i < 20; i++) {
+                            const a = (Math.PI * 2 / 20) * i + wave * 0.1;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, vx: Math.cos(a) * (400 + wave * 30), vy: Math.sin(a) * (400 + wave * 30),
+                                radius: 12, damage: 22, owner: 'enemy', life: 1.8,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.fillStyle = `rgba(0, 255, 255, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                            });
+                        }
+                        // 随机雷柱
+                        for (let j = 0; j < 10; j++) {
+                            const jx = 80 + Math.random() * 840;
+                            const jy = 60 + Math.random() * 480;
+                            this.combatSystem.spawnProjectile({
+                                x: jx, y: 0, targetY: jy, radius: 50, damage: 28, owner: 'enemy', life: 0.25,
+                                update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.strokeStyle = `rgba(255, 255, 0, ${this.life * 4})`; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(this.x, 0); ctx.lineTo(this.x, this.targetY); ctx.stroke(); }
+                            });
+                        }
+                    }, wave * 350);
+                }
+                break;
+                
+            case 'DIVINE_AVATAR':
+                // 神王化身 - 短暂无敌+强力连击
+                this.isInvincible = true;
+                if (this.player.screenShake) { this.player.screenShake.intensity = 20; this.player.screenShake.duration = 3; }
+                // 连续5次冲刺攻击
+                for (let dash = 0; dash < 5; dash++) {
+                    setTimeout(() => {
+                        const dashAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                        this.x += Math.cos(dashAngle) * 180;
+                        this.y += Math.sin(dashAngle) * 180;
+                        // 每次冲刺释放雷电爆发
+                        for (let i = 0; i < 12; i++) {
+                            const a = (Math.PI * 2 / 12) * i;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, vx: Math.cos(a) * 450, vy: Math.sin(a) * 450,
+                                radius: 10, damage: 20, owner: 'enemy', life: 1,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.fillStyle = `rgba(255, 215, 0, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                            });
+                        }
+                    }, dash * 400);
+                }
+                setTimeout(() => { this.isInvincible = false; }, 2500);
+                break;
+                
+            case 'STORM_EMPEROR':
+                // 风暴帝王 - 追踪雷电风暴（削弱版）
+                // 预警阶段
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 80, damage: 0, owner: 'enemy', life: 1.5, maxLife: 1.5, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.strokeStyle = `rgba(0, 200, 255, ${0.8})`; ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 60 + p * 40, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#00ffff'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚡ 风暴集结中... ⚡', this.x, this.y - 70);
+                    }
+                });
+                // 1.5秒后释放，减少数量和速度
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 12; this.player.screenShake.duration = 4; }
+                    for (let i = 0; i < 12; i++) {
+                        setTimeout(() => {
+                            this.combatSystem.spawnProjectile({
+                                x: this.x + (Math.random() - 0.5) * 100, y: this.y + (Math.random() - 0.5) * 100,
+                                targetPlayer: this.player, speed: 220,
+                                radius: 12, damage: 12, owner: 'enemy', life: 2.5,
+                                update(dt) {
+                                    const dx = this.targetPlayer.x - this.x, dy = this.targetPlayer.y - this.y;
+                                    const dist = Math.sqrt(dx * dx + dy * dy);
+                                    this.x += (dx / dist) * this.speed * dt;
+                                    this.y += (dy / dist) * this.speed * dt;
+                                    this.life -= dt;
+                                    if (this.life <= 0) this.markedForDeletion = true;
+                                },
+                                draw(ctx) {
+                                    ctx.fillStyle = `rgba(0, 200, 255, ${this.life * 0.4})`;
+                                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                                }
+                            });
+                        }, i * 350);
+                    }
+                }, 1500);
+                break;
+                
+            case 'HEAVENLY_EXECUTION':
+                // 天罚处刑 - 秒杀技（增强预警，4秒前摇）
+                const execX = this.player.x, execY = this.player.y;
+                // 第一阶段：1秒蓄力预警
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 50, damage: 0, owner: 'enemy', life: 1, maxLife: 1, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.strokeStyle = `rgba(255, 200, 0, ${0.8})`; ctx.lineWidth = 6;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 40 + p * 30, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#ffcc00'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠️ 天罚处刑准备中... ⚠️', this.x, this.y - 80);
+                    }
+                });
+                // 第二阶段：4秒的明显预警区域
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 25; this.player.screenShake.duration = 4; }
+                    this.combatSystem.spawnProjectile({
+                        x: execX, y: execY, radius: 220, damage: 0, owner: 'enemy', life: 4, maxLife: 4,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            const p = 1 - this.life / this.maxLife;
+                            const time = Date.now() / 1000;
+                            // 多层收缩的危险区域
+                            for (let r = 0; r < 3; r++) {
+                                ctx.strokeStyle = `rgba(255, ${50 + r * 50}, 0, ${0.8 - r * 0.2 + Math.sin(time * 10) * 0.2})`;
+                                ctx.lineWidth = 12 - r * 3;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - p * 0.3) - r * 20, 0, Math.PI * 2); ctx.stroke();
+                            }
+                            ctx.fillStyle = `rgba(255, 50, 50, ${p * 0.5})`; ctx.fill();
+                            // 明显的警告文字
+                            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 32px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('⚡⚡ 天罚处刑 ⚡⚡', this.x, this.y - this.radius - 35);
+                            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 28px Arial';
+                            ctx.fillText(`${Math.ceil(this.life)}秒内必须离开！`, this.x, this.y);
+                            ctx.fillStyle = '#ffff00'; ctx.font = 'bold 20px Arial';
+                            ctx.fillText('↑↑ 危险区域 ↑↑', this.x, this.y + 30);
+                        }
+                    });
+                }, 1000);
+                // 4.55秒时锁定位置提示（释放前0.45秒）
+                setTimeout(() => {
+                    this.combatSystem.spawnProjectile({
+                        x: execX, y: execY, radius: 220, damage: 0, owner: 'enemy', life: 0.45,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('🔒 位置已锁定！即将释放！ 🔒', ctx.canvas.width / 2, 180);
+                            ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 6;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 10, 0, Math.PI * 2); ctx.stroke();
+                        }
+                    });
+                }, 4550);
+                // 5秒后爆炸（1+4）
+                setTimeout(() => {
+                    const dist = Math.sqrt((this.player.x - execX) ** 2 + (this.player.y - execY) ** 2);
+                    if (dist < 230) this.player.takeDamage(120); // 稍微降低伤害
+                    this.combatSystem.spawnProjectile({
+                        x: execX, y: 0, targetY: execY, radius: 100, damage: 0, owner: 'enemy', life: 0.6,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            ctx.fillStyle = `rgba(255, 255, 100, ${this.life})`; ctx.fillRect(this.x - 50, 0, 100, this.targetY);
+                            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 8; ctx.strokeRect(this.x - 50, 0, 100, this.targetY);
+                        }
+                    });
+                }, 5000);
+                break;
+                
+            // THUNDER_DOMAIN 已删除 - 全场持续伤害体验不好
+                
+            case 'OLYMPUS_JUDGEMENT':
+                // 众神审判 - 多段全屏轰炸
+                if (this.player.screenShake) { this.player.screenShake.intensity = 35; this.player.screenShake.duration = 6; }
+                for (let phase = 0; phase < 4; phase++) {
+                    setTimeout(() => {
+                        // 每阶段不同的攻击模式
+                        if (phase % 2 === 0) {
+                            // 集中于玩家的雷击
+                            for (let i = 0; i < 15; i++) {
+                                const tx = this.player.x + (Math.random() - 0.5) * 200;
+                                const ty = this.player.y + (Math.random() - 0.5) * 200;
+                                setTimeout(() => {
+                                    this.combatSystem.spawnProjectile({
+                                        x: tx, y: 0, targetY: ty, radius: 45, damage: 25, owner: 'enemy', life: 0.25,
+                                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                        draw(ctx) { ctx.strokeStyle = `rgba(255, 200, 0, ${this.life * 4})`; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(this.x, 0); ctx.lineTo(this.x, this.targetY); ctx.stroke(); }
+                                    });
+                                }, i * 60);
+                            }
+                        } else {
+                            // 全屏散射
+                            for (let i = 0; i < 24; i++) {
+                                const a = (Math.PI * 2 / 24) * i;
+                                this.combatSystem.spawnProjectile({
+                                    x: this.x, y: this.y, vx: Math.cos(a) * 500, vy: Math.sin(a) * 500,
+                                    radius: 14, damage: 22, owner: 'enemy', life: 1.5,
+                                    update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                    draw(ctx) { ctx.fillStyle = `rgba(255, 255, 0, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                                });
+                            }
+                        }
+                    }, phase * 1200);
+                }
+                break;
         }
     }
 
-    takeDamage(amount) { this.hp -= amount; if (this.hp <= 0) this.hp = 0; }
+    takeDamage(amount) {
+        if (this.isInvincible) return; // 神王化身期间无敌
+        this.hp -= amount;
+        if (this.hp <= 0) this.hp = 0;
+    }
 
     draw(ctx) {
         const time = Date.now() / 1000;
         const isRage = this.phase === 2;
+        const isDivine = this.phase === 3; // 神王之怒阶段
         
-        // ===== 雷暴背景光环 (简化) =====
-        ctx.fillStyle = isRage ? 'rgba(200, 200, 100, 0.3)' : 'rgba(100, 150, 255, 0.2)';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
-        ctx.fill();
+        // ===== 雷暴背景光环 =====
+        if (isDivine) {
+            // 三阶段：金色神圣光环
+            for (let r = 0; r < 4; r++) {
+                ctx.fillStyle = `rgba(255, 215, 0, ${0.3 - r * 0.06})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * (2.5 + r * 0.3) + Math.sin(time * 4 + r) * 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // 旋转雷电光环
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 4;
+            for (let i = 0; i < 12; i++) {
+                const a = time * 3 + i * (Math.PI / 6);
+                const dist = this.radius + 35;
+                ctx.beginPath();
+                ctx.moveTo(this.x + Math.cos(a) * dist, this.y + Math.sin(a) * dist);
+                ctx.lineTo(this.x + Math.cos(a) * (dist + 20), this.y + Math.sin(a) * (dist + 20));
+                ctx.stroke();
+            }
+        } else {
+            ctx.fillStyle = isRage ? 'rgba(200, 200, 100, 0.3)' : 'rgba(100, 150, 255, 0.2)';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
         
         // ===== 旋转雷电环 (减少) =====
         ctx.strokeStyle = isRage ? '#00ffff' : '#6495ed';

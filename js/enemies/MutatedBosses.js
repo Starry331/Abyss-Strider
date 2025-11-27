@@ -832,6 +832,31 @@ export class MutatedIceDragonBoss {
                     draw(ctx) { ctx.fillStyle = '#9932cc'; 
                         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();  }
                 }); } break;
+            case 'FROST_CHARGE':
+                // 冰霜冲锋
+                setTimeout(() => {
+                    this.x = this.dashTarget.x; this.y = this.dashTarget.y;
+                    for (let i = 0; i < 12; i++) {
+                        const a = (Math.PI * 2 / 12) * i;
+                        this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 280, vy: Math.sin(a) * 280,
+                            radius: 14, damage: this.damage, owner: 'enemy', life: 0.8,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.fillStyle = `rgba(153,50,204,${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                        });
+                    }
+                }, 300); break;
+            case 'ICICLE_RAIN':
+                // 冰锥雨
+                for (let i = 0; i < 12; i++) {
+                    const rx = this.player.x + (Math.random() - 0.5) * 300;
+                    const ry = this.player.y + (Math.random() - 0.5) * 200;
+                    setTimeout(() => {
+                        this.combatSystem.spawnProjectile({ x: rx, y: ry - 200, vy: 400, radius: 10, damage: this.damage, owner: 'enemy', life: 0.8,
+                            update(dt) { this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.fillStyle = '#cc66ff'; ctx.beginPath(); ctx.moveTo(this.x, this.y + 15); ctx.lineTo(this.x - 6, this.y - 10); ctx.lineTo(this.x + 6, this.y - 10); ctx.closePath(); ctx.fill(); }
+                        });
+                    }, i * 100);
+                } break;
             case 'FROST_DOMAIN': this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 200, damage: 0, owner: 'enemy', life: 4, maxLife: 4,
                 player: this.player, dmg: this.damage * 0.3,
                 update(dt) { this.life -= dt; const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
@@ -841,6 +866,38 @@ export class MutatedIceDragonBoss {
                     ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
                     ctx.strokeStyle = `rgba(255,0,255,${alpha*0.6})`; ctx.lineWidth = 4; ctx.stroke(); }
             }); break;
+            case 'BLIZZARD':
+                // 暴风雪 - 全屏冰晶风暴
+                if (this.player.screenShake) { this.player.screenShake.intensity = 15; this.player.screenShake.duration = 4; }
+                for (let wave = 0; wave < 5; wave++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 16; i++) {
+                            const a = (Math.PI * 2 / 16) * i + wave * 0.2;
+                            this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * (300 + wave * 50), vy: Math.sin(a) * (300 + wave * 50),
+                                radius: 10, damage: this.damage - 3, owner: 'enemy', life: 1.5,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.fillStyle = `rgba(180,100,255,${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                            });
+                        }
+                    }, wave * 400);
+                } break;
+            case 'ABSOLUTE_ZERO':
+                // 绝对零度 - 冻结区域
+                if (this.player.screenShake) { this.player.screenShake.intensity = 25; this.player.screenShake.duration = 3; }
+                const azX = this.player.x, azY = this.player.y;
+                this.combatSystem.spawnProjectile({ x: azX, y: azY, radius: 180, damage: 0, owner: 'enemy', life: 2.5, maxLife: 2.5,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const p = 1 - this.life / this.maxLife; const time = Date.now() / 1000;
+                        ctx.strokeStyle = `rgba(200,100,255,${0.6 + Math.sin(time * 8) * 0.3})`; ctx.lineWidth = 8;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - p * 0.3), 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = `rgba(153,50,204,${p * 0.5})`; ctx.fill();
+                        ctx.fillStyle = '#cc66ff'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('❄ 绝对零度 ❄', this.x, this.y - this.radius - 15); }
+                });
+                setTimeout(() => {
+                    const dist = Math.sqrt((this.player.x - azX) ** 2 + (this.player.y - azY) ** 2);
+                    if (dist < 190) this.player.takeDamage(this.damage * 3);
+                }, 2500); break;
             default: for (let i = 0; i < 5; i++) { const a = angle + (i - 2) * 0.2;
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
                     radius: 10, damage: this.damage, owner: 'enemy',
@@ -1070,6 +1127,27 @@ export class MutatedCerberusBoss {
                         draw(ctx) { ctx.fillStyle = '#660000'; 
                             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();  }
                     }); }, i * 150); } } break;
+            case 'INFERNO_CHARGE':
+                // 地狱冲锋
+                setTimeout(() => {
+                    this.x = this.dashTarget.x; this.y = this.dashTarget.y;
+                    const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                    if (dist < 80) this.player.takeDamage(this.damage + 10);
+                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 100, damage: this.damage, owner: 'enemy', life: 0.4, maxLife: 0.4,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { const a = this.life / this.maxLife; ctx.fillStyle = `rgba(150,30,0,${a*0.6})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                    });
+                }, 300); break;
+            case 'HELLFIRE':
+                // 地狱火焰 - 扇形火焰喷射
+                for (let i = 0; i < 9; i++) {
+                    const a = angle + (i - 4) * 0.12;
+                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 450, vy: Math.sin(a) * 450,
+                        radius: 14, damage: this.damage, owner: 'enemy', life: 0.7,
+                        update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { ctx.fillStyle = `rgba(255,80,0,${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                    });
+                } break;
             case 'HELL_RIFT': for (let i = 0; i < 5; i++) { const rx = this.x + (Math.random() - 0.5) * 400, ry = this.y + (Math.random() - 0.5) * 300;
                 setTimeout(() => { this.combatSystem.spawnProjectile({ x: rx, y: ry, radius: 60, damage: this.damage * 1.2, owner: 'enemy', life: 2, maxLife: 2,
                     update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
@@ -1118,6 +1196,40 @@ export class MutatedCerberusBoss {
                     draw(ctx) { const alpha = this.life / this.maxLife; ctx.strokeStyle = `rgba(80,0,0,${alpha})`; ctx.lineWidth = 5;
                         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
                         ctx.fillStyle = `rgba(40,0,0,${alpha * 0.3})`; ctx.fill(); }
+                }); break;
+            case 'APOCALYPSE':
+                // 末日审判 - 全屏火焰轰炸
+                if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 4; }
+                for (let wave = 0; wave < 6; wave++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 10; i++) {
+                            const bx = 80 + Math.random() * 840;
+                            const by = 60 + Math.random() * 480;
+                            this.combatSystem.spawnProjectile({ x: bx, y: by - 300, targetY: by, radius: 50, damage: this.damage, owner: 'enemy', life: 0.4,
+                                update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.strokeStyle = `rgba(255,100,0,${this.life * 2.5})`; ctx.lineWidth = 8;
+                                    ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x, this.targetY); ctx.stroke();
+                                    ctx.fillStyle = `rgba(255,50,0,${this.life * 2})`; ctx.beginPath(); ctx.arc(this.x, this.targetY, 40, 0, Math.PI * 2); ctx.fill(); }
+                            });
+                        }
+                    }, wave * 400);
+                } break;
+            case 'UNDERWORLD_GATE':
+                // 冥界之门 - 召唤黑暗区域
+                if (this.player.screenShake) { this.player.screenShake.intensity = 20; this.player.screenShake.duration = 3; }
+                const gx = this.player.x, gy = this.player.y;
+                this.combatSystem.spawnProjectile({ x: gx, y: gy, radius: 200, damage: 0, owner: 'enemy', life: 3, maxLife: 3, player: this.player, dmg: this.damage,
+                    update(dt) { this.life -= dt;
+                        const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
+                        if (dist < this.radius && Math.random() < dt * 3) this.player.takeDamage(this.dmg * 0.5);
+                        if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const alpha = this.life / this.maxLife; const time = Date.now() / 1000;
+                        ctx.fillStyle = `rgba(30,0,0,${alpha * 0.6})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = `rgba(150,0,0,${alpha})`; ctx.lineWidth = 6; ctx.setLineDash([15, 8]);
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.8, time * 2, time * 2 + Math.PI * 1.5); ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = `rgba(255,50,0,${alpha})`; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('☠ 冥界之门 ☠', this.x, this.y - this.radius - 10); }
                 }); break;
             default: for (let i = 0; i < 6; i++) { const a = angle + (i - 2.5) * 0.2;
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350,
@@ -1301,6 +1413,16 @@ export class MutatedZeusBoss {
         this.dashTarget = { x: 0, y: 0 };
         this.skills = ['LIGHTNING_BOLT', 'THUNDER_DASH', 'CHAIN_LIGHTNING', 'TYRANT_THUNDER', 'DARK_PLASMA'];
         this.phase2Skills = [...this.skills, 'OLYMPUS_WRATH', 'ZEUS_APOCALYPSE', 'TYRANT_SMITE', 'STORM_APOCALYPSE', 'DARK_JUDGMENT'];
+        // 三阶段：暗黑神王 - 血量25%以下触发
+        this.phase3Skills = [
+            ...this.phase2Skills,
+            'TYRANT_ANNIHILATION',     // 暴君毁灭：全屏暗黑雷电
+            'DARK_AVATAR',             // 暗黑化身：无敌+连续绫杀
+            'CHAOS_STORM',             // 混沌风暴：追踪雷电（已削弱）
+            'DARK_EXECUTION',          // 暗黑处刑：秒杀技（增强预警）
+            'OLYMPUS_DESTRUCTION'      // 奥林匹斯毁灭：终极技能
+        ];
+        this.isInvincible = false;
     }
     update(deltaTime) {
         if (this.state === 'IDLE') {
@@ -1311,7 +1433,7 @@ export class MutatedZeusBoss {
         switch (this.state) {
             case 'IDLE': this.timer += deltaTime;
                 if (this.timer >= this.attackCooldown) { this.timer = 0; this.state = 'TELEGRAPH';
-                    const skills = this.phase === 2 ? this.phase2Skills : this.skills;
+                    const skills = this.phase === 3 ? this.phase3Skills : (this.phase === 2 ? this.phase2Skills : this.skills);
                     this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
                     if (this.currentSkill === 'THUNDER_DASH') this.dashTarget = { x: this.player.x, y: this.player.y };
                 } break;
@@ -1320,7 +1442,18 @@ export class MutatedZeusBoss {
             case 'ATTACK': this.timer += deltaTime;
                 if (this.timer >= 0.5) { this.timer = 0; this.state = 'IDLE'; } break;
         }
-        if (this.hp < this.maxHp * 0.5 && this.phase === 1) { this.phase = 2; this.telegraphDuration = 0.6; }
+        // 三阶段切换逻辑
+        if (this.hp <= this.maxHp * 0.25 && this.phase < 3) {
+            this.phase = 3;
+            this.telegraphDuration = 0.45;
+            this.attackCooldown = 0.7;
+            console.log('⚡ 暗黑宙斯进入暗黑神王阶段！');
+            if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 2.5; }
+        } else if (this.hp <= this.maxHp * 0.5 && this.phase === 1) {
+            this.phase = 2;
+            this.telegraphDuration = 0.6;
+            console.log('⚡ 暗黑宙斯进入狂暴阶段！');
+        }
     }
     executeAttack() {
         const angle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
@@ -1397,6 +1530,198 @@ export class MutatedZeusBoss {
                         update(dt) { this.radius = this.maxRadius * (1 - this.life * 2.2); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                         draw(ctx) { ctx.fillStyle = `rgba(255,220,150,${this.life * 2})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
                     }); }, 2200); break;
+            
+            // ===== 三阶段专属技能 =====
+            case 'TYRANT_ANNIHILATION':
+                // 暴君毁灭 - 全屏暗黑雷电
+                if (this.player.screenShake) { this.player.screenShake.intensity = 45; this.player.screenShake.duration = 5; }
+                for (let wave = 0; wave < 10; wave++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 24; i++) {
+                            const a = (Math.PI * 2 / 24) * i + wave * 0.12;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, vx: Math.cos(a) * (450 + wave * 35), vy: Math.sin(a) * (450 + wave * 35),
+                                radius: 14, damage: this.damage, owner: 'enemy', life: 2,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.fillStyle = `rgba(255, 100, 0, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                            });
+                        }
+                        for (let j = 0; j < 12; j++) {
+                            const jx = 60 + Math.random() * 880, jy = 50 + Math.random() * 500;
+                            this.combatSystem.spawnProjectile({
+                                x: jx, y: 0, targetY: jy, radius: 55, damage: this.damage + 5, owner: 'enemy', life: 0.25,
+                                update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.strokeStyle = `rgba(255, 150, 0, ${this.life * 4})`; ctx.lineWidth = 12; ctx.beginPath(); ctx.moveTo(this.x, 0); ctx.lineTo(this.x, this.targetY); ctx.stroke(); }
+                            });
+                        }
+                    }, wave * 300);
+                }
+                break;
+                
+            case 'DARK_AVATAR':
+                // 暗黑化身 - 无敌+连续绫杀
+                this.isInvincible = true;
+                if (this.player.screenShake) { this.player.screenShake.intensity = 25; this.player.screenShake.duration = 4; }
+                for (let dash = 0; dash < 7; dash++) {
+                    setTimeout(() => {
+                        const dashAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                        this.x += Math.cos(dashAngle) * 200;
+                        this.y += Math.sin(dashAngle) * 200;
+                        for (let i = 0; i < 16; i++) {
+                            const a = (Math.PI * 2 / 16) * i;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, vx: Math.cos(a) * 500, vy: Math.sin(a) * 500,
+                                radius: 12, damage: this.damage - 5, owner: 'enemy', life: 1.2,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.fillStyle = `rgba(255, 100, 0, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                            });
+                        }
+                    }, dash * 350);
+                }
+                setTimeout(() => { this.isInvincible = false; }, 3000);
+                break;
+                
+            case 'CHAOS_STORM':
+                // 混沌风暴 - 追踪雷电漩涡（削弱版）
+                // 预警阶段
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 80, damage: 0, owner: 'enemy', life: 1.5, maxLife: 1.5, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.strokeStyle = `rgba(255, 100, 0, ${0.8})`; ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 60 + p * 40, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#ff6600'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚡ 混沌集结中... ⚡', this.x, this.y - 70);
+                    }
+                });
+                // 1.5秒后释放，减少数量和速度
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 12; this.player.screenShake.duration = 4; }
+                    for (let i = 0; i < 15; i++) {
+                        setTimeout(() => {
+                            this.combatSystem.spawnProjectile({
+                                x: this.x + (Math.random() - 0.5) * 120, y: this.y + (Math.random() - 0.5) * 120,
+                                targetPlayer: this.player, speed: 240,
+                                radius: 14, damage: this.damage - 12, owner: 'enemy', life: 2.5,
+                                update(dt) {
+                                    const dx = this.targetPlayer.x - this.x, dy = this.targetPlayer.y - this.y;
+                                    const dist = Math.sqrt(dx * dx + dy * dy);
+                                    this.x += (dx / dist) * this.speed * dt;
+                                    this.y += (dy / dist) * this.speed * dt;
+                                    this.life -= dt;
+                                    if (this.life <= 0) this.markedForDeletion = true;
+                                },
+                                draw(ctx) {
+                                    ctx.fillStyle = `rgba(255, 80, 0, ${this.life * 0.4})`;
+                                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                                }
+                            });
+                        }, i * 300);
+                    }
+                }, 1500);
+                break;
+                
+            case 'DARK_EXECUTION':
+                // 暗黑处刑 - 秒杀技（增强预警，5秒前摇）
+                const execX = this.player.x, execY = this.player.y;
+                // 第一阶段：1秒蓄力预警
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 50, damage: 0, owner: 'enemy', life: 1, maxLife: 1, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.strokeStyle = `rgba(255, 100, 0, ${0.8})`; ctx.lineWidth = 6;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 40 + p * 30, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#ff6600'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠️ 暗黑处刑准备中... ⚠️', this.x, this.y - 80);
+                    }
+                });
+                // 第二阶段：4秒的明显预警区域
+                setTimeout(() => {
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 4; }
+                    this.combatSystem.spawnProjectile({
+                        x: execX, y: execY, radius: 250, damage: 0, owner: 'enemy', life: 4, maxLife: 4,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            const p = 1 - this.life / this.maxLife;
+                            const time = Date.now() / 1000;
+                            // 多层收缩的危险区域
+                            for (let r = 0; r < 3; r++) {
+                                ctx.strokeStyle = `rgba(255, ${30 + r * 40}, 0, ${0.8 - r * 0.2 + Math.sin(time * 12) * 0.2})`;
+                                ctx.lineWidth = 14 - r * 3;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - p * 0.35) - r * 25, 0, Math.PI * 2); ctx.stroke();
+                            }
+                            ctx.fillStyle = `rgba(255, 0, 0, ${p * 0.5})`; ctx.fill();
+                            // 明显的警告文字
+                            ctx.fillStyle = '#ff3300'; ctx.font = 'bold 36px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('☠☠ 暗黑处刑 ☠☠', this.x, this.y - this.radius - 40);
+                            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 30px Arial';
+                            ctx.fillText(`${Math.ceil(this.life)}秒内必须逃离！`, this.x, this.y);
+                            ctx.fillStyle = '#ffff00'; ctx.font = 'bold 22px Arial';
+                            ctx.fillText('↑↑ 致命区域 ↑↑', this.x, this.y + 35);
+                        }
+                    });
+                }, 1000);
+                // 4.55秒时锁定位置提示（释放前0.45秒）
+                setTimeout(() => {
+                    this.combatSystem.spawnProjectile({
+                        x: execX, y: execY, radius: 250, damage: 0, owner: 'enemy', life: 0.45,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('🔒 位置已锁定！即将释放！ 🔒', ctx.canvas.width / 2, 180);
+                            ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 6;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 10, 0, Math.PI * 2); ctx.stroke();
+                        }
+                    });
+                }, 4550);
+                // 5秒后爆炸（1+4）
+                setTimeout(() => {
+                    const dist = Math.sqrt((this.player.x - execX) ** 2 + (this.player.y - execY) ** 2);
+                    if (dist < 260) this.player.takeDamage(140); // 稍微降低伤害
+                    this.combatSystem.spawnProjectile({
+                        x: execX, y: 0, targetY: execY, radius: 120, damage: 0, owner: 'enemy', life: 0.7,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { ctx.fillStyle = `rgba(255, 100, 0, ${this.life})`; ctx.fillRect(this.x - 60, 0, 120, this.targetY); }
+                    });
+                }, 5000);
+                break;
+                
+            // TYRANT_DOMAIN 已删除 - 全场持续伤害体验不好
+                
+            case 'OLYMPUS_DESTRUCTION':
+                // 奥林匹斯毁灭 - 终极技能
+                if (this.player.screenShake) { this.player.screenShake.intensity = 50; this.player.screenShake.duration = 8; }
+                for (let phase = 0; phase < 6; phase++) {
+                    setTimeout(() => {
+                        if (phase % 2 === 0) {
+                            for (let i = 0; i < 20; i++) {
+                                const tx = this.player.x + (Math.random() - 0.5) * 250;
+                                const ty = this.player.y + (Math.random() - 0.5) * 250;
+                                setTimeout(() => {
+                                    this.combatSystem.spawnProjectile({
+                                        x: tx, y: 0, targetY: ty, radius: 50, damage: this.damage, owner: 'enemy', life: 0.25,
+                                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                        draw(ctx) { ctx.strokeStyle = `rgba(255, 200, 0, ${this.life * 4})`; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(this.x, 0); ctx.lineTo(this.x, this.targetY); ctx.stroke(); }
+                                    });
+                                }, i * 50);
+                            }
+                        } else {
+                            for (let i = 0; i < 30; i++) {
+                                const a = (Math.PI * 2 / 30) * i;
+                                this.combatSystem.spawnProjectile({
+                                    x: this.x, y: this.y, vx: Math.cos(a) * 550, vy: Math.sin(a) * 550,
+                                    radius: 16, damage: this.damage - 5, owner: 'enemy', life: 1.8,
+                                    update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                    draw(ctx) { ctx.fillStyle = `rgba(255, 150, 0, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                                });
+                            }
+                        }
+                    }, phase * 1000);
+                }
+                break;
+                
             default: for (let i = 0; i < 6; i++) { const a = angle + (i - 2.5) * 0.2;
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 400, vy: Math.sin(a) * 400,
                     radius: 10, damage: this.damage, owner: 'enemy',
@@ -1405,7 +1730,11 @@ export class MutatedZeusBoss {
                 }); } break;
         }
     }
-    takeDamage(amount) { this.hp -= amount; if (this.hp <= 0) this.hp = 0; }
+    takeDamage(amount) {
+        if (this.isInvincible) return;
+        this.hp -= amount;
+        if (this.hp <= 0) this.hp = 0;
+    }
     draw(ctx) {
         const time = Date.now() / 1000;
         

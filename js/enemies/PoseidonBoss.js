@@ -75,6 +75,51 @@ export class GhostPoseidonBoss {
         this.divineJudgmentWarning = false;
         this.divineJudgmentSafeZone = { x: 0, y: 0, radius: 100 };
         this.divineJudgmentTimer = 0;
+        
+        // 包装spawnProjectile以自动添加update/draw方法
+        this._originalSpawnProjectile = this.combatSystem.spawnProjectile.bind(this.combatSystem);
+        this.spawnProjectile = (config) => {
+            const proj = {
+                x: config.x,
+                y: config.y,
+                vx: config.vx || 0,
+                vy: config.vy || 0,
+                radius: config.radius || 10,
+                damage: config.damage || 0,
+                owner: 'enemy',
+                life: config.lifetime || 1,
+                maxLife: config.lifetime || 1,
+                color: config.color || '#00aaff',
+                isPull: config.isPull || false,
+                pullStrength: config.pullStrength || 0,
+                player: this.player,
+                update(dt) {
+                    this.x += this.vx * dt;
+                    this.y += this.vy * dt;
+                    this.life -= dt;
+                    if (this.isPull && this.player) {
+                        const dx = this.x - this.player.x;
+                        const dy = this.y - this.player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < this.radius && dist > 10) {
+                            this.player.x += (dx / dist) * this.pullStrength * dt * 0.5;
+                            this.player.y += (dy / dist) * this.pullStrength * dt * 0.5;
+                        }
+                    }
+                    if (this.life <= 0) this.markedForDeletion = true;
+                },
+                draw(ctx) {
+                    const alpha = Math.min(1, this.life / this.maxLife);
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            };
+            this._originalSpawnProjectile(proj);
+        };
     }
     
     update(deltaTime) {
@@ -174,26 +219,48 @@ export class GhostPoseidonBoss {
         
         switch (this.currentSkill) {
             case 'TRIDENT_THRUST':
-                // 三叉戟突刺 - 快速冲刺+三向攻击
-                const angle = Math.atan2(this.dashTarget.y - this.y, this.dashTarget.x - this.x);
-                this.x = this.dashTarget.x - Math.cos(angle) * 80;
-                this.y = this.dashTarget.y - Math.sin(angle) * 80;
-                for (let i = -1; i <= 1; i++) {
-                    this.combatSystem.spawnProjectile({
-                        x: this.x, y: this.y,
-                        vx: Math.cos(angle + i * 0.3) * 400,
-                        vy: Math.sin(angle + i * 0.3) * 400,
-                        radius: 12, damage: dmg, lifetime: 1.2,
-                        color: '#00aaff', isEnemy: true
-                    });
-                }
+                // 三叉戟突刺 - 快速冲刺+三向攻击（添加预警和锁定）
+                const thrustTarget = { x: this.dashTarget.x, y: this.dashTarget.y };
+                const thrustStart = { x: this.x, y: this.y };
+                // 预警线
+                this.spawnProjectile({
+                    x: thrustStart.x, y: thrustStart.y, vx: 0, vy: 0, radius: 5, damage: 0, lifetime: 0.35,
+                    color: '#00ffff', isEnemy: false, tx: thrustTarget.x, ty: thrustTarget.y,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        ctx.strokeStyle = `rgba(0,255,255,${this.life * 3})`; ctx.lineWidth = 3; ctx.setLineDash([8, 4]);
+                        ctx.beginPath(); ctx.moveTo(thrustStart.x, thrustStart.y); ctx.lineTo(this.tx, this.ty); ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = `rgba(0,200,255,${this.life * 2})`;
+                        ctx.beginPath(); ctx.arc(this.tx, this.ty, 50, 0, Math.PI * 2); ctx.fill();
+                        if (this.life < 0.15) {
+                            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('🔒', this.tx, this.ty - 60);
+                        }
+                    }
+                });
+                // 0.35秒后冲刺
+                setTimeout(() => {
+                    const angle = Math.atan2(thrustTarget.y - this.y, thrustTarget.x - this.x);
+                    this.x = thrustTarget.x - Math.cos(angle) * 80;
+                    this.y = thrustTarget.y - Math.sin(angle) * 80;
+                    for (let i = -1; i <= 1; i++) {
+                        this.spawnProjectile({
+                            x: this.x, y: this.y,
+                            vx: Math.cos(angle + i * 0.3) * 400,
+                            vy: Math.sin(angle + i * 0.3) * 400,
+                            radius: 12, damage: dmg, lifetime: 1.2,
+                            color: '#00aaff', isEnemy: true
+                        });
+                    }
+                }, 350);
                 break;
                 
             case 'TIDAL_WAVE':
                 // 潮汐波 - 扇形水浪
                 for (let i = -4; i <= 4; i++) {
                     const a = this.waveDirection + i * 0.15;
-                    this.combatSystem.spawnProjectile({
+                    this.spawnProjectile({
                         x: this.x, y: this.y,
                         vx: Math.cos(a) * 280, vy: Math.sin(a) * 280,
                         radius: 18, damage: dmg * 0.7, lifetime: 1.5,
@@ -207,7 +274,7 @@ export class GhostPoseidonBoss {
                 for (let i = 0; i < 6; i++) {
                     setTimeout(() => {
                         const a = Math.atan2(this.player.y - this.y, this.player.x - this.x);
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: this.x, y: this.y,
                             vx: Math.cos(a) * 350, vy: Math.sin(a) * 350,
                             radius: 10, damage: dmg * 0.5, lifetime: 1.8,
@@ -219,7 +286,7 @@ export class GhostPoseidonBoss {
                 
             case 'WHIRLPOOL':
                 // 漩涡陷阱 - 持续吸引
-                this.combatSystem.spawnProjectile({
+                this.spawnProjectile({
                     x: this.whirlpoolCenter.x, y: this.whirlpoolCenter.y,
                     vx: 0, vy: 0,
                     radius: 80, damage: dmg * 0.3, lifetime: 3,
@@ -232,7 +299,7 @@ export class GhostPoseidonBoss {
                 // 海洋爆发 - 360度水柱
                 for (let i = 0; i < 16; i++) {
                     const a = (Math.PI * 2 / 16) * i;
-                    this.combatSystem.spawnProjectile({
+                    this.spawnProjectile({
                         x: this.x, y: this.y,
                         vx: Math.cos(a) * 200, vy: Math.sin(a) * 200,
                         radius: 14, damage: dmg * 0.6, lifetime: 1.2,
@@ -243,7 +310,7 @@ export class GhostPoseidonBoss {
                 
             case 'AQUA_SHIELD':
                 // 水之护盾 - 临时减伤+反弹
-                this.combatSystem.spawnProjectile({
+                this.spawnProjectile({
                     x: this.x, y: this.y,
                     vx: 0, vy: 0,
                     radius: 70, damage: 0, lifetime: 2,
@@ -253,20 +320,42 @@ export class GhostPoseidonBoss {
                 break;
                 
             case 'DEPTH_CHARGE':
-                // 深渊冲击 - 冲刺+爆炸
-                this.x = this.dashTarget.x;
-                this.y = this.dashTarget.y;
+                // 深渊冲击 - 冲刺+爆炸（添加瞬移预警+锁定）
+                const chargeOldX = this.x, chargeOldY = this.y;
+                const chargeTarget = { x: this.dashTarget.x, y: this.dashTarget.y }; // 锁定目标
+                // 瞬移线路预警
+                this.spawnProjectile({
+                    x: chargeOldX, y: chargeOldY, vx: 0, vy: 0, radius: 5, damage: 0, lifetime: 0.35,
+                    color: '#00ffff', isEnemy: false,
+                    targetX: chargeTarget.x, targetY: chargeTarget.y,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        ctx.strokeStyle = `rgba(0,255,255,${this.life * 3})`; ctx.lineWidth = 4; ctx.setLineDash([10, 5]);
+                        ctx.beginPath(); ctx.moveTo(chargeOldX, chargeOldY); ctx.lineTo(this.targetX, this.targetY); ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = `rgba(0,200,255,${this.life * 2})`;
+                        ctx.beginPath(); ctx.arc(this.targetX, this.targetY, 60, 0, Math.PI * 2); ctx.fill();
+                        if (this.life < 0.15) {
+                            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('🔒', this.targetX, this.targetY - 70);
+                        }
+                    }
+                });
+                // 0.35秒后瞬移
                 setTimeout(() => {
+                    this.x = chargeTarget.x;
+                    this.y = chargeTarget.y;
+                    // 爆炸
                     for (let i = 0; i < 12; i++) {
                         const a = (Math.PI * 2 / 12) * i;
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: this.x, y: this.y,
                             vx: Math.cos(a) * 250, vy: Math.sin(a) * 250,
                             radius: 16, damage: dmg * 0.8, lifetime: 1,
                             color: '#0055aa', isEnemy: true
                         });
                     }
-                }, 200);
+                }, 350);
                 break;
                 
             case 'TSUNAMI':
@@ -275,7 +364,7 @@ export class GhostPoseidonBoss {
                     setTimeout(() => {
                         for (let i = 0; i < 8; i++) {
                             const a = (Math.PI * 2 / 8) * i;
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: point.x, y: point.y,
                                 vx: Math.cos(a) * 180, vy: Math.sin(a) * 180,
                                 radius: 25, damage: dmg * 0.9, lifetime: 1.5,
@@ -290,7 +379,7 @@ export class GhostPoseidonBoss {
                 // 地震 - 地面裂缝
                 this.earthquakeZones.forEach((zone, idx) => {
                     setTimeout(() => {
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: zone.x, y: zone.y,
                             vx: 0, vy: 0,
                             radius: 60, damage: dmg * 1.2, lifetime: 0.8,
@@ -301,41 +390,71 @@ export class GhostPoseidonBoss {
                 break;
                 
             case 'POSEIDON_WRATH':
-                // 波塞冬之怒 - 全屏水柱雨
+                // 波塞冬之怒 - 全屏水柱雨（添加下落预警）
                 for (let i = 0; i < 20; i++) {
+                    const rx = this.player.x + (Math.random() - 0.5) * 400;
+                    const ry = this.player.y + (Math.random() - 0.5) * 400;
+                    // 先显示落点预警
                     setTimeout(() => {
-                        const rx = this.player.x + (Math.random() - 0.5) * 400;
-                        const ry = this.player.y + (Math.random() - 0.5) * 400;
-                        this.combatSystem.spawnProjectile({
-                            x: rx, y: ry - 200,
-                            vx: 0, vy: 400,
+                        this.spawnProjectile({
+                            x: rx, y: ry, vx: 0, vy: 0, radius: 30, damage: 0, lifetime: 0.5,
+                            color: 'rgba(0,170,255,0.4)', isEnemy: false,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) {
+                                const pulse = Math.sin(Date.now() / 50) * 0.3 + 0.7;
+                                ctx.strokeStyle = `rgba(0,200,255,${this.life * 2 * pulse})`; ctx.lineWidth = 3;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, 25, 0, Math.PI * 2); ctx.stroke();
+                                ctx.fillStyle = `rgba(0,150,255,${this.life * 0.5})`; ctx.fill();
+                            }
+                        });
+                    }, i * 130);
+                    // 0.5秒后水柱下落
+                    setTimeout(() => {
+                        this.spawnProjectile({
+                            x: rx, y: -50,
+                            vx: 0, vy: 500,
                             radius: 20, damage: dmg * 0.7, lifetime: 1.5,
                             color: '#00aadd', isEnemy: true
                         });
-                    }, i * 130);
+                    }, i * 130 + 500);
                 }
                 break;
                 
             case 'KRAKEN_SUMMON':
-                // 召唤克拉肯触手 - 地面触手攻击
+                // 召唤克拉肯触手 - 地面触手攻击（添加地面预警）
                 for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI * 2 / 6) * i + Math.random() * 0.5;
-                    const dist = 100 + Math.random() * 100;
+                    const tentacleAngle = (Math.PI * 2 / 6) * i + Math.random() * 0.5;
+                    const tentacleDist = 100 + Math.random() * 100;
+                    const tx = this.player.x + Math.cos(tentacleAngle) * tentacleDist;
+                    const ty = this.player.y + Math.sin(tentacleAngle) * tentacleDist;
+                    // 地面裂缝预警
                     setTimeout(() => {
-                        this.combatSystem.spawnProjectile({
-                            x: this.player.x + Math.cos(angle) * dist,
-                            y: this.player.y + Math.sin(angle) * dist,
-                            vx: 0, vy: 0,
+                        this.spawnProjectile({
+                            x: tx, y: ty, vx: 0, vy: 0, radius: 40, damage: 0, lifetime: 0.6,
+                            color: 'rgba(0,68,102,0.5)', isEnemy: false,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) {
+                                const p = 1 - this.life / 0.6;
+                                ctx.strokeStyle = `rgba(0,100,150,${1 - p})`; ctx.lineWidth = 4;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, 35 * (0.5 + p * 0.5), 0, Math.PI * 2); ctx.stroke();
+                                ctx.fillStyle = `rgba(0,50,80,${0.5 - p * 0.3})`; ctx.fill();
+                            }
+                        });
+                    }, i * 220);
+                    // 0.6秒后触手突出
+                    setTimeout(() => {
+                        this.spawnProjectile({
+                            x: tx, y: ty, vx: 0, vy: 0,
                             radius: 35, damage: dmg, lifetime: 1.2,
                             color: '#004466', isEnemy: true
                         });
-                    }, i * 220);
+                    }, i * 220 + 600);
                 }
                 break;
                 
             case 'ABYSS_DOMAIN':
                 // 深渊领域 - 持续伤害区域
-                this.combatSystem.spawnProjectile({
+                this.spawnProjectile({
                     x: this.x, y: this.y,
                     vx: 0, vy: 0,
                     radius: 150, damage: dmg * 0.2, lifetime: 4,
@@ -345,42 +464,77 @@ export class GhostPoseidonBoss {
                 break;
                 
             case 'DIVINE_JUDGMENT':
-                // 秒杀技：神罚海啸 - 全屏攻击，只有安全区可躲避
-                // 设置安全区（Boss位置附近）
-                this.divineJudgmentWarning = true;
-                this.divineJudgmentSafeZone = {
-                    x: this.x,
-                    y: this.y,
-                    radius: 120
-                };
-                
-                // 2.5秒预警后发动
+                // 秒杀技：神罚海啸 - 全屏攻击（5秒前摇+明显预警）
+                // 第一阶段：1秒蓄力预警
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 50, damage: 0, lifetime: 1, maxLife: 1, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.strokeStyle = `rgba(0,200,255,${0.8})`; ctx.lineWidth = 6;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 40 + p * 40, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#00ffff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠️ 神罚海啸准备中... ⚠️', this.x, this.y - 90);
+                    }
+                });
+                // 第二阶段：4秒的明显预警区域
+                setTimeout(() => {
+                    this.divineJudgmentWarning = true;
+                    this.divineJudgmentSafeZone = { x: this.x, y: this.y, radius: 130 };
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 20; this.player.screenShake.duration = 4; }
+                    // 持续4秒的预警效果
+                    this.spawnProjectile({
+                        x: this.x, y: this.y, vx: 0, vy: 0, radius: 130, damage: 0, lifetime: 4, maxLife: 4,
+                        safeX: this.divineJudgmentSafeZone.x, safeY: this.divineJudgmentSafeZone.y,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            const t = Date.now() / 1000;
+                            // 全屏危险警告
+                            ctx.fillStyle = `rgba(0,100,200,${0.15 + Math.sin(t * 10) * 0.1})`;
+                            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                            // 安全区
+                            ctx.strokeStyle = '#00ff00'; ctx.lineWidth = 8; ctx.setLineDash([15, 10]);
+                            ctx.beginPath(); ctx.arc(this.safeX, this.safeY, this.radius, 0, Math.PI * 2); ctx.stroke();
+                            ctx.setLineDash([]);
+                            ctx.fillStyle = `rgba(0,255,100,${0.2 + Math.sin(t * 8) * 0.1})`; ctx.fill();
+                            // 警告文字
+                            ctx.fillStyle = '#ff4444'; ctx.font = 'bold 36px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('⚠️ 神罚海啸 - 快躲到安全区！ ⚠️', ctx.canvas.width / 2, 80);
+                            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 30px Arial';
+                            ctx.fillText(`${Math.ceil(this.life)}秒内进入绿色安全区！`, ctx.canvas.width / 2, 130);
+                            ctx.fillStyle = '#00ff00'; ctx.font = 'bold 22px Arial';
+                            ctx.fillText('↓↓ 安全区 ↓↓', this.safeX, this.safeY - this.radius - 15);
+                        }
+                    });
+                }, 1000);
+                // 4.55秒时锁定位置提示（释放前0.45秒）
+                setTimeout(() => {
+                    this.spawnProjectile({
+                        x: this.divineJudgmentSafeZone.x, y: this.divineJudgmentSafeZone.y, vx: 0, vy: 0, radius: 130, damage: 0, lifetime: 0.45,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('🔒 位置已锁定！即将释放！ 🔒', ctx.canvas.width / 2, 180);
+                            ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 6;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 10, 0, Math.PI * 2); ctx.stroke();
+                        }
+                    });
+                }, 4550);
+                // 5秒后发动（1+4）
                 setTimeout(() => {
                     this.divineJudgmentWarning = false;
-                    // 检查玩家是否在安全区
-                    const px = this.player.x;
-                    const py = this.player.y;
-                    const sx = this.divineJudgmentSafeZone.x;
-                    const sy = this.divineJudgmentSafeZone.y;
+                    const px = this.player.x, py = this.player.y;
+                    const sx = this.divineJudgmentSafeZone.x, sy = this.divineJudgmentSafeZone.y;
                     const dist = Math.sqrt((px - sx) ** 2 + (py - sy) ** 2);
-                    
                     if (dist > this.divineJudgmentSafeZone.radius) {
-                        // 不在安全区，造成巨额伤害
-                        this.player.hp -= 999;
+                        this.player.takeDamage ? this.player.takeDamage(150) : (this.player.hp -= 150);
                     }
-                    
                     // 全屏水柱特效
-                    for (let i = 0; i < 30; i++) {
-                        const rx = Math.random() * 800 + 100;
-                        const ry = Math.random() * 600;
-                        this.combatSystem.spawnProjectile({
-                            x: rx, y: -50,
-                            vx: 0, vy: 600,
-                            radius: 30, damage: 0, lifetime: 1.5,
-                            color: '#00aaff', isEnemy: false // 纯视觉效果
-                        });
+                    for (let i = 0; i < 40; i++) {
+                        const rx = Math.random() * 900 + 50, ry = Math.random() * 600;
+                        this.spawnProjectile({ x: rx, y: -50, vx: 0, vy: 700, radius: 35, damage: 0, lifetime: 1.2, color: '#00ddff', isEnemy: false });
                     }
-                }, 2500);
+                }, 5000);
                 break;
                 
             case 'STORM_SURGE':
@@ -390,7 +544,7 @@ export class GhostPoseidonBoss {
                         for (let i = 0; i < 12; i++) {
                             const a = (Math.PI * 2 / 12) * i;
                             const startDist = 50 + wave * 30;
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: this.x + Math.cos(a) * startDist,
                                 y: this.y + Math.sin(a) * startDist,
                                 vx: Math.cos(a) * 200, vy: Math.sin(a) * 200,
@@ -411,7 +565,7 @@ export class GhostPoseidonBoss {
                         // 从玩家身后发射向Boss方向
                         const startX = this.player.x + Math.cos(riptideAngle) * 300;
                         const startY = this.player.y + Math.sin(riptideAngle) * 300;
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: startX, y: startY,
                             vx: -Math.cos(riptideAngle + offset) * 350,
                             vy: -Math.sin(riptideAngle + offset) * 350,
@@ -429,14 +583,14 @@ export class GhostPoseidonBoss {
                         const px = this.player.x + (Math.random() - 0.5) * 200;
                         const py = this.player.y + (Math.random() - 0.5) * 200;
                         // 预警圈
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: px, y: py, vx: 0, vy: 0,
                             radius: 40, damage: 0, lifetime: 0.5,
                             color: 'rgba(0, 150, 255, 0.3)', isEnemy: false
                         });
                         // 延迟喷发
                         setTimeout(() => {
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: px, y: py, vx: 0, vy: -300,
                                 radius: 35, damage: dmg * 1.1, lifetime: 1,
                                 color: '#00ddff', isEnemy: true
@@ -453,7 +607,7 @@ export class GhostPoseidonBoss {
                 for (let i = 0; i < 8; i++) {
                     const cageAngle = (Math.PI * 2 / 8) * i;
                     setTimeout(() => {
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: cageX + Math.cos(cageAngle) * 150,
                             y: cageY + Math.sin(cageAngle) * 150,
                             vx: -Math.cos(cageAngle) * 100,
@@ -472,7 +626,7 @@ export class GhostPoseidonBoss {
                 for (let i = 0; i < 5; i++) {
                     setTimeout(() => {
                         const startY = 100 + i * 100;
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: levSide > 0 ? -50 : 850,
                             y: startY,
                             vx: levSide * 400, vy: 0,

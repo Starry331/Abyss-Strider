@@ -86,6 +86,53 @@ export class BerserkArtemisBoss {
         
         // 近身攻击范围
         this.meleeRange = 100;
+        
+        // 包装spawnProjectile以自动添加update/draw方法
+        this._originalSpawnProjectile = this.combatSystem.spawnProjectile.bind(this.combatSystem);
+        this.spawnProjectile = (config) => {
+            const proj = {
+                x: config.x,
+                y: config.y,
+                vx: config.vx || 0,
+                vy: config.vy || 0,
+                radius: config.radius || 10,
+                damage: config.damage || 0,
+                owner: 'enemy',
+                life: config.lifetime || 1,
+                maxLife: config.lifetime || 1,
+                color: config.color || '#cc88ff',
+                isHoming: config.isHoming || false,
+                homingSpeed: config.homingSpeed || 0,
+                player: this.player,
+                update(dt) {
+                    // 追踪逻辑
+                    if (this.isHoming && this.player) {
+                        const dx = this.player.x - this.x;
+                        const dy = this.player.y - this.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist > 10) {
+                            this.x += (dx / dist) * this.homingSpeed * dt;
+                            this.y += (dy / dist) * this.homingSpeed * dt;
+                        }
+                    } else {
+                        this.x += this.vx * dt;
+                        this.y += this.vy * dt;
+                    }
+                    this.life -= dt;
+                    if (this.life <= 0) this.markedForDeletion = true;
+                },
+                draw(ctx) {
+                    const alpha = Math.min(1, this.life / this.maxLife);
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            };
+            this._originalSpawnProjectile(proj);
+        };
     }
     
     update(deltaTime) {
@@ -214,7 +261,7 @@ export class BerserkArtemisBoss {
                 for (let i = 0; i < 3; i++) {
                     setTimeout(() => {
                         const a = angle + (Math.random() - 0.5) * 0.1;
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: this.x, y: this.y,
                             vx: Math.cos(a) * 500, vy: Math.sin(a) * 500,
                             radius: 8, damage: dmg * 0.5, lifetime: 1.5,
@@ -226,7 +273,7 @@ export class BerserkArtemisBoss {
                 
             case 'MOON_SHOT':
                 // 月光箭 - 穿透高伤
-                this.combatSystem.spawnProjectile({
+                this.spawnProjectile({
                     x: this.x, y: this.y,
                     vx: Math.cos(this.moonBeamAngle) * 600,
                     vy: Math.sin(this.moonBeamAngle) * 600,
@@ -236,34 +283,56 @@ export class BerserkArtemisBoss {
                 break;
                 
             case 'HUNTER_DASH':
-                // 猎手冲刺 - 高速穿刺
-                const dashAngle = Math.atan2(this.dashTarget.y - this.y, this.dashTarget.x - this.x);
-                // 留下残影攻击
-                for (let i = 0; i < 5; i++) {
-                    setTimeout(() => {
-                        const progress = i / 5;
-                        const px = this.x + (this.dashTarget.x - this.x) * progress;
-                        const py = this.y + (this.dashTarget.y - this.y) * progress;
-                        this.combatSystem.spawnProjectile({
-                            x: px, y: py,
-                            vx: 0, vy: 0,
-                            radius: 25, damage: dmg * 0.4, lifetime: 0.3,
-                            color: 'rgba(200, 150, 255, 0.5)', isEnemy: true
-                        });
-                    }, i * 70);
-                }
-                // 冲刺到目标
+                // 猎手冲刺 - 高速穿刺（添加瞬移预警+锁定）
+                const dashTarget = { x: this.dashTarget.x, y: this.dashTarget.y }; // 锁定目标
+                const dashAngle = Math.atan2(dashTarget.y - this.y, dashTarget.x - this.x);
+                const startX = this.x, startY = this.y;
+                // 瞬移线路预警
+                this.spawnProjectile({
+                    x: startX, y: startY, vx: 0, vy: 0, radius: 5, damage: 0, lifetime: 0.35,
+                    color: '#ff88ff', isEnemy: false,
+                    targetX: dashTarget.x, targetY: dashTarget.y,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        ctx.strokeStyle = `rgba(255,150,255,${this.life * 3})`; ctx.lineWidth = 3; ctx.setLineDash([8, 4]);
+                        ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(this.targetX, this.targetY); ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = `rgba(255,100,255,${this.life * 2})`;
+                        ctx.beginPath(); ctx.arc(this.targetX, this.targetY, 40, 0, Math.PI * 2); ctx.fill();
+                        if (this.life < 0.15) {
+                            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('🔒', this.targetX, this.targetY - 50);
+                        }
+                    }
+                });
+                // 0.35秒后开始冲刺
                 setTimeout(() => {
-                    this.x = this.dashTarget.x - Math.cos(dashAngle) * 100;
-                    this.y = this.dashTarget.y - Math.sin(dashAngle) * 100;
-                }, 200);
+                    // 留下残影攻击
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            const progress = i / 5;
+                            const px = startX + (dashTarget.x - startX) * progress;
+                            const py = startY + (dashTarget.y - startY) * progress;
+                            this.spawnProjectile({
+                                x: px, y: py, vx: 0, vy: 0,
+                                radius: 25, damage: dmg * 0.4, lifetime: 0.3,
+                                color: 'rgba(200, 150, 255, 0.5)', isEnemy: true
+                            });
+                        }, i * 50);
+                    }
+                    // 冲刺到目标
+                    setTimeout(() => {
+                        this.x = dashTarget.x - Math.cos(dashAngle) * 100;
+                        this.y = dashTarget.y - Math.sin(dashAngle) * 100;
+                    }, 150);
+                }, 350);
                 break;
                 
             case 'BEAST_TRAP':
                 // 野兽陷阱
                 this.trapPositions.forEach((pos, idx) => {
                     setTimeout(() => {
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: pos.x, y: pos.y,
                             vx: 0, vy: 0,
                             radius: 40, damage: dmg * 0.8, lifetime: 3,
@@ -275,18 +344,31 @@ export class BerserkArtemisBoss {
                 break;
                 
             case 'SILVER_RAIN':
-                // 银箭雨
+                // 银箭雨（添加下落预警）
                 for (let i = 0; i < 15; i++) {
+                    const rx = this.arrowRainCenter.x + (Math.random() - 0.5) * 200;
+                    const ry = this.arrowRainCenter.y + (Math.random() - 0.5) * 200;
+                    // 落点预警
                     setTimeout(() => {
-                        const rx = this.arrowRainCenter.x + (Math.random() - 0.5) * 200;
-                        const ry = this.arrowRainCenter.y + (Math.random() - 0.5) * 200;
-                        this.combatSystem.spawnProjectile({
-                            x: rx, y: ry - 300,
-                            vx: 0, vy: 500,
+                        this.spawnProjectile({
+                            x: rx, y: ry, vx: 0, vy: 0, radius: 15, damage: 0, lifetime: 0.4,
+                            color: 'rgba(220,220,255,0.5)', isEnemy: false,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) {
+                                ctx.strokeStyle = `rgba(200,200,255,${this.life * 2.5})`; ctx.lineWidth = 2;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, 12, 0, Math.PI * 2); ctx.stroke();
+                            }
+                        });
+                    }, i * 90);
+                    // 0.4秒后箭矢下落
+                    setTimeout(() => {
+                        this.spawnProjectile({
+                            x: rx, y: -30,
+                            vx: 0, vy: 550,
                             radius: 6, damage: dmg * 0.4, lifetime: 1.5,
                             color: '#ddddff', isEnemy: true
                         });
-                    }, i * 90);
+                    }, i * 90 + 400);
                 }
                 break;
                 
@@ -294,7 +376,7 @@ export class BerserkArtemisBoss {
                 // 月神打击 - 扇形月光
                 for (let i = -5; i <= 5; i++) {
                     const a = this.moonBeamAngle + i * 0.12;
-                    this.combatSystem.spawnProjectile({
+                    this.spawnProjectile({
                         x: this.x, y: this.y,
                         vx: Math.cos(a) * 350, vy: Math.sin(a) * 350,
                         radius: 12, damage: dmg * 0.6, lifetime: 1.2,
@@ -308,7 +390,7 @@ export class BerserkArtemisBoss {
                 this.huntTargets.forEach((target, idx) => {
                     setTimeout(() => {
                         const a = Math.atan2(this.player.y - target.y, this.player.x - target.x);
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: target.x, y: target.y,
                             vx: Math.cos(a) * 400, vy: Math.sin(a) * 400,
                             radius: 10, damage: dmg * 0.7, lifetime: 1.5,
@@ -324,7 +406,7 @@ export class BerserkArtemisBoss {
                     setTimeout(() => {
                         const rx = this.arrowRainCenter.x + (Math.random() - 0.5) * 350;
                         const ry = this.arrowRainCenter.y + (Math.random() - 0.5) * 350;
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: rx, y: ry - 400,
                             vx: (Math.random() - 0.5) * 50, vy: 450,
                             radius: 8, damage: dmg * 0.35, lifetime: 2,
@@ -341,7 +423,7 @@ export class BerserkArtemisBoss {
                     for (let i = 0; i < 12; i++) {
                         setTimeout(() => {
                             const a = baseAngle + (Math.PI * 2 / 12) * i + Date.now() / 500;
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: this.x + Math.cos(a) * 50,
                                 y: this.y + Math.sin(a) * 50,
                                 vx: Math.cos(a) * 250, vy: Math.sin(a) * 250,
@@ -359,7 +441,7 @@ export class BerserkArtemisBoss {
                     setTimeout(() => {
                         for (let i = 0; i < 16; i++) {
                             const a = (Math.PI * 2 / 16) * i + wave * 0.2;
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: this.x, y: this.y,
                                 vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
                                 radius: 10, damage: dmg * 0.5, lifetime: 1.5,
@@ -382,14 +464,14 @@ export class BerserkArtemisBoss {
                             color: '#8866aa', isEnemy: true,
                             isHoming: true, homingSpeed: 180
                         };
-                        this.combatSystem.spawnProjectile(wolf);
+                        this.spawnProjectile(wolf);
                     }, idx * 200);
                 });
                 break;
                 
             case 'GODDESS_DOMAIN':
                 // 女神领域 - 持续月光场
-                this.combatSystem.spawnProjectile({
+                this.spawnProjectile({
                     x: this.x, y: this.y,
                     vx: 0, vy: 0,
                     radius: 180, damage: dmg * 0.15, lifetime: 5,
@@ -400,7 +482,7 @@ export class BerserkArtemisBoss {
                 for (let i = 0; i < 15; i++) {
                     setTimeout(() => {
                         const a = Math.random() * Math.PI * 2;
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: this.x, y: this.y,
                             vx: Math.cos(a) * 200, vy: Math.sin(a) * 200,
                             radius: 8, damage: dmg * 0.3, lifetime: 1.5,
@@ -417,7 +499,7 @@ export class BerserkArtemisBoss {
                         const rx = this.player.x + (Math.random() - 0.5) * 300;
                         const ry = this.player.y + (Math.random() - 0.5) * 300;
                         // 预警
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: rx, y: ry,
                             vx: 0, vy: 0,
                             radius: 50, damage: 0, lifetime: 0.5,
@@ -425,7 +507,7 @@ export class BerserkArtemisBoss {
                         });
                         // 延迟爆发
                         setTimeout(() => {
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: rx, y: ry,
                                 vx: 0, vy: 0,
                                 radius: 50, damage: dmg * 1.5, lifetime: 0.3,
@@ -449,7 +531,7 @@ export class BerserkArtemisBoss {
                         // 每次冲刺释放箭矢
                         for (let i = 0; i < 8; i++) {
                             const a = (Math.PI * 2 / 8) * i;
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: this.x, y: this.y,
                                 vx: Math.cos(a) * 350, vy: Math.sin(a) * 350,
                                 radius: 12, damage: dmg * 0.6, lifetime: 1.2,
@@ -470,7 +552,7 @@ export class BerserkArtemisBoss {
                 // 月牙形攻击
                 for (let i = -3; i <= 3; i++) {
                     const a = slashAngle + i * 0.25;
-                    this.combatSystem.spawnProjectile({
+                    this.spawnProjectile({
                         x: this.x, y: this.y,
                         vx: Math.cos(a) * 250, vy: Math.sin(a) * 250,
                         radius: 20, damage: dmg * 0.8, lifetime: 0.6,
@@ -486,54 +568,90 @@ export class BerserkArtemisBoss {
                 break;
                 
             case 'LUNAR_EXECUTION':
-                // 秒杀技：月神处刑 - 全屏月光，只有阴影区可躲避
-                this.lunarExecutionWarning = true;
-                
-                // 生成3个安全区（阴影区）
-                this.lunarExecutionSafeZones = [];
-                for (let i = 0; i < 3; i++) {
-                    const angle = (Math.PI * 2 / 3) * i + Math.random() * 0.5;
-                    const dist = 180 + Math.random() * 100;
-                    this.lunarExecutionSafeZones.push({
-                        x: this.x + Math.cos(angle) * dist,
-                        y: this.y + Math.sin(angle) * dist,
-                        radius: 80
+                // 秒杀技：月神处刑 - 全屏月光（5秒前摇+明显预警）
+                // 第一阶段：1秒蓄力预警
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 50, damage: 0, lifetime: 1, maxLife: 1, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.strokeStyle = `rgba(255,150,255,${0.8})`; ctx.lineWidth = 6;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 40 + p * 40, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#ff88ff'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠️ 月神处刑准备中... ⚠️', this.x, this.y - 90);
+                    }
+                });
+                // 第二阶段：生成安全区并显示4秒预警
+                setTimeout(() => {
+                    this.lunarExecutionWarning = true;
+                    this.lunarExecutionSafeZones = [];
+                    for (let i = 0; i < 3; i++) {
+                        const angle = (Math.PI * 2 / 3) * i + Math.random() * 0.5;
+                        const dist = 180 + Math.random() * 100;
+                        this.lunarExecutionSafeZones.push({ x: this.x + Math.cos(angle) * dist, y: this.y + Math.sin(angle) * dist, radius: 90 });
+                    }
+                    if (this.player.screenShake) { this.player.screenShake.intensity = 20; this.player.screenShake.duration = 4; }
+                    // 4秒预警效果
+                    this.spawnProjectile({
+                        x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, damage: 0, lifetime: 4, maxLife: 4,
+                        zones: this.lunarExecutionSafeZones,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            const t = Date.now() / 1000;
+                            // 全屏月光危险警告
+                            ctx.fillStyle = `rgba(200,100,255,${0.15 + Math.sin(t * 10) * 0.1})`;
+                            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                            // 安全区（阴影区）
+                            this.zones.forEach((zone, i) => {
+                                ctx.fillStyle = `rgba(50,30,80,${0.7 + Math.sin(t * 8 + i) * 0.2})`;
+                                ctx.beginPath(); ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2); ctx.fill();
+                                ctx.strokeStyle = '#333'; ctx.lineWidth = 5; ctx.setLineDash([12, 8]);
+                                ctx.stroke(); ctx.setLineDash([]);
+                                ctx.fillStyle = '#aaaaaa'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                                ctx.fillText('↓ 阴影安全区 ↓', zone.x, zone.y - zone.radius - 10);
+                            });
+                            // 警告文字
+                            ctx.fillStyle = '#ff66ff'; ctx.font = 'bold 36px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('☠️ 月神处刑 - 快躲到阴影区！ ☠️', ctx.canvas.width / 2, 80);
+                            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 30px Arial';
+                            ctx.fillText(`${Math.ceil(this.life)}秒内进入深色安全区！`, ctx.canvas.width / 2, 130);
+                        }
                     });
-                }
-                
-                // 3秒预警后发动
+                }, 1000);
+                // 4.55秒时锁定位置提示（释放前0.45秒）
+                setTimeout(() => {
+                    const zones = this.lunarExecutionSafeZones;
+                    this.spawnProjectile({
+                        x: 0, y: 0, vx: 0, vy: 0, radius: 0, damage: 0, lifetime: 0.45, zones: zones,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText('🔒 位置已锁定！即将释放！ 🔒', ctx.canvas.width / 2, 180);
+                            this.zones.forEach(zone => {
+                                ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 5;
+                                ctx.beginPath(); ctx.arc(zone.x, zone.y, zone.radius + 10, 0, Math.PI * 2); ctx.stroke();
+                            });
+                        }
+                    });
+                }, 4550);
+                // 5秒后发动（1+4）
                 setTimeout(() => {
                     this.lunarExecutionWarning = false;
-                    
-                    // 检查玩家是否在任一安全区
-                    const px = this.player.x;
-                    const py = this.player.y;
+                    const px = this.player.x, py = this.player.y;
                     let isSafe = false;
-                    
                     for (const zone of this.lunarExecutionSafeZones) {
                         const dist = Math.sqrt((px - zone.x) ** 2 + (py - zone.y) ** 2);
-                        if (dist <= zone.radius) {
-                            isSafe = true;
-                            break;
-                        }
+                        if (dist <= zone.radius) { isSafe = true; break; }
                     }
-                    
                     if (!isSafe) {
-                        // 不在安全区，造成巨额伤害
-                        this.player.hp -= 999;
+                        this.player.takeDamage ? this.player.takeDamage(150) : (this.player.hp -= 150);
                     }
-                    
-                    // 全屏月光特效
-                    for (let i = 0; i < 24; i++) {
-                        const a = (Math.PI * 2 / 24) * i;
-                        this.combatSystem.spawnProjectile({
-                            x: this.x, y: this.y,
-                            vx: Math.cos(a) * 400, vy: Math.sin(a) * 400,
-                            radius: 25, damage: 0, lifetime: 1.5,
-                            color: '#ffddff', isEnemy: false // 纯视觉效果
-                        });
+                    // 全屏月光爆发
+                    for (let i = 0; i < 32; i++) {
+                        const a = (Math.PI * 2 / 32) * i;
+                        this.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 500, vy: Math.sin(a) * 500, radius: 30, damage: 0, lifetime: 1.2, color: '#ffddff', isEnemy: false });
                     }
-                }, 3000);
+                }, 5000);
                 break;
                 
             case 'STAR_SHOWER':
@@ -542,7 +660,7 @@ export class BerserkArtemisBoss {
                     setTimeout(() => {
                         const starX = this.player.x + (Math.random() - 0.5) * 400;
                         // 预警
-                        this.combatSystem.spawnProjectile({
+                        this.spawnProjectile({
                             x: starX, y: this.player.y,
                             vx: 0, vy: 0,
                             radius: 25, damage: 0, lifetime: 0.4,
@@ -550,7 +668,7 @@ export class BerserkArtemisBoss {
                         });
                         // 星光箭
                         setTimeout(() => {
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: starX, y: -30,
                                 vx: (Math.random() - 0.5) * 50, vy: 500,
                                 radius: 12, damage: dmg * 0.7, lifetime: 1.5,
@@ -562,27 +680,45 @@ export class BerserkArtemisBoss {
                 break;
                 
             case 'SHADOW_STEP':
-                // 影步 - 瞬移并留下残影攻击
+                // 影步 - 瞬移并留下残影攻击（添加瞬移预警）
                 const shadowPositions = [];
                 for (let i = 0; i < 4; i++) {
-                    const angle = (Math.PI * 2 / 4) * i + Math.random() * 0.5;
-                    const dist = 100 + Math.random() * 50;
-                    shadowPositions.push({
-                        x: this.player.x + Math.cos(angle) * dist,
-                        y: this.player.y + Math.sin(angle) * dist
-                    });
+                    const stepAngle = (Math.PI * 2 / 4) * i + Math.random() * 0.5;
+                    const stepDist = 100 + Math.random() * 50;
+                    shadowPositions.push({ x: this.player.x + Math.cos(stepAngle) * stepDist, y: this.player.y + Math.sin(stepAngle) * stepDist });
                 }
-                
+                // 先显示所有瞬移位置预警（每个位置有独立的锁定时间）
+                shadowPositions.forEach((pos, idx) => {
+                    const totalTime = 0.35 + idx * 0.25; // 每个位置的总预警时间
+                    this.spawnProjectile({
+                        x: pos.x, y: pos.y, vx: 0, vy: 0, radius: 35, damage: 0, lifetime: totalTime, maxLife: totalTime,
+                        color: 'rgba(170,100,200,0.4)', isEnemy: false, idx: idx,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            const pulse = Math.sin(Date.now() / 80) * 0.3 + 0.7;
+                            ctx.strokeStyle = `rgba(200,100,255,${Math.min(1, this.life) * pulse})`; ctx.lineWidth = 3;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, 30, 0, Math.PI * 2); ctx.stroke();
+                            ctx.fillStyle = `rgba(150,50,200,${Math.min(1, this.life) * 0.3})`; ctx.fill();
+                            ctx.fillStyle = '#cc88ff'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+                            ctx.fillText(`影步${this.idx + 1}`, this.x, this.y - 40);
+                            // 释放前0.15秒显示锁定
+                            if (this.life < 0.15) {
+                                ctx.fillStyle = '#ff0000'; ctx.font = 'bold 12px Arial';
+                                ctx.fillText('🔒', this.x, this.y - 55);
+                            }
+                        }
+                    });
+                });
+                // 延迟后开始瞬移
                 shadowPositions.forEach((pos, idx) => {
                     setTimeout(() => {
                         // 瞬移到位置
                         this.x = pos.x;
                         this.y = pos.y;
-                        
                         // 残影攻击
                         const attackAngle = Math.atan2(this.player.y - pos.y, this.player.x - pos.x);
                         for (let j = -1; j <= 1; j++) {
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: pos.x, y: pos.y,
                                 vx: Math.cos(attackAngle + j * 0.2) * 400,
                                 vy: Math.sin(attackAngle + j * 0.2) * 400,
@@ -590,7 +726,7 @@ export class BerserkArtemisBoss {
                                 color: '#aa66cc', isEnemy: true
                             });
                         }
-                    }, idx * 250);
+                    }, (0.35 + idx * 0.25) * 1000); // 与预警时间同步
                 });
                 break;
                 
@@ -602,7 +738,7 @@ export class BerserkArtemisBoss {
                         const sweepAngle = sweepStartAngle + (Math.PI / 2) * (i / 20);
                         // 多段激光
                         for (let j = 0; j < 5; j++) {
-                            this.combatSystem.spawnProjectile({
+                            this.spawnProjectile({
                                 x: this.x + Math.cos(sweepAngle) * (50 + j * 40),
                                 y: this.y + Math.sin(sweepAngle) * (50 + j * 40),
                                 vx: Math.cos(sweepAngle) * 300,
@@ -616,25 +752,46 @@ export class BerserkArtemisBoss {
                 break;
                 
             case 'FERAL_CHARGE':
-                // 野性冲锋 - 近身连续突进
+                // 野性冲锋 - 近身连续突进（添加预警+锁定）
                 for (let charge = 0; charge < 5; charge++) {
+                    // 每次冲锋先显示预警
                     setTimeout(() => {
-                        const chargeAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
-                        // 冲向玩家
-                        this.x = this.player.x - Math.cos(chargeAngle) * 50;
-                        this.y = this.player.y - Math.sin(chargeAngle) * 50;
-                        
-                        // 爪击
-                        for (let claw = -2; claw <= 2; claw++) {
-                            this.combatSystem.spawnProjectile({
-                                x: this.x, y: this.y,
-                                vx: Math.cos(chargeAngle + claw * 0.3) * 300,
-                                vy: Math.sin(chargeAngle + claw * 0.3) * 300,
-                                radius: 15, damage: dmg * 0.6, lifetime: 0.5,
-                                color: '#ff88aa', isEnemy: true
-                            });
-                        }
-                    }, charge * 300);
+                        const feralTarget = { x: this.player.x, y: this.player.y }; // 锁定目标
+                        const feralStart = { x: this.x, y: this.y };
+                        // 预警线
+                        this.spawnProjectile({
+                            x: feralStart.x, y: feralStart.y, vx: 0, vy: 0, radius: 5, damage: 0, lifetime: 0.35,
+                            color: '#ff88aa', isEnemy: false, tx: feralTarget.x, ty: feralTarget.y,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) {
+                                ctx.strokeStyle = `rgba(255,100,150,${this.life * 3})`; ctx.lineWidth = 2; ctx.setLineDash([6, 3]);
+                                ctx.beginPath(); ctx.moveTo(feralStart.x, feralStart.y); ctx.lineTo(this.tx, this.ty); ctx.stroke();
+                                ctx.setLineDash([]);
+                                ctx.fillStyle = `rgba(255,80,120,${this.life * 2})`;
+                                ctx.beginPath(); ctx.arc(this.tx, this.ty, 35, 0, Math.PI * 2); ctx.fill();
+                                if (this.life < 0.15) {
+                                    ctx.fillStyle = '#ff0000'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center';
+                                    ctx.fillText('🔒', this.tx, this.ty - 45);
+                                }
+                            }
+                        });
+                        // 0.35秒后冲锋
+                        setTimeout(() => {
+                            const chargeAngle = Math.atan2(feralTarget.y - this.y, feralTarget.x - this.x);
+                            this.x = feralTarget.x - Math.cos(chargeAngle) * 50;
+                            this.y = feralTarget.y - Math.sin(chargeAngle) * 50;
+                            // 爪击
+                            for (let claw = -2; claw <= 2; claw++) {
+                                this.spawnProjectile({
+                                    x: this.x, y: this.y,
+                                    vx: Math.cos(chargeAngle + claw * 0.3) * 300,
+                                    vy: Math.sin(chargeAngle + claw * 0.3) * 300,
+                                    radius: 15, damage: dmg * 0.6, lifetime: 0.5,
+                                    color: '#ff88aa', isEnemy: true
+                                });
+                            }
+                        }, 350);
+                    }, charge * 500); // 增加间隔以适应预警时间
                 }
                 break;
                 
@@ -643,7 +800,7 @@ export class BerserkArtemisBoss {
                 // 蓄力预警
                 const snipeAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
                 // 显示瞄准线
-                this.combatSystem.spawnProjectile({
+                this.spawnProjectile({
                     x: this.x, y: this.y,
                     vx: Math.cos(snipeAngle) * 800,
                     vy: Math.sin(snipeAngle) * 800,
@@ -653,7 +810,7 @@ export class BerserkArtemisBoss {
                 
                 // 延迟发射高伤害箭矢
                 setTimeout(() => {
-                    this.combatSystem.spawnProjectile({
+                    this.spawnProjectile({
                         x: this.x, y: this.y,
                         vx: Math.cos(snipeAngle) * 800,
                         vy: Math.sin(snipeAngle) * 800,

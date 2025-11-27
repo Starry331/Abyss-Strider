@@ -516,8 +516,8 @@ export class BossRushScene {
               apply: () => { this.player.damageBonus = (this.player.damageBonus || 1) * 1.2; } },
             { name: '速度强化', desc: '移速+15%', icon: '💨', bgColor: '#1a2a2a', borderColor: '#44aaff',
               apply: () => { this.player.speed *= 1.15; } },
-            { name: '暴击强化', desc: '暴击率+10%', icon: '💥', bgColor: '#2a1a2a', borderColor: '#ff44ff',
-              apply: () => { this.weaponSystem.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.1); } },
+            { name: '暴击强化', desc: '暴击率+5%', icon: '💥', bgColor: '#2a1a2a', borderColor: '#ff44ff',
+              apply: () => { this.weaponSystem.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.05); } },
             { name: '护盾赐予', desc: '获得50护盾', icon: '🛡️', bgColor: '#1a2a3a', borderColor: '#4488ff',
               apply: () => { this.player.shield = (this.player.shield || 0) + 50; } },
             { name: '吸血本能', desc: '攻击回复2%生命', icon: '🧛', bgColor: '#3a1a1a', borderColor: '#cc4444',
@@ -539,8 +539,8 @@ export class BossRushScene {
               effect: () => { this.player.damageReduction = (this.player.damageReduction || 0) + 0.2; } },
             { name: '速度祝福', desc: '移速+25%', icon: '💨', color: '#44ffaa',
               effect: () => { this.player.speed *= 1.25; } },
-            { name: '暴击祝福', desc: '暴击率+15%', icon: '💥', color: '#ff44ff',
-              effect: () => { this.weaponSystem.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.15); } },
+            { name: '暴击祝福', desc: '暴击率+8%', icon: '💥', color: '#ff44ff',
+              effect: () => { this.weaponSystem.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.08); } },
         ];
         
         // 随机选3个
