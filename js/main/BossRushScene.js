@@ -212,13 +212,14 @@ export class BossRushScene {
     }
     
     enter() {
-        console.log('进入Boss战模式');
+        console.log('=== 进入Boss战模式 ===');
         this.isActive = true;
         this.isResurrecting = false; // 重置复活状态
         
         // 重新初始化BossRushMode确保干净状态
         this.bossRushMode = new BossRushMode();
         this.bossRushMode.start();
+        console.log('BossRushMode已启动, 当前Boss:', this.bossRushMode.getCurrentBoss());
         
         // 初始化输入管理器
         this.inputManager = new this.InputManager();
@@ -232,6 +233,7 @@ export class BossRushScene {
         this.player = new this.Player(canvas.width / 2, canvas.height / 2, this.inputManager);
         this.player.maxHp = 100; // 基础血量
         this.player.hp = 100;
+        console.log('玩家已创建, HP:', this.player.hp, '/', this.player.maxHp);
         this.player.invincibleTime = 0; // 重置无敌时间
         this.hasUsedRevive = false; // 重置复活机会（只有一次）
         
@@ -296,13 +298,19 @@ export class BossRushScene {
         const y = canvas.height / 2;
         
         // 根据Boss类型创建
-        if (bossInfo.level === 6) {
-            this.activeBoss = new GhostPoseidonBoss(x, y, this.player, this.combatSystem);
-        } else if (bossInfo.level === 7) {
-            this.activeBoss = new BerserkArtemisBoss(x, y, this.player, this.combatSystem);
-        } else {
-            // 异化Boss 1-5
-            this.activeBoss = BossVariety.createBoss(bossInfo.level, x, y, this.player, this.combatSystem, true);
+        console.log('创建Boss, 位置:', x, y, '等级:', bossInfo.level);
+        try {
+            if (bossInfo.level === 6) {
+                this.activeBoss = new GhostPoseidonBoss(x, y, this.player, this.combatSystem);
+            } else if (bossInfo.level === 7) {
+                this.activeBoss = new BerserkArtemisBoss(x, y, this.player, this.combatSystem);
+            } else {
+                // 异化Boss 1-5
+                this.activeBoss = BossVariety.createBoss(bossInfo.level, x, y, this.player, this.combatSystem, true);
+            }
+            console.log('Boss已创建:', this.activeBoss ? this.activeBoss.name : 'null');
+        } catch (e) {
+            console.error('创建Boss失败:', e);
         }
         
         // 更新Boss血条UI
