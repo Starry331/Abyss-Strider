@@ -1679,15 +1679,15 @@ class CerberusBoss extends BaseBoss {
         super(x, y, player, combatSystem);
         this.level = 3;
         this.name = '地狱三头魔犬·刻耳柏洛斯';
-        this.maxHp = 750;  // 削弱血量
+        this.maxHp = 850;  // 增强血量 750→850
         this.hp = this.maxHp;
         this.radius = 68;
         this.color = '#8b0000';
-        this.damage = 24;
-        this.telegraphDuration = 0.85; // 施法加速
-        this.attackCooldown = 1.2; // 攻击间隔缩短
-        this.skills = ['TRIPLE_FIRE', 'INFERNO_CHARGE', 'HELLFIRE', 'LAVA_POOL', 'BITE_RUSH', 'METEOR', 'SOUL_HOWL', 'HELLGATE', 'FLAME_VORTEX'];
-        this.phase2Skills = [...this.skills, 'APOCALYPSE', 'CERBERUS_RAGE', 'DEMON_SUMMON', 'INFERNO_BREATH'];
+        this.damage = 26;  // 增强伤害 24→26
+        this.telegraphDuration = 0.8; // 施法加速
+        this.attackCooldown = 1.1; // 攻击间隔缩短
+        this.skills = ['TRIPLE_FIRE', 'INFERNO_CHARGE', 'HELLFIRE', 'LAVA_POOL', 'BITE_RUSH', 'METEOR', 'SOUL_HOWL', 'HELLGATE', 'FLAME_VORTEX', 'FIRE_CHAIN', 'MAGMA_BURST'];
+        this.phase2Skills = [...this.skills, 'APOCALYPSE', 'CERBERUS_RAGE', 'DEMON_SUMMON', 'INFERNO_BREATH', 'HELLHOUND_FRENZY', 'SOUL_DEVOUR'];
         this.headAngles = [0, 0, 0]; // 三头动画
     }
 
@@ -2035,6 +2035,107 @@ class CerberusBoss extends BaseBoss {
                     }
                 });
                 break;
+                
+            // ===== 新增技能 =====
+            case 'FIRE_CHAIN':
+                // 火焰锁链 - 连接玩家的火焰链
+                for (let i = 0; i < 6; i++) {
+                    const chainAngle = (Math.PI * 2 / 6) * i;
+                    this.combatSystem.spawnProjectile({
+                        x: this.x, y: this.y, targetPlayer: this.player, chainAngle: chainAngle,
+                        radius: 20, damage: 18, owner: 'enemy', life: 2.0, maxLife: 2.0, boss: this,
+                        update(dt) {
+                            this.chainAngle += dt * 2;
+                            const dist = 80 + Math.sin(this.chainAngle * 3) * 30;
+                            this.x = this.targetPlayer.x + Math.cos(this.chainAngle) * dist;
+                            this.y = this.targetPlayer.y + Math.sin(this.chainAngle) * dist;
+                            this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
+                        },
+                        draw(ctx) {
+                            const alpha = this.life / this.maxLife;
+                            ctx.strokeStyle = `rgba(255, 100, 0, ${alpha})`; ctx.lineWidth = 4;
+                            ctx.beginPath(); ctx.moveTo(this.boss.x, this.boss.y); ctx.lineTo(this.x, this.y); ctx.stroke();
+                            ctx.fillStyle = `rgba(255, 69, 0, ${alpha})`;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                        }
+                    });
+                }
+                break;
+                
+            case 'MAGMA_BURST':
+                // 岩浆爆发 - 地面喷发
+                for (let i = 0; i < 10; i++) {
+                    const bx = 100 + Math.random() * 800;
+                    const by = 80 + Math.random() * 440;
+                    setTimeout(() => {
+                        // 预警
+                        this.combatSystem.spawnProjectile({
+                            x: bx, y: by, radius: 50, damage: 0, owner: 'enemy', life: 0.8, maxLife: 0.8,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) {
+                                const p = 1 - this.life / this.maxLife;
+                                ctx.strokeStyle = `rgba(255, 50, 0, ${0.5 + p * 0.5})`; ctx.lineWidth = 3;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - p * 0.3), 0, Math.PI * 2); ctx.stroke();
+                            }
+                        });
+                    }, i * 100);
+                    setTimeout(() => {
+                        const dist = Math.sqrt((this.player.x - bx) ** 2 + (this.player.y - by) ** 2);
+                        if (dist < 55) this.player.takeDamage(25);
+                        this.combatSystem.spawnProjectile({
+                            x: bx, y: by, radius: 55, damage: 0, owner: 'enemy', life: 0.3,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.fillStyle = `rgba(255, 100, 0, ${this.life * 3})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                        });
+                    }, 800 + i * 100);
+                }
+                break;
+                
+            case 'HELLHOUND_FRENZY':
+                // 地狱犬狂暴 - 快速多段冲刺
+                for (let dash = 0; dash < 5; dash++) {
+                    setTimeout(() => {
+                        const dashAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                        for (let s = 0; s < 3; s++) {
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, vx: Math.cos(dashAngle + (s - 1) * 0.3) * 550, vy: Math.sin(dashAngle + (s - 1) * 0.3) * 550,
+                                radius: 18, damage: 20, owner: 'enemy', life: 0.6,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.fillStyle = '#ff4500'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                            });
+                        }
+                    }, dash * 200);
+                }
+                break;
+                
+            case 'SOUL_DEVOUR':
+                // 灵魂吞噬 - 大范围吸取
+                if (this.player.screenShake) { this.player.screenShake.intensity = 15; this.player.screenShake.duration = 2; }
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 0, maxRadius: 250, damage: 0, owner: 'enemy', life: 2.0, maxLife: 2.0, boss: this, player: this.player,
+                    update(dt) {
+                        this.x = this.boss.x; this.y = this.boss.y;
+                        this.radius = this.maxRadius * (1 - this.life / this.maxLife);
+                        // 吸引玩家
+                        const dx = this.boss.x - this.player.x;
+                        const dy = this.boss.y - this.player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < this.radius && dist > 50) {
+                            this.player.x += (dx / dist) * 80 * dt;
+                            this.player.y += (dy / dist) * 80 * dt;
+                        }
+                        if (dist < 60) this.player.takeDamage(15 * dt);
+                        this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
+                    },
+                    draw(ctx) {
+                        const alpha = this.life / this.maxLife;
+                        ctx.strokeStyle = `rgba(139, 0, 0, ${alpha})`; ctx.lineWidth = 6;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = `rgba(50, 0, 0, ${alpha * 0.3})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                    }
+                });
+                break;
         }
     }
 
@@ -2288,15 +2389,15 @@ class ZeusBoss extends BaseBoss {
         super(x, y, player, combatSystem);
         this.level = 4;
         this.name = '天穹之王·宙斯';
-        this.maxHp = 1250;  // 微调血量
+        this.maxHp = 1400;  // 增强血量 1250→1400
         this.hp = this.maxHp;
         this.radius = 62;
         this.color = '#ffd700';
-        this.damage = 30;
-        this.telegraphDuration = 0.75; // 施法加速
-        this.attackCooldown = 1.3;
-        this.skills = ['LIGHTNING_BOLT', 'THUNDER_DASH', 'CHAIN_LIGHTNING', 'STORM_CLOUD', 'THUNDER_CLAP', 'LIGHTNING_FIELD', 'DIVINE_STRIKE', 'SKY_FURY', 'THUNDER_PRISON', 'ZEUS_BARRIER'];
-        this.phase2Skills = [...this.skills, 'OLYMPUS_WRATH', 'THUNDERGOD_AVATAR', 'DIVINE_JUDGEMENT', 'STORM_CALLER'];
+        this.damage = 33;  // 增强伤害 30→33
+        this.telegraphDuration = 0.7; // 施法加速
+        this.attackCooldown = 1.2;
+        this.skills = ['LIGHTNING_BOLT', 'THUNDER_DASH', 'CHAIN_LIGHTNING', 'STORM_CLOUD', 'THUNDER_CLAP', 'LIGHTNING_FIELD', 'DIVINE_STRIKE', 'SKY_FURY', 'THUNDER_PRISON', 'ZEUS_BARRIER', 'PLASMA_LANCE'];
+        this.phase2Skills = [...this.skills, 'OLYMPUS_WRATH', 'THUNDERGOD_AVATAR', 'DIVINE_JUDGEMENT', 'STORM_CALLER', 'GODLY_SMITE', 'HEAVENS_FURY', 'THUNDER_APOCALYPSE'];
         this.lightningAura = 0; // 闪电光环动画
     }
 
@@ -2664,6 +2765,130 @@ class ZeusBoss extends BaseBoss {
                     }, wave * 500);
                 }
                 break;
+                
+            // ===== 新增技能 =====
+            case 'PLASMA_LANCE':
+                // 等离子长矛 - 高速贯穿
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        const lanceAngle = angle + (i - 2) * 0.12;
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(lanceAngle) * 700, vy: Math.sin(lanceAngle) * 700,
+                            radius: 12, damage: 28, owner: 'enemy', life: 1.2, rotation: lanceAngle, trail: [],
+                            update(dt) {
+                                this.trail.push({ x: this.x, y: this.y, life: 0.15 });
+                                this.trail = this.trail.filter(t => { t.life -= dt; return t.life > 0; });
+                                this.x += this.vx * dt; this.y += this.vy * dt;
+                                this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
+                            },
+                            draw(ctx) {
+                                this.trail.forEach(t => {
+                                    ctx.fillStyle = `rgba(0, 255, 255, ${t.life * 5})`; ctx.beginPath();
+                                    ctx.arc(t.x, t.y, 8, 0, Math.PI * 2); ctx.fill();
+                                });
+                                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                                ctx.fillStyle = '#00ffff';
+                                ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(-15, -8); ctx.lineTo(-15, 8); ctx.closePath(); ctx.fill();
+                                ctx.restore();
+                            }
+                        });
+                    }, i * 80);
+                }
+                break;
+                
+            // ===== 强力二阶段技能 =====
+            case 'GODLY_SMITE':
+                // 神罚 - 追踪雷柱
+                if (this.player.screenShake) { this.player.screenShake.intensity = 20; this.player.screenShake.duration = 3; }
+                for (let i = 0; i < 8; i++) {
+                    setTimeout(() => {
+                        const tx = this.player.x + (Math.random() - 0.5) * 100;
+                        const ty = this.player.y + (Math.random() - 0.5) * 100;
+                        // 预警
+                        this.combatSystem.spawnProjectile({
+                            x: tx, y: ty, radius: 60, damage: 0, owner: 'enemy', life: 0.5, maxLife: 0.5,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) {
+                                const p = 1 - this.life / this.maxLife;
+                                ctx.strokeStyle = `rgba(255, 255, 0, ${0.6 + p * 0.4})`; ctx.lineWidth = 4;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - p * 0.4), 0, Math.PI * 2); ctx.stroke();
+                            }
+                        });
+                        setTimeout(() => {
+                            const dist = Math.sqrt((this.player.x - tx) ** 2 + (this.player.y - ty) ** 2);
+                            if (dist < 65) this.player.takeDamage(35);
+                            this.combatSystem.spawnProjectile({
+                                x: tx, y: 0, targetX: tx, targetY: ty, radius: 30, damage: 0, owner: 'enemy', life: 0.3,
+                                update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) {
+                                    ctx.strokeStyle = `rgba(255, 255, 0, ${this.life * 3})`; ctx.lineWidth = 12;
+                                    ctx.beginPath(); ctx.moveTo(this.x, 0); ctx.lineTo(this.targetX, this.targetY); ctx.stroke();
+                                }
+                            });
+                        }, 500);
+                    }, i * 250);
+                }
+                break;
+                
+            case 'HEAVENS_FURY':
+                // 天堂之怒 - 全方位闪电风暴
+                if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 4; }
+                for (let wave = 0; wave < 6; wave++) {
+                    setTimeout(() => {
+                        // 内圈
+                        for (let i = 0; i < 16; i++) {
+                            const a = (Math.PI * 2 / 16) * i + wave * 0.2;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, vx: Math.cos(a) * (350 + wave * 50), vy: Math.sin(a) * (350 + wave * 50),
+                                radius: 10, damage: 18, owner: 'enemy', life: 1.5,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.fillStyle = `rgba(0, 255, 255, ${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                            });
+                        }
+                        // 外圈雷柱
+                        for (let j = 0; j < 6; j++) {
+                            const jx = 150 + Math.random() * 700;
+                            const jy = 100 + Math.random() * 400;
+                            this.combatSystem.spawnProjectile({
+                                x: jx, y: 0, targetY: jy, radius: 40, damage: 20, owner: 'enemy', life: 0.25,
+                                update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.strokeStyle = `rgba(255, 255, 0, ${this.life * 4})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(this.x, 0); ctx.lineTo(this.x, this.targetY); ctx.stroke(); }
+                            });
+                        }
+                    }, wave * 400);
+                }
+                break;
+                
+            case 'THUNDER_APOCALYPSE':
+                // 雷霆末日 - 超大范围延迟爆炸 (类秒杀)
+                if (this.player.screenShake) { this.player.screenShake.intensity = 35; this.player.screenShake.duration = 4; }
+                const apocX = this.player.x, apocY = this.player.y;
+                // 2.5秒预警
+                this.combatSystem.spawnProjectile({
+                    x: apocX, y: apocY, radius: 180, damage: 0, owner: 'enemy', life: 2.5, maxLife: 2.5,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        const time = Date.now() / 1000;
+                        ctx.strokeStyle = `rgba(255, 255, 0, ${0.5 + Math.sin(time * 10) * 0.3})`; ctx.lineWidth = 8;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - p * 0.2), 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = `rgba(255, 255, 100, ${p * 0.3})`; ctx.fill();
+                        ctx.fillStyle = `rgba(255, 255, 0, 0.8)`; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚡ 雷霆末日 ⚡', this.x, this.y - this.radius - 20);
+                        ctx.font = 'bold 18px Arial'; ctx.fillText(`${Math.ceil(this.life)}秒`, this.x, this.y);
+                    }
+                });
+                setTimeout(() => {
+                    const dist = Math.sqrt((this.player.x - apocX) ** 2 + (this.player.y - apocY) ** 2);
+                    if (dist < 190) this.player.takeDamage(80);
+                    // 爆炸
+                    this.combatSystem.spawnProjectile({
+                        x: apocX, y: apocY, radius: 0, maxRadius: 220, damage: 0, owner: 'enemy', life: 0.5,
+                        update(dt) { this.radius = this.maxRadius * (1 - this.life * 2); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { ctx.fillStyle = `rgba(255, 255, 200, ${this.life * 2})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                    });
+                }, 2500);
+                break;
         }
     }
 
@@ -2965,7 +3190,10 @@ class PaladinBoss extends BaseBoss {
             'BLADE_BARRIER',    // 剑阵
             'HOLY_SMITE',       // 圣光击
             'EXCALIBUR_BEAM',   // 圣剑光波
-            'KINGS_CHARGE'      // 王者冲锋
+            'KINGS_CHARGE',     // 王者冲锋
+            // 新增近身技能
+            'PARRY_RIPOSTE',    // 格挡反击
+            'CLOSE_QUARTERS'    // 近战连击
         ];
         this.phase2Skills = [
             ...this.skills,
@@ -2982,6 +3210,9 @@ class PaladinBoss extends BaseBoss {
             'HEAVEN_FALL',        // 天堂陨落
             'SACRED_CHAINS',      // 神圣锁链
             'ULTIMATE_SLASH',     // 终极斩击
+            // 近身防御/格挡技能
+            'AEGIS_STANCE',       // 神盾架势
+            'BLADE_REFLECT',      // 剑刃反射
             'EXCALIBUR_APOCALYPSE' // 终焉圣剑 (秒杀)
         ];
         this.swordAngle = 0;    // 剑角度动画
@@ -3884,6 +4115,143 @@ class PaladinBoss extends BaseBoss {
                         }
                     });
                 }, 3000);
+                break;
+                
+            // ===== 近身防御/攻击/格挡技能 =====
+            case 'PARRY_RIPOSTE':
+                // 格挡反击 - 先格挡再反击
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 70, damage: 0, owner: 'enemy', life: 0.8, maxLife: 0.8, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const alpha = this.life / this.maxLife;
+                        ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`; ctx.lineWidth = 6;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = 'rgba(255, 215, 0, 0.3)'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('格挡中', this.x, this.y - this.radius - 8);
+                    }
+                });
+                // 0.8秒后反击
+                setTimeout(() => {
+                    const counterAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                    // 快速冲向玩家
+                    const tx = this.player.x, ty = this.player.y;
+                    this.x = tx - Math.cos(counterAngle) * 50;
+                    this.y = ty - Math.sin(counterAngle) * 50;
+                    // 360度剑气爆发
+                    for (let i = 0; i < 12; i++) {
+                        const sa = (Math.PI * 2 / 12) * i;
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(sa) * 500, vy: Math.sin(sa) * 500,
+                            radius: 15, damage: 30, owner: 'enemy', rotation: sa, life: 0.6,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#ffd700'); }
+                        });
+                    }
+                }, 800);
+                break;
+                
+            case 'CLOSE_QUARTERS':
+                // 近战连击 - 瞬移到玩家身边连续攻击
+                for (let hit = 0; hit < 6; hit++) {
+                    setTimeout(() => {
+                        // 瞬移到玩家周围
+                        const hitAngle = Math.random() * Math.PI * 2;
+                        const hitDist = 50 + Math.random() * 30;
+                        this.x = this.player.x + Math.cos(hitAngle) * hitDist;
+                        this.y = this.player.y + Math.sin(hitAngle) * hitDist;
+                        // 近战攻击
+                        const slashAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                        for (let s = -1; s <= 1; s++) {
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y, vx: Math.cos(slashAngle + s * 0.3) * 400, vy: Math.sin(slashAngle + s * 0.3) * 400,
+                                radius: 12, damage: 18, owner: 'enemy', rotation: slashAngle + s * 0.3, life: 0.3,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#c0c0c0'); }
+                            });
+                        }
+                        // 残影
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, radius: 40, damage: 0, owner: 'enemy', life: 0.2,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.fillStyle = `rgba(255, 215, 0, ${this.life * 3})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                        });
+                    }, hit * 150);
+                }
+                break;
+                
+            case 'AEGIS_STANCE':
+                // 神盾架势 - 防御姿态+反伤
+                if (this.player.screenShake) { this.player.screenShake.intensity = 10; this.player.screenShake.duration = 2; }
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 90, damage: 0, owner: 'enemy', life: 2.5, maxLife: 2.5, boss: this, player: this.player,
+                    update(dt) {
+                        this.x = this.boss.x; this.y = this.boss.y;
+                        // 玩家靠近时反击
+                        const dx = this.player.x - this.x, dy = this.player.y - this.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 80) {
+                            // 推开玩家
+                            this.player.x += (dx / dist) * 150 * dt;
+                            this.player.y += (dy / dist) * 150 * dt;
+                            this.player.takeDamage(8 * dt);
+                        }
+                        this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
+                    },
+                    draw(ctx) {
+                        const alpha = this.life / this.maxLife;
+                        const time = Date.now() / 1000;
+                        // 盾牌光环
+                        ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + Math.sin(time * 6) * 0.3})`; ctx.lineWidth = 8;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.2})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                        // 盾牌图标
+                        ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🛡️ 神盾', this.x, this.y - this.radius - 15);
+                    }
+                });
+                break;
+                
+            case 'BLADE_REFLECT':
+                // 剑刃反射 - 短暂反弹投射物
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y, radius: 100, damage: 0, owner: 'enemy', life: 1.5, maxLife: 1.5, boss: this,
+                    update(dt) {
+                        this.x = this.boss.x; this.y = this.boss.y;
+                        this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
+                    },
+                    draw(ctx) {
+                        const alpha = this.life / this.maxLife;
+                        const time = Date.now() / 1000;
+                        // 反射场
+                        for (let r = 0; r < 3; r++) {
+                            ctx.strokeStyle = `rgba(200, 200, 255, ${alpha * (0.4 - r * 0.1)})`;
+                            ctx.lineWidth = 3 - r;
+                            ctx.setLineDash([15, 8]);
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius - r * 15, time * 4 + r, time * 4 + r + Math.PI * 1.8); ctx.stroke();
+                        }
+                        ctx.setLineDash([]);
+                        // 文字
+                        ctx.fillStyle = `rgba(200, 200, 255, ${alpha})`; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚔ 剑刃反射 ⚔', this.x, this.y - this.radius - 12);
+                    }
+                });
+                // 发射反射剑气
+                for (let w = 0; w < 3; w++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 8; i++) {
+                            const ra = (Math.PI * 2 / 8) * i + w * 0.2;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x + Math.cos(ra) * 100, y: this.y + Math.sin(ra) * 100,
+                                vx: Math.cos(ra) * 300, vy: Math.sin(ra) * 300,
+                                radius: 10, damage: 15, owner: 'enemy', rotation: ra, life: 1.0,
+                                update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#aaaaff'); }
+                            });
+                        }
+                    }, w * 400);
+                }
                 break;
         }
     }
