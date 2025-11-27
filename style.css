@@ -934,8 +934,8 @@ canvas {
 }
 
 .gallery-image {
-    width: 120px;
-    height: 120px;
+    width: 80px;
+    height: 80px;
     border-radius: 10px;
     background: rgba(0,0,0,0.3);
     display: flex;
@@ -1009,7 +1009,7 @@ canvas {
 }
 
 .gallery-card.wide .gallery-image {
-    width: 100%;
+    width: 160px;
     height: auto;
     aspect-ratio: 16/9;
 }
@@ -1057,8 +1057,8 @@ canvas {
 }
 
 .preview-content img {
-    max-width: 90vw;
-    max-height: 70vh;
+    max-width: min(800px, 90vw);
+    max-height: min(450px, 70vh);
     object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 0 50px rgba(255,215,0,0.3);
