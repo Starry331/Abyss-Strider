@@ -14,7 +14,7 @@ export class GallerySystem {
             { id: 'monkey_mutated', level: 1, name: '噬魂猿魔', title: 'Soul Devourer', isMutated: true, image: 'Evil Monkey.png' },
             // Lv2
             { id: 'ice_dragon', level: 2, name: '冰霜巨龙', title: 'Frost Dragon', isMutated: false, image: 'Ice dragon.png', wideImage: true },
-            { id: 'ice_dragon_mutated', level: 2, name: '深渊冰龙', title: 'Abyss Ice Dragon', isMutated: true, image: 'Evil Ice dragon.png' },
+            { id: 'ice_dragon_mutated', level: 2, name: '深渊冰龙', title: 'Abyss Ice Dragon', isMutated: true, image: 'Evil Ice dragon.png', wideImage: true },
             // Lv3
             { id: 'cerberus', level: 3, name: '地狱三头魔犬·刻耳柏洛斯', title: 'Cerberus', isMutated: false, image: 'three head dog.png' },
             { id: 'cerberus_mutated', level: 3, name: '冥界魔犬', title: 'Underworld Hound', isMutated: true, image: 'evil three head dog.png' },
