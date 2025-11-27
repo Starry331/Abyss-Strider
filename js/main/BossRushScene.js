@@ -45,77 +45,140 @@ export class BossRushScene {
         this.initBackground();
     }
     
-    // 初始化众神赐福
+    // 初始化众神赐福（强化版：蓝色-金色构筑牌强度）
     initGodBlessings() {
         return {
+            // ===== 蓝色稀有度 =====
             zeus: {
-                name: '宙斯', title: 'Zeus', icon: '⚡',
+                name: '宙斯', title: 'Zeus', icon: '⚡', rarity: 'blue',
                 desc: '天神之王，雷霆加护',
                 color: '#ffdd44', bgColor: '#3a3a1a',
                 effects: [
-                    { name: '雷霆之力', desc: '攻击+30%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.3; } },
-                    { name: '天神庇护', desc: '最大生命+80', apply: (p, ws) => { p.maxHp += 80; p.hp += 80; } },
-                    { name: '闪电链', desc: '攻击有20%概率连锁', apply: (p, ws) => { ws.weapons.forEach(w => w.chainChance = 0.2); } }
+                    { name: '雷霆之力', desc: '攻击+50%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.5; } },
+                    { name: '天神庇护', desc: '最大生命+120', apply: (p, ws) => { p.maxHp += 120; p.hp += 120; } },
+                    { name: '闪电链', desc: '攻击有35%概率连锁', apply: (p, ws) => { ws.weapons.forEach(w => w.chainChance = 0.35); } }
                 ]
             },
             hera: {
-                name: '赫拉', title: 'Hera', icon: '👑',
+                name: '赫拉', title: 'Hera', icon: '👑', rarity: 'blue',
                 desc: '婚姻女神，家庭守护',
                 color: '#ff88cc', bgColor: '#3a1a2a',
                 effects: [
-                    { name: '女王威严', desc: '减伤+25%', apply: (p, ws) => { p.damageReduction = (p.damageReduction || 0) + 0.25; } },
-                    { name: '家庭祝福', desc: '每秒回复1%生命', apply: (p, ws) => { p.regenRate = (p.regenRate || 0) + 0.01; } },
-                    { name: '神后恩典', desc: '护盾+100', apply: (p, ws) => { p.shield = (p.shield || 0) + 100; } }
+                    { name: '女王威严', desc: '减伤+40%', apply: (p, ws) => { p.damageReduction = (p.damageReduction || 0) + 0.4; } },
+                    { name: '家庭祝福', desc: '每秒回复2%生命', apply: (p, ws) => { p.regenRate = (p.regenRate || 0) + 0.02; } },
+                    { name: '神后恩典', desc: '护盾+150', apply: (p, ws) => { p.shield = (p.shield || 0) + 150; } }
                 ]
             },
             poseidon: {
-                name: '波塞冬', title: 'Poseidon', icon: '🔱',
+                name: '波塞冬', title: 'Poseidon', icon: '🔱', rarity: 'blue',
                 desc: '海神，风暴主宰',
                 color: '#44aaff', bgColor: '#1a2a3a',
                 effects: [
-                    { name: '海神之怒', desc: '攻击击退敌人', apply: (p, ws) => { ws.weapons.forEach(w => w.knockback = 50); } },
-                    { name: '潮汐护盾', desc: '受伤时30%概率免疫', apply: (p, ws) => { p.dodgeChance = (p.dodgeChance || 0) + 0.3; } },
-                    { name: '深海力量', desc: '暴击伤害+50%', apply: (p, ws) => { ws.weapons.forEach(w => w.critMultiplier = (w.critMultiplier || 2) + 0.5); } }
+                    { name: '海神之怒', desc: '攻击强力击退', apply: (p, ws) => { ws.weapons.forEach(w => w.knockback = 80); } },
+                    { name: '潮汐护盾', desc: '受伤时45%概率免疫', apply: (p, ws) => { p.dodgeChance = (p.dodgeChance || 0) + 0.45; } },
+                    { name: '深海力量', desc: '暴击伤害+80%', apply: (p, ws) => { ws.weapons.forEach(w => w.critMultiplier = (w.critMultiplier || 2) + 0.8); } }
                 ]
             },
             athena: {
-                name: '雅典娜', title: 'Athena', icon: '🦉',
+                name: '雅典娜', title: 'Athena', icon: '🦉', rarity: 'blue',
                 desc: '智慧女神，战争策略',
                 color: '#aaaaff', bgColor: '#2a2a3a',
                 effects: [
-                    { name: '战争智慧', desc: '暴击率+20%', apply: (p, ws) => { ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.2); } },
-                    { name: '神盾庇护', desc: '格挡+15%伤害', apply: (p, ws) => { p.blockChance = (p.blockChance || 0) + 0.15; } },
-                    { name: '智慧光芒', desc: '移速+20%', apply: (p, ws) => { p.speed *= 1.2; } }
+                    { name: '战争智慧', desc: '暴击率+35%', apply: (p, ws) => { ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.35); } },
+                    { name: '神盾庇护', desc: '格挡+25%伤害', apply: (p, ws) => { p.blockChance = (p.blockChance || 0) + 0.25; } },
+                    { name: '智慧光芒', desc: '移速+35%', apply: (p, ws) => { p.speed *= 1.35; } }
                 ]
             },
             apollo: {
-                name: '阿波罗', title: 'Apollo', icon: '☀️',
+                name: '阿波罗', title: 'Apollo', icon: '☀️', rarity: 'blue',
                 desc: '光明之神，预言主宰',
                 color: '#ffaa44', bgColor: '#3a2a1a',
                 effects: [
-                    { name: '光明箭矢', desc: '投射物速度+40%', apply: (p, ws) => { ws.projectileSpeedMult = (ws.projectileSpeedMult || 1) * 1.4; } },
-                    { name: '预言之眼', desc: '攻击范围+25%', apply: (p, ws) => { ws.weapons.forEach(w => w.range *= 1.25); } },
-                    { name: '太阳祝福', desc: '恢复100生命', apply: (p, ws) => { p.hp = Math.min(p.hp + 100, p.maxHp); } }
+                    { name: '光明箭矢', desc: '投射物速度+60%', apply: (p, ws) => { ws.projectileSpeedMult = (ws.projectileSpeedMult || 1) * 1.6; } },
+                    { name: '预言之眼', desc: '攻击范围+40%', apply: (p, ws) => { ws.weapons.forEach(w => w.range *= 1.4); } },
+                    { name: '太阳祝福', desc: '恢复150生命', apply: (p, ws) => { p.hp = Math.min(p.hp + 150, p.maxHp); } }
                 ]
             },
             artemis: {
-                name: '阿尔忒弥斯', title: 'Artemis', icon: '🌙',
+                name: '阿尔忒弥斯', title: 'Artemis', icon: '🌙', rarity: 'blue',
                 desc: '狩猎女神，月之守护',
                 color: '#cc88ff', bgColor: '#2a1a3a',
                 effects: [
-                    { name: '猎手本能', desc: '攻速+30%', apply: (p, ws) => { ws.weapons.forEach(w => w.cooldown *= 0.7); } },
-                    { name: '月光箭', desc: '攻击穿透敌人', apply: (p, ws) => { ws.weapons.forEach(w => w.pierce = true); } },
-                    { name: '野兽之力', desc: '攻击+25%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.25; } }
+                    { name: '猎手本能', desc: '攻速+45%', apply: (p, ws) => { ws.weapons.forEach(w => w.cooldown *= 0.55); } },
+                    { name: '月光箭', desc: '攻击穿透+伤害+20%', apply: (p, ws) => { ws.weapons.forEach(w => { w.pierce = true; }); p.damageBonus = (p.damageBonus || 1) * 1.2; } },
+                    { name: '野兽之力', desc: '攻击+45%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.45; } }
                 ]
             },
             hades: {
-                name: '哈迪斯', title: 'Hades', icon: '💀',
+                name: '哈迪斯', title: 'Hades', icon: '💀', rarity: 'blue',
                 desc: '冥王，死亡主宰',
                 color: '#aa44aa', bgColor: '#2a1a2a',
                 effects: [
-                    { name: '冥王之握', desc: '击杀回复5%生命', apply: (p, ws) => { p.killHeal = (p.killHeal || 0) + 0.05; } },
-                    { name: '死亡印记', desc: '攻击附加持续伤害', apply: (p, ws) => { ws.weapons.forEach(w => w.dot = 5); } },
-                    { name: '冥界庇护', desc: '受致命伤时保留1HP(1次)', apply: (p, ws) => { p.deathSave = true; } }
+                    { name: '冥王之握', desc: '击杀回复8%生命', apply: (p, ws) => { p.killHeal = (p.killHeal || 0) + 0.08; } },
+                    { name: '死亡印记', desc: '攻击附加强力持续伤害', apply: (p, ws) => { ws.weapons.forEach(w => w.dot = 12); } },
+                    { name: '冥界庇护', desc: '受致命伤时保留1HP(2次)', apply: (p, ws) => { p.deathSaveCount = (p.deathSaveCount || 0) + 2; } }
+                ]
+            },
+            
+            // ===== 金色稀有度 =====
+            hecate: {
+                name: '赫卡忒', title: 'Hecate', icon: '🔮', rarity: 'gold',
+                desc: '魔法女神，三相女神',
+                color: '#ff66ff', bgColor: '#3a1a3a',
+                effects: [
+                    { name: '三重魔法', desc: '攻击+60%，暴击+25%', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.6; 
+                        ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.25);
+                    }},
+                    { name: '月之咒术', desc: '攻速+50%，范围+30%', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => { w.cooldown *= 0.5; w.range *= 1.3; });
+                    }},
+                    { name: '冥界钥匙', desc: '减伤+35%，死亡保护', apply: (p, ws) => { 
+                        p.damageReduction = (p.damageReduction || 0) + 0.35;
+                        p.deathSaveCount = (p.deathSaveCount || 0) + 1;
+                    }}
+                ]
+            },
+            
+            // ===== 红色稀有度 =====
+            gaea: {
+                name: '盖亚', title: 'Gaea', icon: '🌍', rarity: 'red',
+                desc: '大地母神，万物之源',
+                color: '#44ff44', bgColor: '#1a3a1a',
+                effects: [
+                    { name: '大地之力', desc: '最大生命+200，减伤+50%', apply: (p, ws) => { 
+                        p.maxHp += 200; p.hp += 200;
+                        p.damageReduction = (p.damageReduction || 0) + 0.5;
+                    }},
+                    { name: '自然恩赐', desc: '每秒回复3%生命，护盾+200', apply: (p, ws) => { 
+                        p.regenRate = (p.regenRate || 0) + 0.03;
+                        p.shield = (p.shield || 0) + 200;
+                    }},
+                    { name: '泰坦血脉', desc: '攻击+70%，击退强化', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.7;
+                        ws.weapons.forEach(w => w.knockback = 100);
+                    }}
+                ]
+            },
+            prometheus: {
+                name: '普罗米修斯', title: 'Prometheus', icon: '🔥', rarity: 'red',
+                desc: '盗火者，人类守护神',
+                color: '#ff6622', bgColor: '#3a2a1a',
+                effects: [
+                    { name: '神火赐福', desc: '攻击+80%，附加灼烧', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.8;
+                        ws.weapons.forEach(w => w.dot = 15);
+                    }},
+                    { name: '不屈意志', desc: '死亡保护(3次)，减伤+30%', apply: (p, ws) => { 
+                        p.deathSaveCount = (p.deathSaveCount || 0) + 3;
+                        p.damageReduction = (p.damageReduction || 0) + 0.3;
+                    }},
+                    { name: '先知智慧', desc: '暴击+40%，暴伤+100%', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => {
+                            w.critChance = (w.critChance || 0.2) + 0.4;
+                            w.critMultiplier = (w.critMultiplier || 2) + 1.0;
+                        });
+                    }}
                 ]
             }
         };
@@ -527,6 +590,13 @@ export class BossRushScene {
     
     // 众神赐福选择（触屏优化）
     showGodBlessingChoice() {
+        // 稀有度颜色和边框
+        const rarityStyles = {
+            blue: { border: '#4488ff', glow: '#4488ff60', label: '蓝', labelBg: '#224488' },
+            gold: { border: '#ffd700', glow: '#ffd70080', label: '金', labelBg: '#665500' },
+            red: { border: '#ff4444', glow: '#ff444480', label: '红', labelBg: '#662222' }
+        };
+        
         // 随机选3位神明
         const godKeys = Object.keys(this.godBlessings);
         const shuffled = godKeys.sort(() => Math.random() - 0.5);
@@ -546,7 +616,8 @@ export class BossRushScene {
         const godChoices = selectedGods.map(key => {
             const god = this.godBlessings[key];
             const effect = god.effects[Math.floor(Math.random() * god.effects.length)];
-            return { key, god, effect };
+            const rarity = rarityStyles[god.rarity] || rarityStyles.blue;
+            return { key, god, effect, rarity };
         });
         
         panel.innerHTML = `
@@ -560,13 +631,19 @@ export class BossRushScene {
                 ${godChoices.map((choice, i) => `
                     <div class="god-card" data-index="${i}" style="
                         background: linear-gradient(135deg, ${choice.god.bgColor}, #0a0510);
-                        border: 3px solid ${choice.god.color}; border-radius: 20px;
+                        border: 4px solid ${choice.rarity.border}; border-radius: 20px;
                         padding: clamp(15px, 3vw, 30px); width: clamp(140px, 28vw, 200px);
                         cursor: pointer; transition: all 0.3s; text-align: center;
-                        box-shadow: 0 0 25px ${choice.god.color}40;
-                        min-height: 180px; display: flex; flex-direction: column;
-                        justify-content: space-between;
+                        box-shadow: 0 0 30px ${choice.rarity.glow};
+                        min-height: 200px; display: flex; flex-direction: column;
+                        justify-content: space-between; position: relative;
                     ">
+                        <div style="position: absolute; top: -12px; right: 10px; 
+                            background: ${choice.rarity.labelBg}; color: ${choice.rarity.border};
+                            padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: bold;
+                            border: 2px solid ${choice.rarity.border};">
+                            ${choice.rarity.label}
+                        </div>
                         <div style="font-size: clamp(36px, 8vw, 56px); margin-bottom: 10px;">${choice.god.icon}</div>
                         <div style="font-size: clamp(16px, 4vw, 22px); color: ${choice.god.color}; font-weight: bold; margin-bottom: 5px;">
                             ${choice.god.name}
@@ -575,13 +652,13 @@ export class BossRushScene {
                             ${choice.god.title}
                         </div>
                         <div style="
-                            background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px;
-                            border: 1px solid ${choice.god.color}50;
+                            background: rgba(0,0,0,0.5); border-radius: 10px; padding: 12px;
+                            border: 2px solid ${choice.rarity.border}40;
                         ">
-                            <div style="font-size: clamp(12px, 3vw, 16px); color: #fff; font-weight: bold; margin-bottom: 5px;">
+                            <div style="font-size: clamp(12px, 3vw, 16px); color: ${choice.rarity.border}; font-weight: bold; margin-bottom: 5px;">
                                 ${choice.effect.name}
                             </div>
-                            <div style="font-size: clamp(11px, 2.5vw, 14px); color: #ccc;">
+                            <div style="font-size: clamp(11px, 2.5vw, 14px); color: #ddd;">
                                 ${choice.effect.desc}
                             </div>
                         </div>
