@@ -60,6 +60,7 @@ canvas {
 #build-panel,
 #mobile-controls button,
 #gallery-overlay,
+#pause-menu,
 #hud {
     pointer-events: auto;
 }
