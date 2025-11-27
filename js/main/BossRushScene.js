@@ -45,7 +45,7 @@ export class BossRushScene {
         // 血包和限时buff系统
         this.pickups = [];
         this.pickupSpawnTimer = 0;
-        this.pickupSpawnInterval = 8; // 每8秒尝试生成
+        this.pickupSpawnInterval = 5; // 每5秒尝试生成
         this.healthPackChance = 0.32; // 血包概率32%（小幅提升）
         this.buffChance = 0.15; // 限时buff概率15%
         
@@ -295,6 +295,10 @@ export class BossRushScene {
         if (this.effectManager) {
             this.effectManager.effects = [];
         }
+        
+        // 重置血包和buff系统
+        this.pickups = [];
+        this.pickupSpawnTimer = 0;
         
         // 显示HUD
         const hud = document.getElementById('hud');
