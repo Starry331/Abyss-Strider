@@ -188,77 +188,159 @@ export class MutatedMonkeyBoss {
     draw(ctx) {
         const time = Date.now() / 1000;
         const isRage = this.phase === 2;
+        const breathe = Math.sin(time * 2) * 2;
         
-        // 暗紫邪恶光环
-        ctx.fillStyle = isRage ? 'rgba(120,0,180,0.3)' : 'rgba(80,0,120,0.2)';
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2); ctx.fill();
+        // 暗紫邪恶气场
+        ctx.fillStyle = isRage ? 'rgba(150,0,200,0.25)' : 'rgba(100,0,150,0.15)';
+        ctx.beginPath(); ctx.arc(this.x, this.y, 75, 0, Math.PI * 2); ctx.fill();
         
         // 灵魂粒子
         for (let i = 0; i < 6; i++) {
-            const pa = time * 2 + i * 1.05;
-            const px = this.x + Math.cos(pa) * (this.radius + 15);
-            const py = this.y + Math.sin(pa) * (this.radius + 15) - Math.sin(time * 4 + i) * 10;
-            ctx.fillStyle = `rgba(180,0,255,${0.6 + Math.sin(time * 5 + i) * 0.3})`;
-            ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+            const pa = time * 2.5 + i * 1.05;
+            const px = this.x + Math.cos(pa) * 60;
+            const py = this.y - 15 + Math.sin(pa) * 35 - Math.abs(Math.sin(time * 4 + i)) * 10;
+            ctx.fillStyle = `rgba(200,50,255,${0.7 + Math.sin(time * 5 + i) * 0.2})`;
+            ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
         }
         
-        // 恶魔尾巴
-        ctx.strokeStyle = isRage ? '#6a0099' : '#3a0066';
-        ctx.lineWidth = 10; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(this.x + this.radius * 0.6, this.y + 12);
-        ctx.bezierCurveTo(this.x + this.radius + 15, this.y + 25 + Math.sin(time * 3) * 8, this.x + this.radius + 35, this.y - 5, this.x + this.radius + 55, this.y - 20 + Math.sin(time * 4) * 6);
+        // ===== 长尾巴 =====
+        ctx.strokeStyle = isRage ? '#6a00aa' : '#4a0077';
+        ctx.lineWidth = 8; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y + 25);
+        ctx.bezierCurveTo(this.x + 40, this.y + 50 + Math.sin(time * 3) * 8, this.x + 70, this.y + 20, this.x + 90 + Math.sin(time * 4) * 5, this.y - 10);
         ctx.stroke();
+        ctx.strokeStyle = isRage ? '#aa00ee' : '#7a00aa';
+        ctx.lineWidth = 4; ctx.stroke();
         // 尾巴尖刺
-        ctx.fillStyle = isRage ? '#cc00ff' : '#8000aa';
-        ctx.beginPath(); ctx.moveTo(this.x + this.radius + 50, this.y - 15); ctx.lineTo(this.x + this.radius + 70, this.y - 30 + Math.sin(time * 4) * 4); ctx.lineTo(this.x + this.radius + 55, this.y - 22); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = isRage ? '#dd00ff' : '#aa00dd';
+        ctx.beginPath();
+        ctx.moveTo(this.x + 85, this.y - 5);
+        ctx.lineTo(this.x + 105 + Math.sin(time * 4) * 3, this.y - 25);
+        ctx.lineTo(this.x + 88, this.y - 12);
+        ctx.closePath(); ctx.fill();
         
-        // 恶魔尖耳
+        // ===== 双腿 =====
         ctx.fillStyle = isRage ? '#5a0088' : '#3a0055';
-        ctx.beginPath(); ctx.moveTo(this.x - 22, this.y - 12); ctx.lineTo(this.x - 42, this.y - 52); ctx.lineTo(this.x - 32, this.y - 18); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(this.x + 22, this.y - 12); ctx.lineTo(this.x + 42, this.y - 52); ctx.lineTo(this.x + 32, this.y - 18); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = isRage ? '#aa00dd' : '#7700aa';
-        ctx.beginPath(); ctx.moveTo(this.x - 25, this.y - 18); ctx.lineTo(this.x - 38, this.y - 42); ctx.lineTo(this.x - 30, this.y - 20); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(this.x + 25, this.y - 18); ctx.lineTo(this.x + 38, this.y - 42); ctx.lineTo(this.x + 30, this.y - 20); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x - 15, this.y + 40, 10, 18, -0.15, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 15, this.y + 40, 10, 18, 0.15, 0, Math.PI * 2); ctx.fill();
+        // 脚
+        ctx.fillStyle = isRage ? '#3a0055' : '#2a0044';
+        ctx.beginPath(); ctx.ellipse(this.x - 15, this.y + 55, 12, 6, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 15, this.y + 55, 12, 6, 0, 0, Math.PI * 2); ctx.fill();
         
-        // 身体
-        ctx.fillStyle = isRage ? '#4a0077' : '#2a0044';
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = isRage ? '#7700aa' : '#440066'; ctx.lineWidth = 3; ctx.stroke();
+        // ===== 躯干 =====
+        ctx.fillStyle = isRage ? '#5a0088' : '#3a0055';
+        ctx.beginPath(); ctx.ellipse(this.x, this.y + 10, 25, 30, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = isRage ? '#7a00aa' : '#4a0066';
+        ctx.lineWidth = 2; ctx.stroke();
         
-        // 诅咒符文
-        ctx.strokeStyle = isRage ? '#cc00ff' : '#8800cc'; ctx.lineWidth = 2;
-        for (let i = 0; i < 4; i++) {
-            const ra = time * 0.8 + i * Math.PI / 2;
-            const rx = this.x + Math.cos(ra) * 18, ry = this.y + Math.sin(ra) * 18;
-            ctx.beginPath(); ctx.moveTo(rx - 4, ry - 4); ctx.lineTo(rx + 4, ry + 4); ctx.moveTo(rx + 4, ry - 4); ctx.lineTo(rx - 4, ry + 4); ctx.stroke();
+        // 诅咒符文纹身
+        ctx.strokeStyle = isRage ? '#dd00ff' : '#aa00cc'; ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+            const ra = time * 0.6 + i * Math.PI * 2 / 3;
+            const rx = this.x + Math.cos(ra) * 12, ry = this.y + 8 + Math.sin(ra) * 10;
+            ctx.beginPath(); ctx.moveTo(rx - 4, ry - 4); ctx.lineTo(rx + 4, ry + 4);
+            ctx.moveTo(rx + 4, ry - 4); ctx.lineTo(rx - 4, ry + 4); ctx.stroke();
         }
         
-        // 脸部
-        ctx.fillStyle = isRage ? '#6a3080' : '#4a2060';
-        ctx.beginPath(); ctx.ellipse(this.x, this.y - 4, 18, 14, 0, 0, Math.PI * 2); ctx.fill();
+        // ===== 双臂 =====
+        const armSwing = Math.sin(time * 3) * 0.15;
+        ctx.fillStyle = isRage ? '#5a0088' : '#3a0055';
+        // 左臂
+        ctx.save();
+        ctx.translate(this.x - 28, this.y - 5);
+        ctx.rotate(-0.4 + armSwing);
+        ctx.beginPath(); ctx.ellipse(0, 20, 8, 22, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = isRage ? '#3a0055' : '#2a0044';
+        ctx.beginPath(); ctx.arc(0, 42, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        // 右臂
+        ctx.fillStyle = isRage ? '#5a0088' : '#3a0055';
+        ctx.save();
+        ctx.translate(this.x + 28, this.y - 5);
+        ctx.rotate(0.4 - armSwing);
+        ctx.beginPath(); ctx.ellipse(0, 20, 8, 22, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = isRage ? '#3a0055' : '#2a0044';
+        ctx.beginPath(); ctx.arc(0, 42, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        
+        // ===== 头部 =====
+        // 恶魔角
+        ctx.fillStyle = isRage ? '#aa00dd' : '#7700aa';
+        ctx.beginPath(); ctx.moveTo(this.x - 18, this.y - 45 + breathe);
+        ctx.lineTo(this.x - 28, this.y - 70 + breathe); ctx.lineTo(this.x - 12, this.y - 50 + breathe); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(this.x + 18, this.y - 45 + breathe);
+        ctx.lineTo(this.x + 28, this.y - 70 + breathe); ctx.lineTo(this.x + 12, this.y - 50 + breathe); ctx.closePath(); ctx.fill();
+        
+        // 耳朵
+        ctx.fillStyle = isRage ? '#5a0088' : '#3a0055';
+        ctx.beginPath(); ctx.ellipse(this.x - 26, this.y - 32 + breathe, 7, 12, -0.4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 26, this.y - 32 + breathe, 7, 12, 0.4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = isRage ? '#aa50aa' : '#8a4088';
+        ctx.beginPath(); ctx.ellipse(this.x - 26, this.y - 30 + breathe, 4, 7, -0.4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 26, this.y - 30 + breathe, 4, 7, 0.4, 0, Math.PI * 2); ctx.fill();
+        
+        // 头
+        ctx.fillStyle = isRage ? '#6a00aa' : '#4a0077';
+        ctx.beginPath(); ctx.ellipse(this.x, this.y - 28 + breathe, 22, 24, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = isRage ? '#8a00cc' : '#5a0088';
+        ctx.lineWidth = 2; ctx.stroke();
+        
+        // 脸部（亮紫色）
+        ctx.fillStyle = isRage ? '#9060a0' : '#7050880';
+        ctx.beginPath(); ctx.ellipse(this.x, this.y - 24 + breathe, 14, 16, 0, 0, Math.PI * 2); ctx.fill();
+        
+        // 凶眉
+        ctx.strokeStyle = isRage ? '#dd00ff' : '#aa00cc';
+        ctx.lineWidth = 4; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(this.x - 12, this.y - 30 + breathe); ctx.lineTo(this.x - 4, this.y - 36 + breathe); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(this.x + 12, this.y - 30 + breathe); ctx.lineTo(this.x + 4, this.y - 36 + breathe); ctx.stroke();
         
         // 邪眼
-        ctx.fillStyle = isRage ? '#ff00ff' : '#cc00cc';
-        ctx.beginPath(); ctx.ellipse(this.x - 8, this.y - 5, 5, 4, -0.3, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(this.x + 8, this.y - 5, 5, 4, 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = isRage ? '#ff00ff' : '#dd00dd';
+        ctx.beginPath(); ctx.ellipse(this.x - 6, this.y - 28 + breathe, 5, 5, -0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 6, this.y - 28 + breathe, 5, 5, 0.2, 0, Math.PI * 2); ctx.fill();
+        // 瞳孔
         ctx.fillStyle = '#000';
-        ctx.beginPath(); ctx.ellipse(this.x - 8, this.y - 5, 2, 3.5, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(this.x + 8, this.y - 5, 2, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x - 5, this.y - 27 + breathe, 2, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x + 7, this.y - 27 + breathe, 2, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+        // 眼睛发光
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(this.x - 7, this.y - 29 + breathe, 1.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(this.x + 5, this.y - 29 + breathe, 1.5, 0, Math.PI * 2); ctx.fill();
         
-        // V型凶眉
-        ctx.strokeStyle = isRage ? '#ff00aa' : '#aa0066'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(this.x - 15, this.y - 10); ctx.lineTo(this.x - 5, this.y - 15); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(this.x + 15, this.y - 10); ctx.lineTo(this.x + 5, this.y - 15); ctx.stroke();
+        // 鼻子
+        ctx.fillStyle = isRage ? '#5a3060' : '#4a2550';
+        ctx.beginPath(); ctx.ellipse(this.x, this.y - 18 + breathe, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#2a1030';
+        ctx.beginPath(); ctx.arc(this.x - 2, this.y - 17 + breathe, 1.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(this.x + 2, this.y - 17 + breathe, 1.5, 0, Math.PI * 2); ctx.fill();
+        
+        // 嘴巴
+        ctx.fillStyle = '#1a0020';
+        ctx.beginPath(); ctx.ellipse(this.x, this.y - 10 + breathe, 9, 4, 0, 0, Math.PI); ctx.fill();
         
         // 獠牙
-        ctx.fillStyle = '#eee';
-        ctx.beginPath(); ctx.moveTo(this.x - 8, this.y + 8); ctx.lineTo(this.x - 6, this.y + 20); ctx.lineTo(this.x - 4, this.y + 8); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(this.x + 8, this.y + 8); ctx.lineTo(this.x + 6, this.y + 20); ctx.lineTo(this.x + 4, this.y + 8); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#fff';
+        const fangSize = isRage ? 1.5 : 1.2;
+        ctx.beginPath();
+        ctx.moveTo(this.x - 7, this.y - 11 + breathe);
+        ctx.lineTo(this.x - 5, this.y - 1 + breathe + 6 * fangSize);
+        ctx.lineTo(this.x - 3, this.y - 11 + breathe);
+        ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(this.x + 7, this.y - 11 + breathe);
+        ctx.lineTo(this.x + 5, this.y - 1 + breathe + 6 * fangSize);
+        ctx.lineTo(this.x + 3, this.y - 11 + breathe);
+        ctx.closePath(); ctx.fill();
         
-        // Phase2 邪恶光环
+        // Phase2 能量环
         if (isRage) {
-            ctx.strokeStyle = `rgba(200,0,255,${0.5 + Math.sin(time * 6) * 0.3})`; ctx.lineWidth = 3; ctx.setLineDash([10, 5]);
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 18 + Math.sin(time * 4) * 6, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+            ctx.strokeStyle = `rgba(200,0,255,${0.5 + Math.sin(time * 5) * 0.3})`;
+            ctx.lineWidth = 3; ctx.setLineDash([10, 5]);
+            ctx.beginPath(); ctx.arc(this.x, this.y, 70 + Math.sin(time * 4) * 5, 0, Math.PI * 2); ctx.stroke();
+            ctx.setLineDash([]);
         }
         
         // 技能指示器
