@@ -14,9 +14,44 @@ export class InputManager {
             switchWeapon: false,
             attack: false // Auto-attack logic might handle this, but input can trigger it too
         };
+        
+        // 作弊码系统
+        this.cheatBuffer = '';
+        this.cheatTimeout = null;
+        this.godModeActive = false;
 
         this.initKeyboard();
         this.initTouch();
+    }
+    
+    // 检测作弊码 00330 = 无敌模式
+    checkCheatCode(key) {
+        // 只接受数字键
+        if (key >= 'Digit0' && key <= 'Digit9') {
+            const num = key.replace('Digit', '');
+            this.cheatBuffer += num;
+            
+            // 重置超时
+            if (this.cheatTimeout) clearTimeout(this.cheatTimeout);
+            this.cheatTimeout = setTimeout(() => {
+                this.cheatBuffer = '';
+            }, 2000);
+            
+            // 检查是否匹配 00330
+            if (this.cheatBuffer.endsWith('00330')) {
+                this.godModeActive = !this.godModeActive;
+                this.cheatBuffer = '';
+                
+                // 触发作弊码激活事件
+                if (this.onCheatActivated) {
+                    this.onCheatActivated(this.godModeActive);
+                }
+                
+                console.log('作弊码激活: 无敌模式 =', this.godModeActive);
+                return true;
+            }
+        }
+        return false;
     }
 
     initKeyboard() {
@@ -25,6 +60,9 @@ export class InputManager {
             if (e.code === 'Space') e.preventDefault();
             this.keys[e.code] = true;
             this.updateInputState();
+            
+            // 检测作弊码
+            this.checkCheatCode(e.code);
         });
 
         window.addEventListener('keyup', (e) => {

@@ -107,6 +107,16 @@ const gameScene = {
         // Link weapon system to player
         this.player.setWeaponSystem(this.weaponSystem);
         
+        // 绑定作弊码回调 (00330 = 无敌模式)
+        inputManager.onCheatActivated = (isActive) => {
+            if (isActive && this.player) {
+                this.player.maxHp = 999999;
+                this.player.hp = 999999;
+                uiManager.updateHealth(this.player.hp, this.player.maxHp);
+                console.log('🔓 无敌模式激活！');
+            }
+        };
+        
         // 玩家音效回调
         this.player.onHit = () => {
             if (audioManager) audioManager.playSound('player_hit');

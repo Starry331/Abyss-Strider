@@ -224,6 +224,16 @@ export class BossRushScene {
         // 初始化输入管理器
         this.inputManager = new this.InputManager();
         
+        // 绑定作弊码回调 (00330 = 无敌模式)
+        this.inputManager.onCheatActivated = (isActive) => {
+            if (isActive && this.player) {
+                this.player.maxHp = 999999;
+                this.player.hp = 999999;
+                this.uiManager.updateHealth(this.player.hp, this.player.maxHp);
+                this.showRewardNotification('🔓 无敌模式激活！', () => {});
+            }
+        };
+        
         // 初始化玩家
         const canvas = document.getElementById('game-canvas');
         if (!canvas) {
