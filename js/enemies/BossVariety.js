@@ -612,108 +612,167 @@ class MonkeyBoss extends BaseBoss {
 
     draw(ctx) {
         const time = Date.now() / 1000;
-        const pulse = 1 + Math.sin(time * 3) * 0.08;
+        const pulse = 1 + Math.sin(time * 3) * 0.05;
         const isRage = this.phase === 2;
         
-        // Phase 2 狂暴背景光环 (简化)
+        // Phase 2 狂暴背景光环
         if (isRage) {
-            ctx.fillStyle = 'rgba(255, 69, 0, 0.25)';
+            ctx.fillStyle = 'rgba(255, 100, 0, 0.2)';
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius * 1.8, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
             ctx.fill();
-            
-            // 狂暴火焰粒子 (减少数量)
-            for (let i = 0; i < 5; i++) {
-                const fa = time * 3 + i * 1.2;
-                const fx = this.x + Math.cos(fa) * (this.radius + 10);
-                const fy = this.y + Math.sin(fa) * (this.radius + 10) - Math.abs(Math.sin(time * 5 + i)) * 15;
-                ctx.fillStyle = 'rgba(255, 120, 0, 0.7)';
+            // 火焰粒子
+            for (let i = 0; i < 6; i++) {
+                const fa = time * 3 + i * 1.05;
+                const fx = this.x + Math.cos(fa) * (this.radius + 15);
+                const fy = this.y + Math.sin(fa) * (this.radius + 15) - Math.abs(Math.sin(time * 5 + i)) * 12;
+                ctx.fillStyle = `rgba(255, ${100 + i * 20}, 0, 0.8)`;
                 ctx.beginPath();
-                ctx.arc(fx, fy, 5, 0, Math.PI * 2);
+                ctx.arc(fx, fy, 4 + Math.sin(time * 6 + i) * 2, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
         
-        // 身体纯色 (移除渐变)
-        ctx.fillStyle = isRage ? '#cd4f39' : '#8b4513';
+        // 尾巴 (先画，在身体后面)
+        ctx.strokeStyle = isRage ? '#b5422f' : '#6b3610';
+        ctx.lineWidth = 10;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(this.x + this.radius * 0.7, this.y + 15);
+        ctx.quadraticCurveTo(
+            this.x + this.radius + 25, this.y + Math.sin(time * 4) * 20,
+            this.x + this.radius + 55, this.y - 15 + Math.sin(time * 3) * 15
+        );
+        ctx.stroke();
+        // 尾巴高光
+        ctx.strokeStyle = isRage ? '#e07050' : '#a0703f';
+        ctx.lineWidth = 4;
+        ctx.stroke();
         
+        // 耳朵 (先画，在头后面)
+        ctx.fillStyle = isRage ? '#b5422f' : '#6b3610';
+        ctx.beginPath();
+        ctx.ellipse(this.x - 32, this.y - 28, 14, 20, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(this.x + 32, this.y - 28, 14, 20, 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        // 耳朵内部
+        ctx.fillStyle = isRage ? '#e88070' : '#d4a574';
+        ctx.beginPath();
+        ctx.ellipse(this.x - 32, this.y - 26, 8, 12, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(this.x + 32, this.y - 26, 8, 12, 0.4, 0, Math.PI * 2);
+        ctx.fill();
         
+        // 身体主体
+        ctx.fillStyle = isRage ? '#c54535' : '#8b5a2b';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius * pulse, 0, Math.PI * 2);
         ctx.fill();
+        // 身体边框
+        ctx.strokeStyle = isRage ? '#8b2010' : '#5c3d1e';
+        ctx.lineWidth = 3;
+        ctx.stroke();
         
         // 毛发纹理
-        ctx.strokeStyle = isRage ? '#8b0000' : '#654321';
+        ctx.strokeStyle = isRage ? '#9b3020' : '#5c3d1e';
         ctx.lineWidth = 2;
-        for (let i = 0; i < 12; i++) {
-            const ha = (Math.PI * 2 / 12) * i;
-            const hLen = this.radius * 0.3;
+        for (let i = 0; i < 10; i++) {
+            const ha = (Math.PI * 2 / 10) * i + 0.3;
             ctx.beginPath();
-            ctx.moveTo(this.x + Math.cos(ha) * this.radius * 0.7, this.y + Math.sin(ha) * this.radius * 0.7);
-            ctx.lineTo(this.x + Math.cos(ha) * (this.radius + hLen * Math.sin(time * 4 + i)), this.y + Math.sin(ha) * (this.radius + hLen * Math.sin(time * 4 + i)));
+            ctx.moveTo(this.x + Math.cos(ha) * this.radius * 0.75, this.y + Math.sin(ha) * this.radius * 0.75);
+            ctx.lineTo(this.x + Math.cos(ha) * (this.radius * 1.1), this.y + Math.sin(ha) * (this.radius * 1.1));
             ctx.stroke();
         }
         
-        // 耳朵
-        ctx.fillStyle = isRage ? '#cd4f39' : '#8b4513';
+        // 胸部浅色区域
+        ctx.fillStyle = isRage ? '#e8a090' : '#d4a574';
         ctx.beginPath();
-        ctx.ellipse(this.x - 30, this.y - 25, 12, 18, -0.3, 0, Math.PI * 2);
-        ctx.ellipse(this.x + 30, this.y - 25, 12, 18, 0.3, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + 8, 18, 14, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 眼睛 - 狂暴时发红光
+        // 脸部区域
+        ctx.fillStyle = isRage ? '#e8a090' : '#d4a574';
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y - 5, 22, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 眉毛
+        ctx.strokeStyle = isRage ? '#8b2010' : '#5c3d1e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.x - 12, this.y - 18, 10, Math.PI + 0.3, Math.PI * 2 - 0.3);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(this.x + 12, this.y - 18, 10, Math.PI + 0.3, Math.PI * 2 - 0.3);
+        ctx.stroke();
+        
+        // 眼睛
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(this.x - 10, this.y - 8, 7, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(this.x + 10, this.y - 8, 7, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 瞳孔
+        ctx.fillStyle = isRage ? '#ff2200' : '#4a2510';
+        ctx.beginPath();
+        ctx.arc(this.x - 9, this.y - 7, 4, 0, Math.PI * 2);
+        ctx.arc(this.x + 11, this.y - 7, 4, 0, Math.PI * 2);
+        ctx.fill();
+        // 眼睛高光
         ctx.fillStyle = '#fff';
-        
         ctx.beginPath();
-        ctx.arc(this.x - 12, this.y - 8, 8, 0, Math.PI * 2);
-        ctx.arc(this.x + 12, this.y - 8, 8, 0, Math.PI * 2);
+        ctx.arc(this.x - 11, this.y - 9, 2, 0, Math.PI * 2);
+        ctx.arc(this.x + 9, this.y - 9, 2, 0, Math.PI * 2);
         ctx.fill();
         
-        ctx.fillStyle = isRage ? '#ff0000' : '#000';
-        if (isRage) {  }
+        // 鼻子
+        ctx.fillStyle = isRage ? '#7a2010' : '#5c3d1e';
         ctx.beginPath();
-        ctx.arc(this.x - 12, this.y - 8, 4, 0, Math.PI * 2);
-        ctx.arc(this.x + 12, this.y - 8, 4, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + 5, 8, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 鼻孔
+        ctx.fillStyle = '#2a1005';
+        ctx.beginPath();
+        ctx.ellipse(this.x - 3, this.y + 5, 2, 2, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 3, this.y + 5, 2, 2, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        
-        // 鼻子和嘴巴
-        ctx.fillStyle = isRage ? '#8b0000' : '#654321';
+        // 嘴巴
+        ctx.strokeStyle = isRage ? '#6a1808' : '#4a2510';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + 8, 10, 7, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(this.x, this.y + 12, 8, 0.2, Math.PI - 0.2);
+        ctx.stroke();
         
         // 獠牙 (狂暴时显示)
         if (isRage) {
             ctx.fillStyle = '#fff';
             ctx.beginPath();
-            ctx.moveTo(this.x - 8, this.y + 15);
-            ctx.lineTo(this.x - 5, this.y + 25);
-            ctx.lineTo(this.x - 2, this.y + 15);
+            ctx.moveTo(this.x - 6, this.y + 14);
+            ctx.lineTo(this.x - 4, this.y + 24);
+            ctx.lineTo(this.x - 2, this.y + 14);
+            ctx.closePath();
             ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(this.x + 8, this.y + 15);
-            ctx.lineTo(this.x + 5, this.y + 25);
-            ctx.lineTo(this.x + 2, this.y + 15);
+            ctx.moveTo(this.x + 6, this.y + 14);
+            ctx.lineTo(this.x + 4, this.y + 24);
+            ctx.lineTo(this.x + 2, this.y + 14);
+            ctx.closePath();
             ctx.fill();
         }
         
-        // 尾巴
-        ctx.strokeStyle = isRage ? '#cd4f39' : '#8b4513';
-        ctx.lineWidth = 8;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(this.x + this.radius * 0.8, this.y + 10);
-        ctx.quadraticCurveTo(this.x + this.radius + 30, this.y + Math.sin(time * 4) * 20, this.x + this.radius + 50, this.y - 20 + Math.sin(time * 3) * 15);
-        ctx.stroke();
-        
-        // Phase 2 狂暴环形能量
+        // Phase 2 狂暴能量环
         if (isRage) {
-            ctx.strokeStyle = `rgba(255, 69, 0, ${0.6 + Math.sin(time * 6) * 0.3})`;
+            ctx.strokeStyle = `rgba(255, 80, 0, ${0.5 + Math.sin(time * 6) * 0.3})`;
             ctx.lineWidth = 3;
-            ctx.setLineDash([10, 5]);
+            ctx.setLineDash([8, 4]);
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius + 20 + Math.sin(time * 4) * 5, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y, this.radius + 18 + Math.sin(time * 4) * 5, 0, Math.PI * 2);
             ctx.stroke();
             ctx.setLineDash([]);
         }
