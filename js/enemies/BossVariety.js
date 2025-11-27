@@ -807,7 +807,7 @@ class IceDragonBoss extends BaseBoss {
         super(x, y, player, combatSystem);
         this.level = 2;
         this.name = '冰霜巨龙';
-        this.maxHp = 550;  // 小幅削弱 600->550
+        this.maxHp = 450;  // 削弱血量
         this.hp = this.maxHp;
         this.radius = 55;
         this.color = '#87ceeb';
@@ -1321,7 +1321,7 @@ class CerberusBoss extends BaseBoss {
         super(x, y, player, combatSystem);
         this.level = 3;
         this.name = '地狱三头魔犬·刻耳柏洛斯';
-        this.maxHp = 950;  // 微调血量
+        this.maxHp = 750;  // 削弱血量
         this.hp = this.maxHp;
         this.radius = 68;
         this.color = '#8b0000';

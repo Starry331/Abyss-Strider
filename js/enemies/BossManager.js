@@ -118,13 +118,9 @@ export class BossManager {
 
     draw(ctx) {
         if (this.activeBoss) {
-            // Use themed boss rendering
-            if (window.CharacterRenderer) {
-                if (this.activeBoss.level === 1) {
-                    window.CharacterRenderer.drawMonkeyBoss(ctx, this.activeBoss);
-                } else {
-                    window.CharacterRenderer.drawDragonBoss(ctx, this.activeBoss);
-                }
+            // Lv1使用CharacterRenderer，其他boss使用自定义draw方法
+            if (this.activeBoss.level === 1 && window.CharacterRenderer) {
+                window.CharacterRenderer.drawMonkeyBoss(ctx, this.activeBoss);
             } else {
                 this.activeBoss.draw(ctx);
             }
