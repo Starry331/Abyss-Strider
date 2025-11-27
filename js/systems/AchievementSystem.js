@@ -424,28 +424,45 @@ export class AchievementSystem {
         container.innerHTML = '';
         
         this.achievements.forEach(achievement => {
-            // 隐藏成就只有解锁后才显示
-            if (achievement.hidden && !achievement.unlocked) return;
-            
             const item = document.createElement('div');
-            item.className = `achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'} ${achievement.rarity === 'super' ? 'super-achievement' : ''}`;
             
-            // 超级杯成就特殊样式
+            // 隐藏成就（超级杯）在未解锁时显示为隐藏成就
+            const isHiddenAndLocked = achievement.hidden && !achievement.unlocked;
             const isSuper = achievement.rarity === 'super';
-            const nameStyle = isSuper ? 'color: #ff4444; text-shadow: 0 0 10px #ff0000;' : '';
             
-            item.innerHTML = `
-                <div class="achievement-cup ${achievement.rarity}">
-                    ${this.getCupIcon(achievement.rarity)}
-                </div>
-                <div class="achievement-details">
-                    <div class="achievement-name" style="${nameStyle}">${achievement.name}</div>
-                    <div class="achievement-condition">${achievement.condition}</div>
-                </div>
-                <div class="achievement-status">
-                    ${achievement.unlocked ? '✅' : '🔒'}
-                </div>
-            `;
+            item.className = `achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'} ${isSuper ? 'super-achievement' : ''} ${isHiddenAndLocked ? 'hidden-achievement' : ''}`;
+            
+            if (isHiddenAndLocked) {
+                // 未解锁的隐藏成就 - 显示为神秘成就
+                item.innerHTML = `
+                    <div class="achievement-cup hidden-cup">
+                        ❓
+                    </div>
+                    <div class="achievement-details">
+                        <div class="achievement-name" style="color: #666;">隐藏成就</div>
+                        <div class="achievement-condition" style="color: #444;">???</div>
+                    </div>
+                    <div class="achievement-status">
+                        🔒
+                    </div>
+                `;
+            } else {
+                // 正常显示成就
+                const nameStyle = isSuper ? 'color: #ff4444; text-shadow: 0 0 10px #ff0000;' : '';
+                
+                item.innerHTML = `
+                    <div class="achievement-cup ${achievement.rarity}">
+                        ${this.getCupIcon(achievement.rarity)}
+                    </div>
+                    <div class="achievement-details">
+                        <div class="achievement-name" style="${nameStyle}">${achievement.name}</div>
+                        <div class="achievement-condition">${achievement.condition}</div>
+                    </div>
+                    <div class="achievement-status">
+                        ${achievement.unlocked ? '✅' : '🔒'}
+                    </div>
+                `;
+            }
             
             container.appendChild(item);
         });
