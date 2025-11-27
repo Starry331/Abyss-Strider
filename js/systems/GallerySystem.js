@@ -27,11 +27,11 @@ export class GallerySystem {
             // Lv6 (Boss战专属) - 16:9大图
             { id: 'poseidon', level: 6, name: '鬼化波塞冬', title: 'Ghost Poseidon', isMutated: false, image: 'bsd.PNG', wideImage: true, lockedImage: 'bsd locked.PNG' },
             // Lv7 (Boss战专属) - 16:9大图
-            { id: 'artemis', level: 7, name: '狂化阿尔忒弥斯', title: 'Berserk Artemis', isMutated: false, image: 'boss_artemis.png', wideImage: true },
+            { id: 'artemis', level: 7, name: '狂化阿尔忒弥斯', title: 'Berserk Artemis', isMutated: false, image: 'arti.png', wideImage: true, lockedImage: 'Arti lock.png' },
             // 特殊解锁 - BSD系列
             { id: 'bsd_swim', level: 6, name: '波塞冬·特别服装', title: 'Poseidon Special', lockedName: '波塞冬·???', lockedTitle: '???', isMutated: false, image: 'bsd swim.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'poseidon_kills', unlockCount: 3, unlockHint: '击败波塞冬3次解锁' },
             { id: 'bsd_swimsuit', level: 6, name: '波塞冬·特别服装', title: 'Poseidon Special', lockedName: '波塞冬·???', lockedTitle: '???', isMutated: false, image: 'bsd swim suit.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'all_except_lv7', unlockCount: 3, unlockHint: '除Lv7外全Boss击杀每个3次解锁' },
-            { id: 'bsd_beach', level: 6, name: '波塞冬·特别服装', title: 'Poseidon Special', lockedName: '波塞冬·???', lockedTitle: '???', isMutated: false, image: 'bsd beach.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'poseidon_kills', unlockCount: 6, unlockHint: '击败波塞冬6次解锁' }
+            { id: 'bsd_beach', level: 6, name: '波塞冬·沙滩', title: 'Poseidon Beach', lockedName: '波塞冬·???', lockedTitle: '???', isMutated: false, image: 'bsd beach.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'poseidon_kills', unlockCount: 6, unlockHint: '击败波塞冬6次解锁' }
         ];
     }
     
