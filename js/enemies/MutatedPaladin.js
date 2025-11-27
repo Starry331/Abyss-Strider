@@ -36,7 +36,8 @@ export class MutatedPaladinBoss {
             case 'ATTACK': this.timer += deltaTime;
                 if (this.timer >= 0.5) { this.timer = 0; this.state = 'IDLE'; } break;
         }
-        if (this.hp < this.maxHp * 0.5 && this.phase === 1) { this.phase = 2; this.telegraphDuration = 0.5; this.attackCooldown = 0.75; }
+        // 二阶段：增加预警时间，降低攻速，避免太难
+        if (this.hp < this.maxHp * 0.5 && this.phase === 1) { this.phase = 2; this.telegraphDuration = 0.7; this.attackCooldown = 1.0; }
     }
     executeAttack() {
         const angle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
@@ -51,18 +52,20 @@ export class MutatedPaladinBoss {
                          ctx.restore(); }
                 }); } break;
             case 'SHADOW_DASH': const target = { ...this.dashTarget };
-                for (let i = 0; i < 10; i++) { setTimeout(() => {
+                // 削弱：5段冲刺，间隔更长，碰撞范围更小
+                for (let i = 0; i < 5; i++) { setTimeout(() => {
                     this.dashTrail.push({ x: this.x, y: this.y, life: 0.5 });
-                    this.x += (target.x - this.x) / (10 - i); this.y += (target.y - this.y) / (10 - i);
+                    this.x += (target.x - this.x) / (5 - i); this.y += (target.y - this.y) / (5 - i);
                     const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
-                    if (dist < 65) this.player.takeDamage(this.calcDamage(this.damage * 1.2).damage);
-                }, i * 30); }
-                setTimeout(() => { for (let j = 0; j < 10; j++) { const sa = (Math.PI * 2 / 10) * j;
-                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(sa) * 400, vy: Math.sin(sa) * 400,
-                        radius: 12, damage: this.damage * 0.8, owner: 'enemy', life: 0.8,
+                    if (dist < 45) this.player.takeDamage(this.calcDamage(this.damage * 0.9).damage);
+                }, i * 60); }
+                // 削弱：6个投射物，伤害降低
+                setTimeout(() => { for (let j = 0; j < 6; j++) { const sa = (Math.PI * 2 / 6) * j;
+                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(sa) * 350, vy: Math.sin(sa) * 350,
+                        radius: 10, damage: this.damage * 0.5, owner: 'enemy', life: 0.7,
                         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                         draw(ctx) { ctx.fillStyle = '#660066'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
-                    }); } }, 350); break;
+                    }); } }, 400); break;
             case 'CORRUPTED_BLADE': for (let i = 0; i < 4; i++) { setTimeout(() => { const sa = angle + (i - 1.5) * 0.5;
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, speed: 300, radius: 20, damage: this.damage * 1.1, owner: 'enemy', life: 3,
                     player: this.player, angle: sa,
@@ -223,12 +226,12 @@ export class MutatedPaladinBoss {
                         draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
                             ctx.fillStyle = '#aa00aa'; ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
                     }); } }, hit * 130); } break;
-            case 'VOID_SHIELD': // 虚空护盾
-                if (this.player.screenShake) { this.player.screenShake.intensity = 12; this.player.screenShake.duration = 2.5; }
-                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 85, damage: 0, owner: 'enemy', life: 2.8, maxLife: 2.8, boss: this, player: this.player,
+            case 'VOID_SHIELD': // 虚空护盾（削弱：持续时间缩短，伤害降低）
+                if (this.player.screenShake) { this.player.screenShake.intensity = 8; this.player.screenShake.duration = 1.5; }
+                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 70, damage: 0, owner: 'enemy', life: 2.0, maxLife: 2.0, boss: this, player: this.player,
                     update(dt) { this.x = this.boss.x; this.y = this.boss.y;
                         const dx = this.player.x - this.x, dy = this.player.y - this.y, dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist < 75) { this.player.x += (dx / dist) * 140 * dt; this.player.y += (dy / dist) * 140 * dt; this.player.takeDamage(10 * dt); }
+                        if (dist < 65) { this.player.x += (dx / dist) * 100 * dt; this.player.y += (dy / dist) * 100 * dt; this.player.hp -= 5 * dt; }
                         this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) { const alpha = this.life / this.maxLife, time = Date.now() / 1000;
                         ctx.strokeStyle = `rgba(153,0,153,${0.5 + Math.sin(time * 7) * 0.3})`; ctx.lineWidth = 7;
