@@ -1126,142 +1126,68 @@ class IceDragonBoss extends BaseBoss {
 
     draw(ctx) {
         const time = Date.now() / 1000;
-        const pulse = 1 + Math.sin(time * 2) * 0.1;
         const isRage = this.phase === 2;
-        
-        // Phase 2 狂暴冰霜风暴背景
-        if (isRage) {
-            const rageGlow = ctx.createRadialGradient(this.x, this.y, this.radius, this.x, this.y, this.radius * 2.5);
-            rageGlow.addColorStop(0, 'rgba(0, 255, 255, 0.3)');
-            rageGlow.addColorStop(1, 'transparent');
-            ctx.fillStyle = rageGlow;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius * 2.5, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 旋转冰晶粒子
-            for (let i = 0; i < 12; i++) {
-                const pa = time * 2 + i * 0.5;
-                const pd = this.radius + 20 + Math.sin(time * 3 + i) * 10;
-                const px = this.x + Math.cos(pa) * pd;
-                const py = this.y + Math.sin(pa) * pd;
-                ctx.fillStyle = `rgba(200, 255, 255, ${0.6 + Math.sin(time * 4 + i) * 0.3})`;
-                ctx.beginPath();
-                ctx.moveTo(px, py - 6); ctx.lineTo(px + 4, py); ctx.lineTo(px, py + 6); ctx.lineTo(px - 4, py);
-                ctx.closePath();
-                ctx.fill();
-            }
-        }
         
         // 龙翅膀
         ctx.fillStyle = isRage ? 'rgba(0, 200, 255, 0.6)' : 'rgba(135, 206, 235, 0.5)';
-        // 左翅
+        const wingFlap = Math.sin(time * 3) * 10;
         ctx.beginPath();
         ctx.moveTo(this.x - 20, this.y);
-        ctx.quadraticCurveTo(this.x - 80, this.y - 40 + Math.sin(time * 3) * 10, this.x - 70, this.y + 20);
+        ctx.quadraticCurveTo(this.x - 80, this.y - 40 + wingFlap, this.x - 70, this.y + 20);
         ctx.quadraticCurveTo(this.x - 50, this.y + 10, this.x - 20, this.y);
         ctx.fill();
-        // 右翅
         ctx.beginPath();
         ctx.moveTo(this.x + 20, this.y);
-        ctx.quadraticCurveTo(this.x + 80, this.y - 40 + Math.sin(time * 3) * 10, this.x + 70, this.y + 20);
+        ctx.quadraticCurveTo(this.x + 80, this.y - 40 + wingFlap, this.x + 70, this.y + 20);
         ctx.quadraticCurveTo(this.x + 50, this.y + 10, this.x + 20, this.y);
         ctx.fill();
         
-        // 冰龙身体
-        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
-        if (isRage) {
-            gradient.addColorStop(0, '#ffffff');
-            gradient.addColorStop(0.4, '#00ffff');
-            gradient.addColorStop(1, '#0080ff');
-        } else {
-            gradient.addColorStop(0, '#e0ffff');
-            gradient.addColorStop(0.5, '#87ceeb');
-            gradient.addColorStop(1, '#4682b4');
-        }
-        
-        ctx.fillStyle = gradient;
-        ctx.shadowColor = isRage ? '#00ffff' : '#87ceeb';
-        ctx.shadowBlur = isRage ? 40 : 20;
+        // 冰龙身体 (简化：不用渐变)
+        ctx.fillStyle = isRage ? '#00d4ff' : '#87ceeb';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * pulse, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
-        
-        // 龙鳞纹理
-        ctx.strokeStyle = isRage ? 'rgba(255, 255, 255, 0.5)' : 'rgba(70, 130, 180, 0.4)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 8; i++) {
-            const sa = (Math.PI * 2 / 8) * i;
-            ctx.beginPath();
-            ctx.arc(this.x + Math.cos(sa) * this.radius * 0.5, this.y + Math.sin(sa) * this.radius * 0.5, 12, 0, Math.PI);
-            ctx.stroke();
-        }
+        ctx.strokeStyle = isRage ? '#fff' : '#4682b4';
+        ctx.lineWidth = 3;
+        ctx.stroke();
         
         // 龙角
         ctx.fillStyle = isRage ? '#00ffff' : '#4682b4';
         ctx.beginPath();
-        ctx.moveTo(this.x - 25, this.y - 35);
-        ctx.lineTo(this.x - 35, this.y - 60);
-        ctx.lineTo(this.x - 15, this.y - 40);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(this.x - 25, this.y - 35); ctx.lineTo(this.x - 35, this.y - 60); ctx.lineTo(this.x - 15, this.y - 40);
+        ctx.closePath(); ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(this.x + 25, this.y - 35);
-        ctx.lineTo(this.x + 35, this.y - 60);
-        ctx.lineTo(this.x + 15, this.y - 40);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(this.x + 25, this.y - 35); ctx.lineTo(this.x + 35, this.y - 60); ctx.lineTo(this.x + 15, this.y - 40);
+        ctx.closePath(); ctx.fill();
         
         // 眼睛
         ctx.fillStyle = isRage ? '#ff00ff' : '#00ffff';
-        ctx.shadowColor = isRage ? '#ff00ff' : '#ffffff';
-        ctx.shadowBlur = 15;
         ctx.beginPath();
         ctx.ellipse(this.x - 15, this.y - 10, 10, 6, 0, 0, Math.PI * 2);
         ctx.ellipse(this.x + 15, this.y - 10, 10, 6, 0, 0, Math.PI * 2);
         ctx.fill();
-        // 瞳孔
         ctx.fillStyle = '#000';
-        ctx.shadowBlur = 0;
         ctx.beginPath();
         ctx.arc(this.x - 15, this.y - 10, 3, 0, Math.PI * 2);
         ctx.arc(this.x + 15, this.y - 10, 3, 0, Math.PI * 2);
         ctx.fill();
         
-        // 龙嘴 (呼吸冰雾效果)
-        if (this.state === 'TELEGRAPH' && this.currentSkill === 'ICE_BREATH') {
-            ctx.fillStyle = 'rgba(200, 255, 255, 0.5)';
-            ctx.beginPath();
-            ctx.ellipse(this.x, this.y + 25, 15, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        // Phase 2 冰霜王冠
+        // Phase 2 冰冠
         if (isRage) {
-            ctx.strokeStyle = `rgba(0, 255, 255, ${0.7 + Math.sin(time * 5) * 0.3})`;
-            ctx.lineWidth = 3;
-            ctx.setLineDash([8, 4]);
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius + 25, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
-            // 冰冠尖刺
+            ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 20, 0, Math.PI * 2); ctx.stroke();
             for (let i = 0; i < 6; i++) {
                 const ca = (Math.PI * 2 / 6) * i - Math.PI / 2;
                 ctx.fillStyle = '#00ffff';
                 ctx.beginPath();
-                ctx.moveTo(this.x + Math.cos(ca) * (this.radius + 25), this.y + Math.sin(ca) * (this.radius + 25));
-                ctx.lineTo(this.x + Math.cos(ca) * (this.radius + 40), this.y + Math.sin(ca) * (this.radius + 40));
-                ctx.lineTo(this.x + Math.cos(ca + 0.15) * (this.radius + 25), this.y + Math.sin(ca + 0.15) * (this.radius + 25));
-                ctx.closePath();
-                ctx.fill();
+                ctx.moveTo(this.x + Math.cos(ca) * (this.radius + 20), this.y + Math.sin(ca) * (this.radius + 20));
+                ctx.lineTo(this.x + Math.cos(ca) * (this.radius + 35), this.y + Math.sin(ca) * (this.radius + 35));
+                ctx.lineTo(this.x + Math.cos(ca + 0.15) * (this.radius + 20), this.y + Math.sin(ca + 0.15) * (this.radius + 20));
+                ctx.closePath(); ctx.fill();
             }
         }
         
-        if (this.state === 'TELEGRAPH') {
-            this.drawSkillIndicator(ctx);
-        }
+        if (this.state === 'TELEGRAPH') this.drawSkillIndicator(ctx);
     }
 
     drawSkillIndicator(ctx) {
