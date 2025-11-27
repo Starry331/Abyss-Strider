@@ -979,12 +979,12 @@ export class MutatedCerberusBoss {
         this.x = x; this.y = y; this.player = player; this.combatSystem = combatSystem;
         this.level = 3; this.name = '冥界魔犬'; this.isMutated = true;
         this.maxHp = Math.round(950 * 1.5); this.hp = this.maxHp;
-        this.radius = 72; this.color = '#4a0000'; this.damage = Math.round(24 * 1.2);
-        this.telegraphDuration = 0.8; this.attackCooldown = 1.1;
+        this.radius = 72; this.color = '#4a0000'; this.damage = Math.round(26 * 1.2);
+        this.telegraphDuration = 0.75; this.attackCooldown = 1.0;
         this.state = 'IDLE'; this.timer = 0; this.currentSkill = null; this.phase = 1;
         this.dashTarget = { x: 0, y: 0 };
-        this.skills = ['TRIPLE_FIRE', 'INFERNO_CHARGE', 'HELLFIRE', 'HELL_RIFT'];
-        this.phase2Skills = [...this.skills, 'APOCALYPSE', 'UNDERWORLD_GATE'];
+        this.skills = ['TRIPLE_FIRE', 'INFERNO_CHARGE', 'HELLFIRE', 'HELL_RIFT', 'DARK_FIRE_CHAIN', 'SHADOW_MAGMA'];
+        this.phase2Skills = [...this.skills, 'APOCALYPSE', 'UNDERWORLD_GATE', 'HELLHOUND_FURY', 'SOUL_CONSUME'];
     }
     update(deltaTime) {
         if (this.state === 'IDLE') {
@@ -1024,6 +1024,48 @@ export class MutatedCerberusBoss {
                         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
                         ctx.strokeStyle = `rgba(255,50,0,${alpha})`; ctx.lineWidth = 4; ctx.stroke(); }
                 }); }, i * 200); } break;
+            // 新增技能
+            case 'DARK_FIRE_CHAIN': for (let i = 0; i < 6; i++) { const ca = (Math.PI * 2 / 6) * i;
+                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, targetPlayer: this.player, chainAngle: ca,
+                    radius: 18, damage: this.damage, owner: 'enemy', life: 2.0, maxLife: 2.0, boss: this,
+                    update(dt) { this.chainAngle += dt * 2; const dist = 70 + Math.sin(this.chainAngle * 3) * 25;
+                        this.x = this.targetPlayer.x + Math.cos(this.chainAngle) * dist;
+                        this.y = this.targetPlayer.y + Math.sin(this.chainAngle) * dist;
+                        this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const alpha = this.life / this.maxLife; ctx.strokeStyle = `rgba(100,0,0,${alpha})`; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.moveTo(this.boss.x, this.boss.y); ctx.lineTo(this.x, this.y); ctx.stroke();
+                        ctx.fillStyle = `rgba(200,50,0,${alpha})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                }); } break;
+            case 'SHADOW_MAGMA': for (let i = 0; i < 8; i++) { const bx = 100 + Math.random() * 700, by = 80 + Math.random() * 400;
+                setTimeout(() => { this.combatSystem.spawnProjectile({ x: bx, y: by, radius: 50, damage: 0, owner: 'enemy', life: 0.7, maxLife: 0.7,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const p = 1 - this.life / this.maxLife; ctx.strokeStyle = `rgba(100,0,0,${0.5 + p * 0.5})`; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - p * 0.3), 0, Math.PI * 2); ctx.stroke(); }
+                }); }, i * 80);
+                setTimeout(() => { const dist = Math.sqrt((this.player.x - bx) ** 2 + (this.player.y - by) ** 2);
+                    if (dist < 55) this.player.takeDamage(this.damage);
+                    this.combatSystem.spawnProjectile({ x: bx, y: by, radius: 55, damage: 0, owner: 'enemy', life: 0.3,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { ctx.fillStyle = `rgba(150,50,0,${this.life * 3})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                    }); }, 700 + i * 80); } break;
+            case 'HELLHOUND_FURY': for (let d = 0; d < 5; d++) { setTimeout(() => { const da = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                for (let s = 0; s < 3; s++) { this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(da + (s - 1) * 0.3) * 550, vy: Math.sin(da + (s - 1) * 0.3) * 550,
+                    radius: 16, damage: this.damage + 5, owner: 'enemy', life: 0.6,
+                    update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { ctx.fillStyle = '#880000'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                }); } }, d * 180); } break;
+            case 'SOUL_CONSUME': if (this.player.screenShake) { this.player.screenShake.intensity = 15; this.player.screenShake.duration = 2; }
+                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 0, maxRadius: 220, damage: 0, owner: 'enemy', life: 2.0, maxLife: 2.0, boss: this, player: this.player,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.radius = this.maxRadius * (1 - this.life / this.maxLife);
+                        const dx = this.boss.x - this.player.x, dy = this.boss.y - this.player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < this.radius && dist > 40) { this.player.x += (dx / dist) * 70 * dt; this.player.y += (dy / dist) * 70 * dt; }
+                        if (dist < 50) this.player.takeDamage(12 * dt);
+                        this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const alpha = this.life / this.maxLife; ctx.strokeStyle = `rgba(80,0,0,${alpha})`; ctx.lineWidth = 5;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = `rgba(40,0,0,${alpha * 0.3})`; ctx.fill(); }
+                }); break;
             default: for (let i = 0; i < 6; i++) { const a = angle + (i - 2.5) * 0.2;
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350,
                     radius: 10, damage: this.damage, owner: 'enemy',
@@ -1199,13 +1241,13 @@ export class MutatedZeusBoss {
     constructor(x, y, player, combatSystem) {
         this.x = x; this.y = y; this.player = player; this.combatSystem = combatSystem;
         this.level = 4; this.name = '暴君宙斯'; this.isMutated = true;
-        this.maxHp = Math.round(1250 * 1.5); this.hp = this.maxHp;
-        this.radius = 65; this.color = '#8b6914'; this.damage = Math.round(30 * 1.2);
-        this.telegraphDuration = 0.7; this.attackCooldown = 1.2;
+        this.maxHp = Math.round(1400 * 1.5); this.hp = this.maxHp;
+        this.radius = 65; this.color = '#8b6914'; this.damage = Math.round(33 * 1.2);
+        this.telegraphDuration = 0.65; this.attackCooldown = 1.1;
         this.state = 'IDLE'; this.timer = 0; this.currentSkill = null; this.phase = 1;
         this.dashTarget = { x: 0, y: 0 };
-        this.skills = ['LIGHTNING_BOLT', 'THUNDER_DASH', 'CHAIN_LIGHTNING', 'TYRANT_THUNDER'];
-        this.phase2Skills = [...this.skills, 'OLYMPUS_WRATH', 'ZEUS_APOCALYPSE'];
+        this.skills = ['LIGHTNING_BOLT', 'THUNDER_DASH', 'CHAIN_LIGHTNING', 'TYRANT_THUNDER', 'DARK_PLASMA'];
+        this.phase2Skills = [...this.skills, 'OLYMPUS_WRATH', 'ZEUS_APOCALYPSE', 'TYRANT_SMITE', 'STORM_APOCALYPSE', 'DARK_JUDGMENT'];
     }
     update(deltaTime) {
         if (this.state === 'IDLE') {
@@ -1245,6 +1287,63 @@ export class MutatedZeusBoss {
                         ctx.lineTo(this.targetX + (Math.random() - 0.5) * 20, this.targetY); ctx.stroke();
                         ctx.fillStyle = `rgba(255,200,0,${alpha*0.5})`; ctx.beginPath(); ctx.arc(this.targetX, this.targetY, this.radius, 0, Math.PI * 2); ctx.fill();  }
                 }); }, i * 150); } break;
+            // 新增技能
+            case 'DARK_PLASMA': for (let i = 0; i < 5; i++) { const la = angle + (i - 2) * 0.12;
+                setTimeout(() => { this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(la) * 650, vy: Math.sin(la) * 650,
+                    radius: 14, damage: this.damage + 5, owner: 'enemy', life: 1.0, rotation: la, trail: [],
+                    update(dt) { this.trail.push({ x: this.x, y: this.y, life: 0.12 });
+                        this.trail = this.trail.filter(t => { t.life -= dt; return t.life > 0; });
+                        this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { this.trail.forEach(t => { ctx.fillStyle = `rgba(255,100,0,${t.life * 6})`; ctx.beginPath(); ctx.arc(t.x, t.y, 10, 0, Math.PI * 2); ctx.fill(); });
+                        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                        ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.moveTo(28, 0); ctx.lineTo(-12, -7); ctx.lineTo(-12, 7); ctx.closePath(); ctx.fill(); ctx.restore(); }
+                }); }, i * 70); } break;
+            case 'TYRANT_SMITE': if (this.player.screenShake) { this.player.screenShake.intensity = 18; this.player.screenShake.duration = 2.5; }
+                for (let i = 0; i < 10; i++) { setTimeout(() => {
+                    const tx = this.player.x + (Math.random() - 0.5) * 120, ty = this.player.y + (Math.random() - 0.5) * 120;
+                    this.combatSystem.spawnProjectile({ x: tx, y: ty, radius: 55, damage: 0, owner: 'enemy', life: 0.45, maxLife: 0.45,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { const p = 1 - this.life / this.maxLife; ctx.strokeStyle = `rgba(255,200,0,${0.6 + p * 0.4})`; ctx.lineWidth = 3;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - p * 0.4), 0, Math.PI * 2); ctx.stroke(); }
+                    });
+                    setTimeout(() => { const dist = Math.sqrt((this.player.x - tx) ** 2 + (this.player.y - ty) ** 2);
+                        if (dist < 60) this.player.takeDamage(this.damage + 8);
+                        this.combatSystem.spawnProjectile({ x: tx, y: 0, targetX: tx, targetY: ty, radius: 35, damage: 0, owner: 'enemy', life: 0.25,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.strokeStyle = `rgba(255,200,0,${this.life * 4})`; ctx.lineWidth = 10;
+                                ctx.beginPath(); ctx.moveTo(this.x, 0); ctx.lineTo(this.targetX, this.targetY); ctx.stroke(); }
+                        }); }, 450); }, i * 200); } break;
+            case 'STORM_APOCALYPSE': if (this.player.screenShake) { this.player.screenShake.intensity = 28; this.player.screenShake.duration = 3.5; }
+                for (let wave = 0; wave < 5; wave++) { setTimeout(() => {
+                    for (let i = 0; i < 14; i++) { const a = (Math.PI * 2 / 14) * i + wave * 0.18;
+                        this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * (320 + wave * 45), vy: Math.sin(a) * (320 + wave * 45),
+                            radius: 10, damage: this.damage - 5, owner: 'enemy', life: 1.4,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.fillStyle = `rgba(255,150,0,${this.life})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                        }); }
+                    for (let j = 0; j < 5; j++) { const jx = 100 + Math.random() * 700, jy = 80 + Math.random() * 400;
+                        this.combatSystem.spawnProjectile({ x: jx, y: 0, targetY: jy, radius: 35, damage: this.damage - 3, owner: 'enemy', life: 0.22,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.strokeStyle = `rgba(255,200,0,${this.life * 4})`; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(this.x, 0); ctx.lineTo(this.x, this.targetY); ctx.stroke(); }
+                        }); } }, wave * 350); } break;
+            case 'DARK_JUDGMENT': if (this.player.screenShake) { this.player.screenShake.intensity = 32; this.player.screenShake.duration = 3.5; }
+                const djX = this.player.x, djY = this.player.y;
+                this.combatSystem.spawnProjectile({ x: djX, y: djY, radius: 170, damage: 0, owner: 'enemy', life: 2.2, maxLife: 2.2,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const p = 1 - this.life / this.maxLife; const time = Date.now() / 1000;
+                        ctx.strokeStyle = `rgba(255,150,0,${0.5 + Math.sin(time * 10) * 0.3})`; ctx.lineWidth = 7;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - p * 0.2), 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = `rgba(255,100,0,${p * 0.35})`; ctx.fill();
+                        ctx.fillStyle = `rgba(255,200,0,0.8)`; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚡ 暴君审判 ⚡', this.x, this.y - this.radius - 18);
+                        ctx.font = 'bold 16px Arial'; ctx.fillText(`${Math.ceil(this.life)}秒`, this.x, this.y); }
+                });
+                setTimeout(() => { const dist = Math.sqrt((this.player.x - djX) ** 2 + (this.player.y - djY) ** 2);
+                    if (dist < 180) this.player.takeDamage(70);
+                    this.combatSystem.spawnProjectile({ x: djX, y: djY, radius: 0, maxRadius: 200, damage: 0, owner: 'enemy', life: 0.45,
+                        update(dt) { this.radius = this.maxRadius * (1 - this.life * 2.2); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { ctx.fillStyle = `rgba(255,220,150,${this.life * 2})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                    }); }, 2200); break;
             default: for (let i = 0; i < 6; i++) { const a = angle + (i - 2.5) * 0.2;
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 400, vy: Math.sin(a) * 400,
                     radius: 10, damage: this.damage, owner: 'enemy',
