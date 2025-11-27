@@ -12,8 +12,8 @@ export class MutatedPaladinBoss {
         this.telegraphDuration = 0.5; this.attackCooldown = 0.75;
         this.state = 'IDLE'; this.timer = 0; this.currentSkill = null; this.phase = 1;
         this.dashTarget = { x: 0, y: 0 }; this.dashTrail = [];
-        this.skills = ['DARK_SLASH', 'SHADOW_DASH', 'CORRUPTED_BLADE', 'PHANTOM_STRIKE', 'DARK_VORTEX', 'CURSE_MARK', 'SOUL_REND', 'VOID_RIFT'];
-        this.phase2Skills = [...this.skills, 'MORDRED_FURY', 'DARK_APOCALYPSE', 'CHAOS_DOMAIN', 'EXCALIBUR_CORRUPT', 'ROUND_TABLE_DARK'];
+        this.skills = ['DARK_SLASH', 'SHADOW_DASH', 'CORRUPTED_BLADE', 'PHANTOM_STRIKE', 'DARK_VORTEX', 'CURSE_MARK', 'SOUL_REND', 'VOID_RIFT', 'DARK_PARRY', 'SHADOW_COMBO'];
+        this.phase2Skills = [...this.skills, 'MORDRED_FURY', 'DARK_APOCALYPSE', 'CHAOS_DOMAIN', 'EXCALIBUR_CORRUPT', 'ROUND_TABLE_DARK', 'VOID_SHIELD', 'DARK_REFLECT'];
     }
     calcDamage(base) { return Math.random() < this.critChance ? { damage: Math.round(base * this.critMultiplier), isCrit: true } : { damage: base, isCrit: false }; }
     update(deltaTime) {
@@ -193,6 +193,68 @@ export class MutatedPaladinBoss {
                         draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
                             ctx.fillStyle = '#990099'; ctx.beginPath(); ctx.moveTo(25, 0); ctx.lineTo(-12, -10); ctx.lineTo(-12, 10); ctx.closePath(); ctx.fill(); ctx.restore(); }
                     }); } }, 700); break;
+            // 新增近身技能
+            case 'DARK_PARRY': // 暗黑格挡反击
+                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 65, damage: 0, owner: 'enemy', life: 0.7, maxLife: 0.7, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const alpha = this.life / this.maxLife; ctx.strokeStyle = `rgba(153,0,153,${alpha})`; ctx.lineWidth = 5;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = 'rgba(100,0,100,0.3)'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('暗黑格挡', this.x, this.y - this.radius - 6); }
+                });
+                setTimeout(() => { const ca = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                    this.x = this.player.x - Math.cos(ca) * 45; this.y = this.player.y - Math.sin(ca) * 45;
+                    for (let i = 0; i < 14; i++) { const sa = (Math.PI * 2 / 14) * i;
+                        this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(sa) * 480, vy: Math.sin(sa) * 480,
+                            radius: 14, damage: this.damage * 1.1, owner: 'enemy', rotation: sa, life: 0.55,
+                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                                ctx.fillStyle = '#cc00cc'; ctx.beginPath(); ctx.moveTo(22, 0); ctx.lineTo(-10, -8); ctx.lineTo(-10, 8); ctx.closePath(); ctx.fill(); ctx.restore(); }
+                        }); } }, 700); break;
+            case 'SHADOW_COMBO': // 暗影连击
+                for (let hit = 0; hit < 7; hit++) { setTimeout(() => {
+                    const ha = Math.random() * Math.PI * 2, hd = 45 + Math.random() * 35;
+                    this.dashTrail.push({ x: this.x, y: this.y, life: 0.35 });
+                    this.x = this.player.x + Math.cos(ha) * hd; this.y = this.player.y + Math.sin(ha) * hd;
+                    const sa = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                    for (let s = -1; s <= 1; s++) { this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(sa + s * 0.25) * 380, vy: Math.sin(sa + s * 0.25) * 380,
+                        radius: 11, damage: this.damage * 0.75, owner: 'enemy', rotation: sa + s * 0.25, life: 0.28,
+                        update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                            ctx.fillStyle = '#aa00aa'; ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
+                    }); } }, hit * 130); } break;
+            case 'VOID_SHIELD': // 虚空护盾
+                if (this.player.screenShake) { this.player.screenShake.intensity = 12; this.player.screenShake.duration = 2.5; }
+                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 85, damage: 0, owner: 'enemy', life: 2.8, maxLife: 2.8, boss: this, player: this.player,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y;
+                        const dx = this.player.x - this.x, dy = this.player.y - this.y, dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 75) { this.player.x += (dx / dist) * 140 * dt; this.player.y += (dy / dist) * 140 * dt; this.player.takeDamage(10 * dt); }
+                        this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const alpha = this.life / this.maxLife, time = Date.now() / 1000;
+                        ctx.strokeStyle = `rgba(153,0,153,${0.5 + Math.sin(time * 7) * 0.3})`; ctx.lineWidth = 7;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = `rgba(80,0,80,${alpha * 0.25})`; ctx.fill();
+                        ctx.fillStyle = `rgba(200,0,200,${alpha})`; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('🛡️ 虚空护盾', this.x, this.y - this.radius - 12); }
+                }); break;
+            case 'DARK_REFLECT': // 暗黑反射
+                this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 95, damage: 0, owner: 'enemy', life: 1.8, maxLife: 1.8, boss: this,
+                    update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) { const alpha = this.life / this.maxLife, time = Date.now() / 1000;
+                        for (let r = 0; r < 3; r++) { ctx.strokeStyle = `rgba(180,0,180,${alpha * (0.4 - r * 0.1)})`; ctx.lineWidth = 3 - r;
+                            ctx.setLineDash([12, 6]); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius - r * 14, time * 5 + r, time * 5 + r + Math.PI * 1.7); ctx.stroke(); }
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = `rgba(180,0,180,${alpha})`; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚔ 暗黑反射 ⚔', this.x, this.y - this.radius - 10); }
+                });
+                for (let w = 0; w < 3; w++) { setTimeout(() => { for (let i = 0; i < 10; i++) { const ra = (Math.PI * 2 / 10) * i + w * 0.2;
+                    this.combatSystem.spawnProjectile({ x: this.x + Math.cos(ra) * 95, y: this.y + Math.sin(ra) * 95,
+                        vx: Math.cos(ra) * 280, vy: Math.sin(ra) * 280,
+                        radius: 10, damage: this.damage * 0.7, owner: 'enemy', rotation: ra, life: 0.9,
+                        update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                            ctx.fillStyle = '#bb00bb'; ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
+                    }); } }, w * 450); } break;
             default: for (let i = 0; i < 8; i++) { const a = angle + (i - 3.5) * 0.15;
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 450, vy: Math.sin(a) * 450,
                     radius: 12, damage: this.damage, owner: 'enemy', life: 1,

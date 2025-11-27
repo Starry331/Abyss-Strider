@@ -788,114 +788,162 @@ class MonkeyBoss extends BaseBoss {
         ctx.ellipse(this.x + 25, this.y - 44 + breathe, 4, 8, 0.5, 0, Math.PI * 2);
         ctx.fill();
         
-        // 头部主体
-        ctx.fillStyle = isRage ? '#b04030' : '#a07020';
+        // ===== 帅气头部 =====
+        // 头部主体 - 更立体
+        ctx.fillStyle = isRage ? '#b04030' : '#9a6520';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y - 38 + breathe, 22, 25, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y - 40 + breathe, 24, 26, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 脸部
-        ctx.fillStyle = isRage ? '#e8c0a0' : '#f5deb3';
+        // 脸部 - 心形更帅气
+        ctx.fillStyle = isRage ? '#f0d0b0' : '#ffe4c4';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y - 35 + breathe, 16, 18, 0, 0, Math.PI * 2);
+        ctx.moveTo(this.x, this.y - 18 + breathe);
+        ctx.bezierCurveTo(this.x - 18, this.y - 22 + breathe, this.x - 18, this.y - 40 + breathe, this.x, this.y - 48 + breathe);
+        ctx.bezierCurveTo(this.x + 18, this.y - 40 + breathe, this.x + 18, this.y - 22 + breathe, this.x, this.y - 18 + breathe);
         ctx.fill();
         
-        // 金色王冠
+        // 脸颊高光
+        ctx.fillStyle = isRage ? 'rgba(255,180,150,0.4)' : 'rgba(255,220,200,0.5)';
+        ctx.beginPath();
+        ctx.ellipse(this.x - 10, this.y - 30 + breathe, 5, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(this.x + 10, this.y - 30 + breathe, 5, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 霸气金冠
         ctx.fillStyle = '#ffd700';
         ctx.beginPath();
-        ctx.moveTo(this.x - 18, this.y - 55 + breathe);
-        ctx.lineTo(this.x - 12, this.y - 68 + breathe);
-        ctx.lineTo(this.x - 6, this.y - 58 + breathe);
-        ctx.lineTo(this.x, this.y - 72 + breathe);
-        ctx.lineTo(this.x + 6, this.y - 58 + breathe);
-        ctx.lineTo(this.x + 12, this.y - 68 + breathe);
-        ctx.lineTo(this.x + 18, this.y - 55 + breathe);
+        ctx.moveTo(this.x - 20, this.y - 58 + breathe);
+        ctx.lineTo(this.x - 15, this.y - 75 + breathe);
+        ctx.lineTo(this.x - 7, this.y - 62 + breathe);
+        ctx.lineTo(this.x, this.y - 80 + breathe);
+        ctx.lineTo(this.x + 7, this.y - 62 + breathe);
+        ctx.lineTo(this.x + 15, this.y - 75 + breathe);
+        ctx.lineTo(this.x + 20, this.y - 58 + breathe);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = '#ff8800';
-        ctx.lineWidth = 1.5;
+        // 王冠金边
+        ctx.strokeStyle = '#ffaa00';
+        ctx.lineWidth = 2;
         ctx.stroke();
         // 王冠宝石
-        ctx.fillStyle = isRage ? '#ff3333' : '#22cc44';
+        ctx.fillStyle = isRage ? '#ff2200' : '#00dd55';
         ctx.beginPath();
-        ctx.arc(this.x, this.y - 64 + breathe, 4, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y - 72 + breathe, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = isRage ? '#ff6666' : '#66ff99';
+        ctx.beginPath();
+        ctx.arc(this.x - 1, this.y - 73 + breathe, 2, 0, Math.PI * 2);
+        ctx.fill();
+        // 侧宝石
+        ctx.fillStyle = '#ff4444';
+        ctx.beginPath();
+        ctx.arc(this.x - 11, this.y - 67 + breathe, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(this.x + 11, this.y - 67 + breathe, 3, 0, Math.PI * 2);
         ctx.fill();
         
-        // 锐利眉毛
-        ctx.strokeStyle = isRage ? '#4a0a0a' : '#3a2010';
-        ctx.lineWidth = 4;
+        // ===== 锐利剑眉 =====
+        ctx.strokeStyle = isRage ? '#3a0505' : '#2a1505';
+        ctx.lineWidth = 3.5;
         ctx.lineCap = 'round';
+        // 左眉 - 斜上
         ctx.beginPath();
-        ctx.moveTo(this.x - 14, this.y - 44 + breathe);
-        ctx.lineTo(this.x - 5, this.y - 48 + breathe);
+        ctx.moveTo(this.x - 16, this.y - 42 + breathe);
+        ctx.quadraticCurveTo(this.x - 10, this.y - 48 + breathe, this.x - 4, this.y - 46 + breathe);
         ctx.stroke();
+        // 右眉 - 斜上
         ctx.beginPath();
-        ctx.moveTo(this.x + 14, this.y - 44 + breathe);
-        ctx.lineTo(this.x + 5, this.y - 48 + breathe);
+        ctx.moveTo(this.x + 16, this.y - 42 + breathe);
+        ctx.quadraticCurveTo(this.x + 10, this.y - 48 + breathe, this.x + 4, this.y - 46 + breathe);
         ctx.stroke();
         
-        // 威严眼睛
-        ctx.fillStyle = '#111';
+        // ===== 帅气眼睛 =====
+        // 眼白
+        ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.ellipse(this.x - 7, this.y - 40 + breathe, 5, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x - 8, this.y - 38 + breathe, 6, 5, -0.1, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(this.x + 7, this.y - 40 + breathe, 5, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 8, this.y - 38 + breathe, 6, 5, 0.1, 0, Math.PI * 2);
         ctx.fill();
-        // 金色虹膜
-        ctx.fillStyle = isRage ? '#ff4400' : '#ffa500';
+        // 金色/火红虹膜
+        ctx.fillStyle = isRage ? '#ff3300' : '#ffaa00';
         ctx.beginPath();
-        ctx.ellipse(this.x - 7, this.y - 40 + breathe, 3.5, 4.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x - 7, this.y - 38 + breathe, 4, 4.5, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(this.x + 7, this.y - 40 + breathe, 3.5, 4.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 7, this.y - 38 + breathe, 4, 4.5, 0, 0, Math.PI * 2);
         ctx.fill();
-        // 瞳孔
+        // 竖瞳 - 更有威严
         ctx.fillStyle = '#000';
         ctx.beginPath();
-        ctx.ellipse(this.x - 7, this.y - 40 + breathe, 1.5, 2.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x - 7, this.y - 38 + breathe, 1.5, 3.5, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(this.x + 7, this.y - 40 + breathe, 1.5, 2.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x + 7, this.y - 38 + breathe, 1.5, 3.5, 0, 0, Math.PI * 2);
         ctx.fill();
-        // 眼神光
+        // 眼神高光
         ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.arc(this.x - 5, this.y - 42 + breathe, 1.5, 0, Math.PI * 2);
+        ctx.arc(this.x - 5, this.y - 40 + breathe, 2, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(this.x + 9, this.y - 42 + breathe, 1.5, 0, Math.PI * 2);
+        ctx.arc(this.x + 9, this.y - 40 + breathe, 2, 0, Math.PI * 2);
+        ctx.fill();
+        // 眼线
+        ctx.strokeStyle = isRage ? '#330000' : '#1a0a00';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(this.x - 8, this.y - 38 + breathe, 6.5, 5.5, -0.1, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(this.x + 8, this.y - 38 + breathe, 6.5, 5.5, 0.1, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // ===== 英俊鼻子 =====
+        ctx.fillStyle = isRage ? '#c08070' : '#d4a574';
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y - 35 + breathe);
+        ctx.quadraticCurveTo(this.x - 4, this.y - 28 + breathe, this.x - 3, this.y - 24 + breathe);
+        ctx.lineTo(this.x + 3, this.y - 24 + breathe);
+        ctx.quadraticCurveTo(this.x + 4, this.y - 28 + breathe, this.x, this.y - 35 + breathe);
+        ctx.fill();
+        // 鼻孔
+        ctx.fillStyle = '#3a1a0a';
+        ctx.beginPath();
+        ctx.ellipse(this.x - 2, this.y - 24 + breathe, 2, 1.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(this.x + 2, this.y - 24 + breathe, 2, 1.5, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // 鼻子
-        ctx.fillStyle = isRage ? '#9a4535' : '#8b5a2b';
+        // ===== 自信微笑 =====
+        ctx.strokeStyle = isRage ? '#4a1010' : '#2a1005';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y - 30 + breathe, 6, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#2a1005';
+        ctx.arc(this.x, this.y - 18 + breathe, 8, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+        // 嘴内
+        ctx.fillStyle = isRage ? '#400808' : '#2a0a05';
         ctx.beginPath();
-        ctx.arc(this.x - 2, this.y - 29 + breathe, 1.5, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y - 18 + breathe, 6, 0.3, Math.PI - 0.3);
         ctx.fill();
-        ctx.beginPath();
-        ctx.arc(this.x + 2, this.y - 29 + breathe, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // 霸气嘴巴
-        ctx.fillStyle = isRage ? '#5a1010' : '#3a1a0a';
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y - 22 + breathe, 8, 4, 0, 0.1, Math.PI - 0.1);
-        ctx.fill();
-        // 獠牙
+        // 帅气獠牙
         ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.moveTo(this.x - 6, this.y - 22 + breathe);
-        ctx.lineTo(this.x - 4, this.y - 16 + breathe);
-        ctx.lineTo(this.x - 2, this.y - 22 + breathe);
+        ctx.moveTo(this.x - 5, this.y - 18 + breathe);
+        ctx.lineTo(this.x - 3.5, this.y - 12 + breathe);
+        ctx.lineTo(this.x - 2, this.y - 18 + breathe);
         ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(this.x + 6, this.y - 22 + breathe);
-        ctx.lineTo(this.x + 4, this.y - 16 + breathe);
-        ctx.lineTo(this.x + 2, this.y - 22 + breathe);
+        ctx.moveTo(this.x + 5, this.y - 18 + breathe);
+        ctx.lineTo(this.x + 3.5, this.y - 12 + breathe);
+        ctx.lineTo(this.x + 2, this.y - 18 + breathe);
         ctx.fill();
         
         // Phase 2 火焰特效
