@@ -11,14 +11,15 @@ export class BossRushMode {
         this.totalBosses = 7; // 异化Lv1-5 + 波塞冬 + 阿尔忒弥斯
         
         // Boss顺序: 异化1-5, 鬼化波塞冬(6), 狂化阿尔忒弥斯(7)
+        // 每个Boss配有专属BGM
         this.bossOrder = [
-            { level: 1, name: '噬魂猿魔', isMutated: true },
-            { level: 2, name: '霜魂冰魔', isMutated: true },
-            { level: 3, name: '冥界地狱犬', isMutated: true },
-            { level: 4, name: '暴君宙斯', isMutated: true },
-            { level: 5, name: '堕落圣骑士', isMutated: true },
-            { level: 6, name: '鬼化波塞冬', isMutated: false, isNewBoss: true },
-            { level: 7, name: '狂化阿尔忒弥斯', isMutated: false, isNewBoss: true }
+            { level: 1, name: '噬魂猿魔', isMutated: true, bgm: 'boss_primal' },
+            { level: 2, name: '霜魂冰魔', isMutated: true, bgm: 'boss_frost' },
+            { level: 3, name: '冥界地狱犬', isMutated: true, bgm: 'boss_hades' },
+            { level: 4, name: '暴君宙斯', isMutated: true, bgm: 'boss_thunder' },
+            { level: 5, name: '堕落圣骑士', isMutated: true, bgm: 'boss_holy' },
+            { level: 6, name: '鬼化波塞冬', isMutated: false, isNewBoss: true, bgm: 'boss_ocean' },
+            { level: 7, name: '狂化阿尔忒弥斯', isMutated: false, isNewBoss: true, bgm: 'boss_moon' }
         ];
         
         // 奖励系统配置

@@ -52,48 +52,18 @@ export class BossRushScene {
         this.initBackground();
     }
     
-    // 初始化众神赐福（强化版：蓝色-金色构筑牌强度）
+    // 初始化众神赐福（平衡版：蓝/紫/金/红稀有度）
     initGodBlessings() {
         return {
-            // ===== 蓝色稀有度 =====
-            zeus: {
-                name: '宙斯', title: 'Zeus', icon: '⚡', rarity: 'blue',
-                desc: '天神之王，雷霆加护',
-                color: '#ffdd44', bgColor: '#3a3a1a',
-                effects: [
-                    { name: '雷霆之力', desc: '攻击+50%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.5; } },
-                    { name: '天神庇护', desc: '最大生命+120', apply: (p, ws) => { p.maxHp += 120; p.hp += 120; } },
-                    { name: '闪电链', desc: '攻击有35%概率连锁', apply: (p, ws) => { ws.weapons.forEach(w => w.chainChance = 0.35); } }
-                ]
-            },
-            hera: {
-                name: '赫拉', title: 'Hera', icon: '👑', rarity: 'blue',
-                desc: '婚姻女神，家庭守护',
-                color: '#ff88cc', bgColor: '#3a1a2a',
-                effects: [
-                    { name: '女王威严', desc: '减伤+40%', apply: (p, ws) => { p.damageReduction = (p.damageReduction || 0) + 0.4; } },
-                    { name: '家庭祝福', desc: '每秒回复2%生命', apply: (p, ws) => { p.regenRate = (p.regenRate || 0) + 0.02; } },
-                    { name: '神后恩典', desc: '护盾+150', apply: (p, ws) => { p.shield = (p.shield || 0) + 150; } }
-                ]
-            },
+            // ===== 蓝色稀有度（基础） =====
             poseidon: {
                 name: '波塞冬', title: 'Poseidon', icon: '🔱', rarity: 'blue',
                 desc: '海神，风暴主宰',
                 color: '#44aaff', bgColor: '#1a2a3a',
                 effects: [
-                    { name: '海神之怒', desc: '攻击强力击退', apply: (p, ws) => { ws.weapons.forEach(w => w.knockback = 80); } },
-                    { name: '潮汐护盾', desc: '受伤时45%概率免疫', apply: (p, ws) => { p.dodgeChance = (p.dodgeChance || 0) + 0.45; } },
-                    { name: '深海力量', desc: '暴击伤害+80%', apply: (p, ws) => { ws.weapons.forEach(w => w.critMultiplier = (w.critMultiplier || 2) + 0.8); } }
-                ]
-            },
-            athena: {
-                name: '雅典娜', title: 'Athena', icon: '🦉', rarity: 'blue',
-                desc: '智慧女神，战争策略',
-                color: '#aaaaff', bgColor: '#2a2a3a',
-                effects: [
-                    { name: '战争智慧', desc: '暴击率+35%', apply: (p, ws) => { ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.35); } },
-                    { name: '神盾庇护', desc: '格挡+25%伤害', apply: (p, ws) => { p.blockChance = (p.blockChance || 0) + 0.25; } },
-                    { name: '智慧光芒', desc: '移速+35%', apply: (p, ws) => { p.speed *= 1.35; } }
+                    { name: '海神之怒', desc: '攻击轻微击退', apply: (p, ws) => { ws.weapons.forEach(w => w.knockback = 20); } },
+                    { name: '潮汐护盾', desc: '受伤时15%概率免疫', apply: (p, ws) => { p.dodgeChance = (p.dodgeChance || 0) + 0.15; } },
+                    { name: '深海力量', desc: '暴击伤害+30%', apply: (p, ws) => { ws.weapons.forEach(w => w.critMultiplier = (w.critMultiplier || 2) + 0.3); } }
                 ]
             },
             apollo: {
@@ -101,21 +71,93 @@ export class BossRushScene {
                 desc: '光明之神，预言主宰',
                 color: '#ffaa44', bgColor: '#3a2a1a',
                 effects: [
-                    { name: '光明箭矢', desc: '投射物速度+60%', apply: (p, ws) => { ws.projectileSpeedMult = (ws.projectileSpeedMult || 1) * 1.6; } },
-                    { name: '预言之眼', desc: '攻击范围+40%', apply: (p, ws) => { ws.weapons.forEach(w => w.range *= 1.4); } },
-                    { name: '太阳祝福', desc: '恢复150生命', apply: (p, ws) => { p.hp = Math.min(p.hp + 150, p.maxHp); } }
+                    { name: '光明箭矢', desc: '投射物速度+30%', apply: (p, ws) => { ws.projectileSpeedMult = (ws.projectileSpeedMult || 1) * 1.3; } },
+                    { name: '预言之眼', desc: '攻击范围+20%', apply: (p, ws) => { ws.weapons.forEach(w => w.range *= 1.2); } },
+                    { name: '太阳祝福', desc: '恢复80生命', apply: (p, ws) => { p.hp = Math.min(p.hp + 80, p.maxHp); } }
+                ]
+            },
+            
+            // ===== 紫色稀有度（中等） =====
+            zeus: {
+                name: '宙斯', title: 'Zeus', icon: '⚡', rarity: 'purple',
+                desc: '天神之王，雷霆加护',
+                color: '#ffdd44', bgColor: '#3a3a1a',
+                effects: [
+                    { name: '雷霆之力', desc: '攻击+35%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.35; } },
+                    { name: '天神庇护', desc: '最大生命+80', apply: (p, ws) => { p.maxHp += 80; p.hp += 80; } },
+                    { name: '闪电链', desc: '攻击有20%概率连锁', apply: (p, ws) => { ws.weapons.forEach(w => w.chainChance = 0.2); } }
+                ]
+            },
+            hera: {
+                name: '赫拉', title: 'Hera', icon: '👑', rarity: 'purple',
+                desc: '婚姻女神，家庭守护',
+                color: '#ff88cc', bgColor: '#3a1a2a',
+                effects: [
+                    { name: '女王威严', desc: '减伤+25%', apply: (p, ws) => { p.damageReduction = (p.damageReduction || 0) + 0.25; } },
+                    { name: '家庭祝福', desc: '每秒回复0.5%生命', apply: (p, ws) => { p.regenRate = (p.regenRate || 0) + 0.005; } },
+                    { name: '神后恩典', desc: '护盾+80', apply: (p, ws) => { p.shield = (p.shield || 0) + 80; } }
+                ]
+            },
+            athena: {
+                name: '雅典娜', title: 'Athena', icon: '🦉', rarity: 'purple',
+                desc: '智慧女神，战争策略',
+                color: '#aaaaff', bgColor: '#2a2a3a',
+                effects: [
+                    { name: '战争智慧', desc: '暴击率+20%', apply: (p, ws) => { ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.2); } },
+                    { name: '神盾庇护', desc: '格挡+15%伤害', apply: (p, ws) => { p.blockChance = (p.blockChance || 0) + 0.15; } },
+                    { name: '智慧光芒', desc: '移速+20%', apply: (p, ws) => { p.speed *= 1.2; } }
                 ]
             },
             artemis: {
-                name: '阿尔忒弥斯', title: 'Artemis', icon: '🌙', rarity: 'blue',
+                name: '阿尔忒弥斯', title: 'Artemis', icon: '🌙', rarity: 'purple',
                 desc: '狩猎女神，月之守护',
                 color: '#cc88ff', bgColor: '#2a1a3a',
                 effects: [
-                    { name: '猎手本能', desc: '攻速+45%', apply: (p, ws) => { ws.weapons.forEach(w => w.cooldown *= 0.55); } },
-                    { name: '月光箭', desc: '攻击穿透+伤害+20%', apply: (p, ws) => { ws.weapons.forEach(w => { w.pierce = true; }); p.damageBonus = (p.damageBonus || 1) * 1.2; } },
-                    { name: '野兽之力', desc: '攻击+45%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.45; } }
+                    { name: '猎手本能', desc: '攻速+30%', apply: (p, ws) => { ws.weapons.forEach(w => w.cooldown *= 0.7); } },
+                    { name: '月光箭', desc: '攻击穿透敌人', apply: (p, ws) => { ws.weapons.forEach(w => w.pierce = true); } },
+                    { name: '野兽之力', desc: '攻击+30%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.3; } }
                 ]
             },
+            
+            // ===== 金色稀有度（稀有，下调） =====
+            hecate: {
+                name: '赫卡忒', title: 'Hecate', icon: '🔮', rarity: 'gold',
+                desc: '魔法女神，三相女神',
+                color: '#ff66ff', bgColor: '#3a1a3a',
+                effects: [
+                    { name: '三重魔法', desc: '攻击+40%，暴击+15%', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.4; 
+                        ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.15);
+                    }},
+                    { name: '月之咒术', desc: '攻速+35%，范围+20%', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => { w.cooldown *= 0.65; w.range *= 1.2; });
+                    }},
+                    { name: '冥界钥匙', desc: '死亡时复活一次(满血)', apply: (p, ws) => { 
+                        p.resurrectCount = (p.resurrectCount || 0) + 1;
+                    }}
+                ]
+            },
+            gaea: {
+                name: '盖亚', title: 'Gaea', icon: '🌍', rarity: 'gold',
+                desc: '大地母神，万物之源',
+                color: '#44ff44', bgColor: '#1a3a1a',
+                effects: [
+                    { name: '大地之力', desc: '最大生命+120，减伤+30%', apply: (p, ws) => { 
+                        p.maxHp += 120; p.hp += 120;
+                        p.damageReduction = (p.damageReduction || 0) + 0.3;
+                    }},
+                    { name: '自然恩赐', desc: '每秒回复1%生命，护盾+100', apply: (p, ws) => { 
+                        p.regenRate = (p.regenRate || 0) + 0.01;
+                        p.shield = (p.shield || 0) + 100;
+                    }},
+                    { name: '泰坦血脉', desc: '攻击+50%，轻微击退', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.5;
+                        ws.weapons.forEach(w => w.knockback = 30);
+                    }}
+                ]
+            },
+            
+            // ===== 红色稀有度（传说） =====
             hades: {
                 name: '哈迪斯', title: 'Hades', icon: '💀', rarity: 'red',
                 desc: '冥王，死亡主宰',
@@ -124,52 +166,11 @@ export class BossRushScene {
                     { name: '冥王之握', desc: '攻击5%吸血', apply: (p, ws) => { 
                         ws.weapons.forEach(w => w.lifesteal = (w.lifesteal || 0) + 0.05);
                     }},
-                    { name: '死亡印记', desc: '攻击附加强力持续伤害', apply: (p, ws) => { 
-                        ws.weapons.forEach(w => w.dot = (w.dot || 0) + 12);
+                    { name: '死亡印记', desc: '攻击附加持续伤害', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => w.dot = (w.dot || 0) + 10);
                     }},
                     { name: '冥界复活', desc: '死亡时复活一次(满血)', apply: (p, ws) => { 
                         p.resurrectCount = (p.resurrectCount || 0) + 1;
-                    }}
-                ]
-            },
-            
-            // ===== 金色稀有度 =====
-            hecate: {
-                name: '赫卡忒', title: 'Hecate', icon: '🔮', rarity: 'gold',
-                desc: '魔法女神，三相女神',
-                color: '#ff66ff', bgColor: '#3a1a3a',
-                effects: [
-                    { name: '三重魔法', desc: '攻击+60%，暴击+25%', apply: (p, ws) => { 
-                        p.damageBonus = (p.damageBonus || 1) * 1.6; 
-                        ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.25);
-                    }},
-                    { name: '月之咒术', desc: '攻速+50%，范围+30%', apply: (p, ws) => { 
-                        ws.weapons.forEach(w => { w.cooldown *= 0.5; w.range *= 1.3; });
-                    }},
-                    { name: '冥界钥匙', desc: '减伤+35%，死亡保护', apply: (p, ws) => { 
-                        p.damageReduction = (p.damageReduction || 0) + 0.35;
-                        p.deathSaveCount = (p.deathSaveCount || 0) + 1;
-                    }}
-                ]
-            },
-            
-            // ===== 红色稀有度 =====
-            gaea: {
-                name: '盖亚', title: 'Gaea', icon: '🌍', rarity: 'red',
-                desc: '大地母神，万物之源',
-                color: '#44ff44', bgColor: '#1a3a1a',
-                effects: [
-                    { name: '大地之力', desc: '最大生命+200，减伤+50%', apply: (p, ws) => { 
-                        p.maxHp += 200; p.hp += 200;
-                        p.damageReduction = (p.damageReduction || 0) + 0.5;
-                    }},
-                    { name: '自然恩赐', desc: '每秒回复3%生命，护盾+200', apply: (p, ws) => { 
-                        p.regenRate = (p.regenRate || 0) + 0.03;
-                        p.shield = (p.shield || 0) + 200;
-                    }},
-                    { name: '泰坦血脉', desc: '攻击+70%，击退强化', apply: (p, ws) => { 
-                        p.damageBonus = (p.damageBonus || 1) * 1.7;
-                        ws.weapons.forEach(w => w.knockback = 100);
                     }}
                 ]
             },
@@ -178,18 +179,18 @@ export class BossRushScene {
                 desc: '盗火者，人类守护神',
                 color: '#ff6622', bgColor: '#3a2a1a',
                 effects: [
-                    { name: '神火赐福', desc: '攻击+80%，附加灼烧', apply: (p, ws) => { 
-                        p.damageBonus = (p.damageBonus || 1) * 1.8;
-                        ws.weapons.forEach(w => w.dot = 15);
+                    { name: '神火赐福', desc: '攻击+60%，附加灼烧', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.6;
+                        ws.weapons.forEach(w => w.dot = 12);
                     }},
-                    { name: '不屈意志', desc: '死亡保护(3次)，减伤+30%', apply: (p, ws) => { 
-                        p.deathSaveCount = (p.deathSaveCount || 0) + 3;
-                        p.damageReduction = (p.damageReduction || 0) + 0.3;
+                    { name: '不屈意志', desc: '复活一次，减伤+20%', apply: (p, ws) => { 
+                        p.resurrectCount = (p.resurrectCount || 0) + 1;
+                        p.damageReduction = (p.damageReduction || 0) + 0.2;
                     }},
-                    { name: '先知智慧', desc: '暴击+40%，暴伤+100%', apply: (p, ws) => { 
+                    { name: '先知智慧', desc: '暴击+25%，暴伤+60%', apply: (p, ws) => { 
                         ws.weapons.forEach(w => {
-                            w.critChance = (w.critChance || 0.2) + 0.4;
-                            w.critMultiplier = (w.critMultiplier || 2) + 1.0;
+                            w.critChance = (w.critChance || 0.2) + 0.25;
+                            w.critMultiplier = (w.critMultiplier || 2) + 0.6;
                         });
                     }}
                 ]
@@ -291,10 +292,18 @@ export class BossRushScene {
         // 更新Boss血条UI
         this.uiManager.updateBossHP(this.activeBoss.hp, this.activeBoss.maxHp, this.activeBoss.name);
         
-        // 播放对应Boss音乐
+        // 播放对应Boss专属BGM
         if (this.audioManager) {
-            this.audioManager.playBossMusic(bossInfo.level);
+            // 尝试播放专属BGM，若不存在则使用默认Boss音乐
+            if (bossInfo.bgm && this.audioManager.sounds[bossInfo.bgm]) {
+                this.audioManager.playMusic(bossInfo.bgm);
+            } else {
+                this.audioManager.playBossMusic(bossInfo.level);
+            }
         }
+        
+        // 清空场上的拾取物
+        this.pickups = [];
     }
     
     onBossDefeated() {
@@ -644,6 +653,7 @@ export class BossRushScene {
         // 稀有度颜色和边框
         const rarityStyles = {
             blue: { border: '#4488ff', glow: '#4488ff60', label: '蓝', labelBg: '#224488' },
+            purple: { border: '#aa66ff', glow: '#aa66ff70', label: '紫', labelBg: '#442266' },
             gold: { border: '#ffd700', glow: '#ffd70080', label: '金', labelBg: '#665500' },
             red: { border: '#ff4444', glow: '#ff444480', label: '红', labelBg: '#662222' }
         };
