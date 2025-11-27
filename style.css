@@ -1555,6 +1555,25 @@ button:disabled {
         margin-bottom: 60px;
     }
     
+    /* 副菜单按钮缩小 */
+    #menu-buttons-secondary {
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+    
+    .menu-btn-small {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    /* 版权信息位置调整 */
+    #menu-footer {
+        position: relative;
+        bottom: auto;
+        margin-top: 10px;
+        font-size: 10px;
+    }
+    
     /* 暂停菜单适配 */
     #pause-menu {
         padding: 30px 40px;
