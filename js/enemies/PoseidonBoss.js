@@ -647,7 +647,7 @@ export class GhostPoseidonBoss {
         const hpPercent = this.hp / this.maxHp;
         const barWidth = 120;
         const barX = this.x - barWidth / 2;
-        const barY = this.y - 110 + breathe;
+        const barY = this.y - 110 + b;
         
         ctx.fillStyle = '#333';
         ctx.fillRect(barX, barY, barWidth, 10);

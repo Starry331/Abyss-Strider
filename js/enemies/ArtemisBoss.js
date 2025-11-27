@@ -877,32 +877,32 @@ export class BerserkArtemisBoss {
         const hpPercent = this.hp / this.maxHp;
         const barWidth = 140;
         const barX = this.x - barWidth / 2;
-        const barY = this.y - 110 + breathe;
+        const barY = this.y - 110 + b;
         
         ctx.fillStyle = '#333';
         ctx.fillRect(barX, barY, barWidth, 12);
         
         const hpGrad = ctx.createLinearGradient(barX, barY, barX + barWidth * hpPercent, barY);
-        hpGrad.addColorStop(0, isFinal ? '#ff88ff' : (isRage ? '#cc66cc' : '#aa44aa'));
-        hpGrad.addColorStop(1, isFinal ? '#cc44cc' : (isRage ? '#aa44aa' : '#882288'));
+        hpGrad.addColorStop(0, f ? '#ff88ff' : (r ? '#cc66cc' : '#aa44aa'));
+        hpGrad.addColorStop(1, f ? '#cc44cc' : (r ? '#aa44aa' : '#882288'));
         ctx.fillStyle = hpGrad;
         ctx.fillRect(barX, barY, barWidth * hpPercent, 12);
         
-        ctx.strokeStyle = isFinal ? '#ffaaff' : '#cc88cc';
+        ctx.strokeStyle = f ? '#ffaaff' : '#cc88cc';
         ctx.lineWidth = 1;
         ctx.strokeRect(barX, barY, barWidth, 12);
         
         // Boss名字
-        ctx.fillStyle = isFinal ? '#ffccff' : '#cc99cc';
+        ctx.fillStyle = f ? '#ffccff' : '#cc99cc';
         ctx.font = 'bold 14px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(this.name, this.x, barY - 5);
         
         // 阶段指示
         if (this.phase > 1) {
-            ctx.fillStyle = isFinal ? '#ff44ff' : '#aa44aa';
+            ctx.fillStyle = f ? '#ff44ff' : '#aa44aa';
             ctx.font = '10px Arial';
-            ctx.fillText(isFinal ? '【绝境】' : '【狂暴】', this.x, barY - 18);
+            ctx.fillText(f ? '【绝境】' : '【狂暴】', this.x, barY - 18);
         }
     }
     
