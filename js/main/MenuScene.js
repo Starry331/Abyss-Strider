@@ -337,12 +337,16 @@ export class MenuScene {
                 imageContent = '❓';
             }
             
+            // 未解锁时显示锁定名称
+            const displayName = boss.unlocked ? boss.name : (boss.lockedName || boss.name);
+            const displayTitle = boss.unlocked ? boss.title : (boss.lockedTitle || boss.title);
+            
             card.innerHTML = `
                 <div class="gallery-image ${isWide ? 'wide' : ''}">
                     ${imageContent}
                 </div>
-                <div class="gallery-name">${boss.name}</div>
-                <div class="gallery-title">${boss.title}</div>
+                <div class="gallery-name">${displayName}</div>
+                <div class="gallery-title">${displayTitle}</div>
                 ${boss.isMutated ? '<div class="gallery-mutated">⚡ 异化形态</div>' : ''}
                 <div class="gallery-kills">${killText}</div>
                 ${isWide && boss.unlocked ? '<div class="gallery-preview-hint">点击查看大图</div>' : ''}
