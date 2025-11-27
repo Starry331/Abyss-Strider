@@ -14,7 +14,9 @@ export class MutatedMonkeyBoss {
         this.state = 'IDLE'; this.timer = 0; this.currentSkill = null; this.phase = 1;
         this.dashTarget = { x: 0, y: 0 };
         this.skills = ['SHADOW_DASH', 'SOUL_THROW', 'DARK_WHIP', 'VOID_LEAP', 'CURSE_TRAP', 'SOUL_RAIN'];
-        this.phase2Skills = [...this.skills, 'DARK_FRENZY', 'DEMON_RAGE'];
+        this.phase2Skills = [...this.skills, 'DARK_FRENZY', 'DEMON_RAGE', 'SOUL_CHAIN', 'VOID_VORTEX'];
+        this.chainTargets = []; // 灵魂锁链目标点
+        this.vortexCenter = { x: 0, y: 0 }; // 虚空漩涡中心
     }
     update(deltaTime) {
         if (this.state === 'IDLE') {
@@ -28,8 +30,22 @@ export class MutatedMonkeyBoss {
                 if (this.timer >= this.attackCooldown) { this.timer = 0; this.state = 'TELEGRAPH';
                     const skills = this.phase === 2 ? this.phase2Skills : this.skills;
                     this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
-                    if (['SHADOW_DASH', 'VOID_LEAP'].includes(this.currentSkill)) 
+                    if (['SHADOW_DASH', 'VOID_LEAP', 'DEMON_RAGE'].includes(this.currentSkill)) 
                         this.dashTarget = { x: this.player.x, y: this.player.y };
+                    if (this.currentSkill === 'SOUL_CHAIN') {
+                        // 生成3个锁链节点围绕玩家
+                        this.chainTargets = [];
+                        for (let i = 0; i < 3; i++) {
+                            const a = (Math.PI * 2 / 3) * i + Math.random() * 0.5;
+                            this.chainTargets.push({
+                                x: this.player.x + Math.cos(a) * 120,
+                                y: this.player.y + Math.sin(a) * 120
+                            });
+                        }
+                    }
+                    if (this.currentSkill === 'VOID_VORTEX') {
+                        this.vortexCenter = { x: this.player.x, y: this.player.y };
+                    }
                 } break;
             case 'TELEGRAPH': this.timer += deltaTime;
                 if (this.timer >= this.telegraphDuration) { this.timer = 0; this.state = 'ATTACK'; this.executeAttack(); } break;
@@ -93,6 +109,79 @@ export class MutatedMonkeyBoss {
                         draw(ctx) { const a = this.life / this.maxLife; ctx.strokeStyle = `rgba(150,0,200,${a*0.8})`; ctx.lineWidth = 4;
                             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - a * 0.3), 0, Math.PI * 2); ctx.stroke(); }
                     }); }, w * 120); } break;
+            case 'SOUL_CHAIN':
+                // 灵魂锁链 - 三角形锁链围困玩家
+                const chainPts = this.chainTargets;
+                for (let i = 0; i < 3; i++) {
+                    const p1 = chainPts[i], p2 = chainPts[(i + 1) % 3];
+                    this.combatSystem.spawnProjectile({
+                        x: p1.x, y: p1.y, x2: p2.x, y2: p2.y,
+                        radius: 15, damage: dmg + 2, owner: 'enemy', life: 2.5, maxLife: 2.5,
+                        player: this.player,
+                        update(dt) {
+                            this.life -= dt;
+                            // 检测玩家是否触碰锁链线
+                            const dx = this.x2 - this.x, dy = this.y2 - this.y;
+                            const len = Math.sqrt(dx * dx + dy * dy);
+                            const nx = -dy / len, ny = dx / len;
+                            const px = this.player.x - this.x, py = this.player.y - this.y;
+                            const dist = Math.abs(px * nx + py * ny);
+                            const proj = (px * dx + py * dy) / (len * len);
+                            if (dist < 20 && proj > 0 && proj < 1 && Math.random() < dt * 3) {
+                                this.player.takeDamage(this.damage * 0.3);
+                            }
+                            if (this.life <= 0) this.markedForDeletion = true;
+                        },
+                        draw(ctx) {
+                            const a = Math.min(1, this.life / this.maxLife * 1.5);
+                            ctx.strokeStyle = `rgba(180,0,255,${a})`; ctx.lineWidth = 6;
+                            ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x2, this.y2); ctx.stroke();
+                            // 节点
+                            ctx.fillStyle = `rgba(200,50,255,${a})`;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, 12, 0, Math.PI * 2); ctx.fill();
+                        }
+                    });
+                }
+                break;
+            case 'VOID_VORTEX':
+                // 虚空漩涡 - 持续吸引玩家的漩涡
+                const vx = this.vortexCenter.x, vy = this.vortexCenter.y;
+                this.combatSystem.spawnProjectile({
+                    x: vx, y: vy, radius: 150, damage: 0, owner: 'enemy', life: 3, maxLife: 3,
+                    player: this.player, dmg: dmg,
+                    update(dt) {
+                        this.life -= dt;
+                        // 吸引玩家
+                        const dx = this.x - this.player.x, dy = this.y - this.player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < this.radius && dist > 30) {
+                            const pullStr = 80 * dt * (1 - dist / this.radius);
+                            this.player.x += (dx / dist) * pullStr;
+                            this.player.y += (dy / dist) * pullStr;
+                        }
+                        // 中心伤害
+                        if (dist < 40 && Math.random() < dt * 4) {
+                            this.player.takeDamage(this.dmg * 0.4);
+                        }
+                        if (this.life <= 0) this.markedForDeletion = true;
+                    },
+                    draw(ctx) {
+                        const a = this.life / this.maxLife;
+                        const time = Date.now() / 1000;
+                        // 漩涡效果
+                        for (let r = 0; r < 3; r++) {
+                            ctx.strokeStyle = `rgba(120,0,200,${a * (0.8 - r * 0.2)})`;
+                            ctx.lineWidth = 4 - r;
+                            ctx.beginPath();
+                            ctx.arc(this.x, this.y, this.radius * (0.3 + r * 0.25), time * 3 + r, time * 3 + r + Math.PI * 1.5);
+                            ctx.stroke();
+                        }
+                        // 中心
+                        ctx.fillStyle = `rgba(80,0,150,${a * 0.6})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 35, 0, Math.PI * 2); ctx.fill();
+                    }
+                });
+                break;
         }
     }
     takeDamage(amount) { this.hp -= amount; if (this.hp <= 0) this.hp = 0; }
@@ -179,17 +268,231 @@ export class MutatedMonkeyBoss {
         if (!this.currentSkill) return;
         const time = Date.now() / 1000;
         const pulse = 0.5 + Math.sin(time * 6) * 0.3;
+        const angle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+        
         ctx.save();
-        ctx.fillStyle = `rgba(150,0,200,${pulse * 0.4})`;
-        ctx.strokeStyle = `rgba(200,0,255,${pulse})`;
-        ctx.lineWidth = 3;
-        if (['SHADOW_DASH', 'VOID_LEAP'].includes(this.currentSkill)) {
-            const tx = this.dashTarget.x, ty = this.dashTarget.y;
-            ctx.beginPath(); ctx.arc(tx, ty, 60, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(tx, ty); ctx.stroke();
-        } else {
-            ctx.beginPath(); ctx.arc(this.player.x, this.player.y, 80, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        
+        switch (this.currentSkill) {
+            case 'SHADOW_DASH':
+            case 'VOID_LEAP': {
+                // 冲刺/跳跃预警 - 轨迹线+落点圈+箭头
+                const tx = this.dashTarget.x, ty = this.dashTarget.y;
+                const r = this.currentSkill === 'VOID_LEAP' ? 110 : 70;
+                
+                // 落点圈
+                ctx.fillStyle = `rgba(150,0,200,${pulse * 0.4})`;
+                ctx.strokeStyle = `rgba(200,0,255,${pulse})`;
+                ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.arc(tx, ty, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                
+                // 轨迹线
+                ctx.setLineDash([10, 5]);
+                ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(tx, ty); ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 箭头
+                const da = Math.atan2(ty - this.y, tx - this.x);
+                ctx.fillStyle = `rgba(255,100,255,${pulse + 0.3})`;
+                ctx.beginPath();
+                ctx.moveTo(tx + Math.cos(da) * 20, ty + Math.sin(da) * 20);
+                ctx.lineTo(tx + Math.cos(da + 2.5) * 25, ty + Math.sin(da + 2.5) * 25);
+                ctx.lineTo(tx + Math.cos(da - 2.5) * 25, ty + Math.sin(da - 2.5) * 25);
+                ctx.closePath(); ctx.fill();
+                
+                // 文字
+                ctx.fillStyle = `rgba(255,150,255,${pulse + 0.4})`;
+                ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                ctx.fillText(this.currentSkill === 'VOID_LEAP' ? '虚空跃!' : '暗影冲!', tx, ty - r - 10);
+                break;
+            }
+            case 'SOUL_THROW': {
+                // 扇形弹幕预警
+                ctx.fillStyle = `rgba(130,0,200,${pulse * 0.3})`;
+                ctx.strokeStyle = `rgba(180,0,255,${pulse})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.arc(this.x, this.y, 200, angle - 0.6, angle + 0.6);
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+                
+                // 方向箭头
+                ctx.fillStyle = `rgba(255,100,255,${pulse + 0.3})`;
+                const arrX = this.x + Math.cos(angle) * 150;
+                const arrY = this.y + Math.sin(angle) * 150;
+                ctx.beginPath();
+                ctx.moveTo(arrX + Math.cos(angle) * 20, arrY + Math.sin(angle) * 20);
+                ctx.lineTo(arrX + Math.cos(angle + 2.5) * 15, arrY + Math.sin(angle + 2.5) * 15);
+                ctx.lineTo(arrX + Math.cos(angle - 2.5) * 15, arrY + Math.sin(angle - 2.5) * 15);
+                ctx.closePath(); ctx.fill();
+                
+                ctx.fillStyle = `rgba(255,150,255,${pulse + 0.4})`;
+                ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('噬魂弹!', this.x, this.y - this.radius - 15);
+                break;
+            }
+            case 'DARK_WHIP': {
+                // 近身AOE预警
+                ctx.fillStyle = `rgba(130,0,180,${pulse * 0.35})`;
+                ctx.strokeStyle = `rgba(200,0,255,${pulse})`;
+                ctx.lineWidth = 5;
+                ctx.beginPath(); ctx.arc(this.x, this.y, 90, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                
+                // 旋转线
+                for (let i = 0; i < 4; i++) {
+                    const a = time * 4 + i * Math.PI / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + Math.cos(a) * 30, this.y + Math.sin(a) * 30);
+                    ctx.lineTo(this.x + Math.cos(a) * 85, this.y + Math.sin(a) * 85);
+                    ctx.stroke();
+                }
+                
+                ctx.fillStyle = `rgba(255,150,255,${pulse + 0.4})`;
+                ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('暗鞭!', this.x, this.y - 100);
+                break;
+            }
+            case 'CURSE_TRAP':
+            case 'SOUL_RAIN': {
+                // 范围落点预警
+                const range = this.currentSkill === 'SOUL_RAIN' ? 200 : 140;
+                ctx.fillStyle = `rgba(100,0,150,${pulse * 0.25})`;
+                ctx.strokeStyle = `rgba(180,0,255,${pulse * 0.7})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(this.player.x, this.player.y, range / 2, 0, Math.PI * 2); ctx.fill();
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath(); ctx.arc(this.player.x, this.player.y, range, 0, Math.PI * 2); ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 下落箭头
+                ctx.fillStyle = `rgba(200,50,255,${pulse + 0.3})`;
+                for (let i = 0; i < 3; i++) {
+                    const ax = this.player.x + (i - 1) * 40;
+                    const ay = this.player.y - 60 - Math.sin(time * 5 + i) * 10;
+                    ctx.beginPath();
+                    ctx.moveTo(ax, ay + 15); ctx.lineTo(ax - 8, ay); ctx.lineTo(ax + 8, ay);
+                    ctx.closePath(); ctx.fill();
+                }
+                
+                ctx.fillStyle = `rgba(255,150,255,${pulse + 0.4})`;
+                ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+                ctx.fillText(this.currentSkill === 'SOUL_RAIN' ? '灵魂雨!' : '诅咒阱!', this.player.x, this.player.y - range / 2 - 20);
+                break;
+            }
+            case 'DARK_FRENZY': {
+                // 8方向放射预警
+                ctx.strokeStyle = `rgba(180,0,255,${pulse})`;
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 8; i++) {
+                    const a = (Math.PI * 2 / 8) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + Math.cos(a) * 30, this.y + Math.sin(a) * 30);
+                    ctx.lineTo(this.x + Math.cos(a) * 150, this.y + Math.sin(a) * 150);
+                    ctx.stroke();
+                    // 小箭头
+                    const ax = this.x + Math.cos(a) * 120, ay = this.y + Math.sin(a) * 120;
+                    ctx.fillStyle = `rgba(255,100,255,${pulse + 0.2})`;
+                    ctx.beginPath();
+                    ctx.moveTo(ax + Math.cos(a) * 12, ay + Math.sin(a) * 12);
+                    ctx.lineTo(ax + Math.cos(a + 2.3) * 10, ay + Math.sin(a + 2.3) * 10);
+                    ctx.lineTo(ax + Math.cos(a - 2.3) * 10, ay + Math.sin(a - 2.3) * 10);
+                    ctx.closePath(); ctx.fill();
+                }
+                ctx.fillStyle = `rgba(255,150,255,${pulse + 0.4})`;
+                ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('暗狂暴!', this.x, this.y - this.radius - 20);
+                break;
+            }
+            case 'DEMON_RAGE': {
+                // 冲刺+冲击波预警
+                const tx = this.dashTarget.x, ty = this.dashTarget.y;
+                
+                // 冲刺轨迹
+                ctx.strokeStyle = `rgba(200,0,255,${pulse})`;
+                ctx.lineWidth = 8;
+                ctx.setLineDash([15, 8]);
+                ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(tx, ty); ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 落点多层圈
+                for (let r = 0; r < 3; r++) {
+                    ctx.strokeStyle = `rgba(180,0,220,${pulse * (1 - r * 0.25)})`;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.arc(tx, ty, 100 + r * 30, 0, Math.PI * 2); ctx.stroke();
+                }
+                
+                ctx.fillStyle = `rgba(255,100,255,${pulse + 0.4})`;
+                ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('恶魔怒!', tx, ty - 170);
+                break;
+            }
+            case 'SOUL_CHAIN': {
+                // 三角锁链预警
+                ctx.strokeStyle = `rgba(200,0,255,${pulse})`;
+                ctx.lineWidth = 4;
+                ctx.fillStyle = `rgba(150,0,200,${pulse * 0.3})`;
+                
+                // 三角形
+                ctx.beginPath();
+                ctx.moveTo(this.chainTargets[0].x, this.chainTargets[0].y);
+                for (let i = 1; i < 3; i++) {
+                    ctx.lineTo(this.chainTargets[i].x, this.chainTargets[i].y);
+                }
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+                
+                // 节点
+                ctx.fillStyle = `rgba(255,100,255,${pulse + 0.3})`;
+                this.chainTargets.forEach(pt => {
+                    ctx.beginPath(); ctx.arc(pt.x, pt.y, 15, 0, Math.PI * 2); ctx.fill();
+                });
+                
+                ctx.fillStyle = `rgba(255,150,255,${pulse + 0.4})`;
+                ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('灵魂锁!', this.player.x, this.player.y - 30);
+                break;
+            }
+            case 'VOID_VORTEX': {
+                // 漩涡预警
+                const vx = this.vortexCenter.x, vy = this.vortexCenter.y;
+                
+                // 多层旋转圈
+                for (let r = 0; r < 3; r++) {
+                    ctx.strokeStyle = `rgba(150,0,220,${pulse * (1 - r * 0.2)})`;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(vx, vy, 50 + r * 40, time * 3 + r * 0.5, time * 3 + r * 0.5 + Math.PI * 1.5);
+                    ctx.stroke();
+                }
+                
+                // 中心警告
+                ctx.fillStyle = `rgba(120,0,180,${pulse * 0.5})`;
+                ctx.beginPath(); ctx.arc(vx, vy, 45, 0, Math.PI * 2); ctx.fill();
+                
+                // 吸引箭头
+                ctx.fillStyle = `rgba(255,100,255,${pulse + 0.3})`;
+                for (let i = 0; i < 4; i++) {
+                    const a = time * 2 + i * Math.PI / 2;
+                    const ax = vx + Math.cos(a) * 100, ay = vy + Math.sin(a) * 100;
+                    ctx.beginPath();
+                    ctx.moveTo(ax - Math.cos(a) * 15, ay - Math.sin(a) * 15);
+                    ctx.lineTo(ax + Math.cos(a + 2.3) * 10, ay + Math.sin(a + 2.3) * 10);
+                    ctx.lineTo(ax + Math.cos(a - 2.3) * 10, ay + Math.sin(a - 2.3) * 10);
+                    ctx.closePath(); ctx.fill();
+                }
+                
+                ctx.fillStyle = `rgba(255,150,255,${pulse + 0.4})`;
+                ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('虚空涡!', vx, vy - 160);
+                break;
+            }
+            default: {
+                // 默认预警
+                ctx.fillStyle = `rgba(150,0,200,${pulse * 0.4})`;
+                ctx.strokeStyle = `rgba(200,0,255,${pulse})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(this.player.x, this.player.y, 80, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            }
         }
+        
         ctx.restore();
     }
 }
