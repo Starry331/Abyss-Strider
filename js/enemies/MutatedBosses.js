@@ -494,28 +494,44 @@ export class MutatedMonkeyBoss {
         ctx.ellipse(this.x + 2, this.y - 26 + breathe, 2, 1.5, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // ===== 邪魅微笑 =====
-        ctx.strokeStyle = isRage ? '#330033' : '#220022';
-        ctx.lineWidth = 2.5;
-        ctx.lineCap = 'round';
+        // ===== 邪恶咆哮嘴 =====
+        ctx.fillStyle = isRage ? '#2a0033' : '#1a0022';
         ctx.beginPath();
-        ctx.arc(this.x, this.y - 20 + breathe, 7, 0.2, Math.PI - 0.2);
-        ctx.stroke();
-        ctx.fillStyle = isRage ? '#220022' : '#110011';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y - 20 + breathe, 5, 0.3, Math.PI - 0.3);
+        ctx.moveTo(this.x - 9, this.y - 22 + breathe);
+        ctx.quadraticCurveTo(this.x, this.y - 17 + breathe, this.x + 9, this.y - 22 + breathe);
+        ctx.quadraticCurveTo(this.x + 7, this.y - 14 + breathe, this.x, this.y - 12 + breathe);
+        ctx.quadraticCurveTo(this.x - 7, this.y - 14 + breathe, this.x - 9, this.y - 22 + breathe);
         ctx.fill();
-        // 帅气獠牙
+        // 嘴内黑暗
+        ctx.fillStyle = isRage ? '#110022' : '#080011';
+        ctx.beginPath();
+        ctx.moveTo(this.x - 7, this.y - 21 + breathe);
+        ctx.quadraticCurveTo(this.x, this.y - 17 + breathe, this.x + 7, this.y - 21 + breathe);
+        ctx.quadraticCurveTo(this.x + 5, this.y - 15 + breathe, this.x, this.y - 14 + breathe);
+        ctx.quadraticCurveTo(this.x - 5, this.y - 15 + breathe, this.x - 7, this.y - 21 + breathe);
+        ctx.fill();
+        // 凶狠獠牙
         ctx.fillStyle = '#eee';
         ctx.beginPath();
-        ctx.moveTo(this.x - 4.5, this.y - 20 + breathe);
-        ctx.lineTo(this.x - 3, this.y - 13 + breathe);
-        ctx.lineTo(this.x - 1.5, this.y - 20 + breathe);
+        ctx.moveTo(this.x - 6, this.y - 21 + breathe);
+        ctx.lineTo(this.x - 4, this.y - 14 + breathe);
+        ctx.lineTo(this.x - 2, this.y - 21 + breathe);
         ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(this.x + 4.5, this.y - 20 + breathe);
-        ctx.lineTo(this.x + 3, this.y - 13 + breathe);
-        ctx.lineTo(this.x + 1.5, this.y - 20 + breathe);
+        ctx.moveTo(this.x + 6, this.y - 21 + breathe);
+        ctx.lineTo(this.x + 4, this.y - 14 + breathe);
+        ctx.lineTo(this.x + 2, this.y - 21 + breathe);
+        ctx.fill();
+        // 下排小牙
+        ctx.beginPath();
+        ctx.moveTo(this.x - 3.5, this.y - 14 + breathe);
+        ctx.lineTo(this.x - 2.5, this.y - 17 + breathe);
+        ctx.lineTo(this.x - 1.5, this.y - 14 + breathe);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(this.x + 3.5, this.y - 14 + breathe);
+        ctx.lineTo(this.x + 2.5, this.y - 17 + breathe);
+        ctx.lineTo(this.x + 1.5, this.y - 14 + breathe);
         ctx.fill();
         
         // Phase2 暗影火焰

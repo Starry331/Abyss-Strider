@@ -56,129 +56,181 @@ export class LevelBackground {
     }
 
     // ==========================================
-    // Level 1: 深暗地牢 - 砖墙、火把、蜘蛛网
+    // Level 1: 神秘丛林神殿 - 月光、藤蔓、古老遗迹
     // ==========================================
     drawDungeon(ctx, canvas, time) {
         const w = canvas.width, h = canvas.height;
         
-        // 深邃的渐变背景 - 紫黑色调
-        const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w);
-        grad.addColorStop(0, '#1a1525');
-        grad.addColorStop(0.4, '#12101a');
-        grad.addColorStop(1, '#08060a');
-        ctx.fillStyle = grad;
+        // 深邃夜空渐变 - 蓝紫星空
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+        skyGrad.addColorStop(0, '#0a0a1a');
+        skyGrad.addColorStop(0.3, '#0f1528');
+        skyGrad.addColorStop(0.6, '#1a2035');
+        skyGrad.addColorStop(1, '#0d1520');
+        ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, w, h);
-
-        // 砖墙纹理 - 更有层次感
-        for (let y = 0; y < h; y += 35) {
-            for (let x = (Math.floor(y/35) % 2 === 0 ? 0 : -35); x < w + 70; x += 70) {
-                // 砖块阴影
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                ctx.fillRect(x + 1, y + 1, 68, 33);
-                // 砖块主体
-                const brickGrad = ctx.createLinearGradient(x, y, x, y + 34);
-                brickGrad.addColorStop(0, '#3a3548');
-                brickGrad.addColorStop(0.5, '#2a2535');
-                brickGrad.addColorStop(1, '#1a1520');
-                ctx.fillStyle = brickGrad;
-                ctx.fillRect(x + 2, y + 2, 66, 31);
-                // 砖块高光
-                ctx.fillStyle = 'rgba(100, 90, 120, 0.15)';
-                ctx.fillRect(x + 3, y + 3, 64, 5);
-            }
+        
+        // 星空点点
+        ctx.fillStyle = '#fff';
+        for (let i = 0; i < 60; i++) {
+            const sx = (i * 137 + 50) % w;
+            const sy = (i * 89 + 30) % (h * 0.6);
+            const twinkle = 0.3 + Math.sin(time * 2 + i) * 0.3;
+            ctx.globalAlpha = twinkle;
+            ctx.beginPath();
+            ctx.arc(sx, sy, Math.random() > 0.8 ? 1.5 : 0.8, 0, Math.PI * 2);
+            ctx.fill();
         }
-
-        // 地牢氛围 - 神秘紫色光芒
-        ctx.globalAlpha = 0.08;
-        const mystGlow = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w * 0.6);
-        mystGlow.addColorStop(0, '#8040a0');
-        mystGlow.addColorStop(1, 'transparent');
-        ctx.fillStyle = mystGlow;
-        ctx.fillRect(0, 0, w, h);
         ctx.globalAlpha = 1;
-
-        // 火把光源 - 4角落
-        const torches = [[100, 100], [w - 100, 100], [100, h - 100], [w - 100, h - 100]];
-        torches.forEach(([tx, ty], i) => {
-            const flicker = Math.sin(time * 10 + i * 2) * 6;
-            
-            // 多层光晕
-            const tg1 = ctx.createRadialGradient(tx, ty, 0, tx, ty, 140 + flicker);
-            tg1.addColorStop(0, 'rgba(255, 120, 40, 0.25)');
-            tg1.addColorStop(0.5, 'rgba(255, 80, 20, 0.08)');
-            tg1.addColorStop(1, 'transparent');
-            ctx.fillStyle = tg1;
+        
+        // 巨大月亮
+        const moonX = w * 0.8, moonY = h * 0.15;
+        const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, 150);
+        moonGlow.addColorStop(0, 'rgba(200, 220, 255, 0.3)');
+        moonGlow.addColorStop(0.5, 'rgba(100, 150, 200, 0.1)');
+        moonGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = moonGlow;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, 150, 0, Math.PI * 2);
+        ctx.fill();
+        // 月亮本体
+        const moonBody = ctx.createRadialGradient(moonX - 10, moonY - 10, 0, moonX, moonY, 45);
+        moonBody.addColorStop(0, '#f8f8ff');
+        moonBody.addColorStop(0.6, '#e0e8f0');
+        moonBody.addColorStop(1, '#b0c0d0');
+        ctx.fillStyle = moonBody;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, 40, 0, Math.PI * 2);
+        ctx.fill();
+        // 月亮阴影坑
+        ctx.fillStyle = 'rgba(150, 160, 180, 0.3)';
+        ctx.beginPath();
+        ctx.arc(moonX + 10, moonY - 5, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(moonX - 12, moonY + 12, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 远景森林剪影
+        ctx.fillStyle = '#0a1015';
+        for (let i = 0; i < 25; i++) {
+            const tx = i * 45 - 20;
+            const th = 80 + Math.sin(i * 0.7) * 40 + Math.cos(i * 1.3) * 20;
             ctx.beginPath();
-            ctx.arc(tx, ty, 140 + flicker, 0, Math.PI * 2);
+            ctx.moveTo(tx, h);
+            ctx.lineTo(tx + 15, h - th);
+            ctx.lineTo(tx + 30, h);
             ctx.fill();
-            
-            // 火把架
-            ctx.fillStyle = '#4a3828';
-            ctx.fillRect(tx - 4, ty + 5, 8, 30);
-            
-            // 火焰核心
-            const flameH = 20 + Math.sin(time * 12 + i) * 5;
-            const flame = ctx.createRadialGradient(tx, ty - 5, 0, tx, ty - 5, 15);
-            flame.addColorStop(0, '#ffffcc');
-            flame.addColorStop(0.3, '#ffaa44');
-            flame.addColorStop(0.7, '#ff5500');
-            flame.addColorStop(1, 'rgba(200, 50, 0, 0)');
-            ctx.fillStyle = flame;
-            ctx.beginPath();
-            ctx.ellipse(tx, ty - 5, 10 + flicker/3, flameH, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 火星
-            ctx.fillStyle = '#ffcc44';
-            for (let s = 0; s < 4; s++) {
-                const sparkY = ty - 25 - ((time * 50 + s * 25 + i * 15) % 50);
-                const sparkX = tx + Math.sin(time * 6 + s * 3 + i) * 12;
-                ctx.globalAlpha = 0.7 - (ty - 25 - sparkY) / 60;
+        }
+        
+        // 中景古老石柱
+        const pillars = [[120, h - 180], [w - 150, h - 200], [w / 2 - 50, h - 160]];
+        pillars.forEach(([px, py], i) => {
+            // 石柱阴影
+            ctx.fillStyle = '#0a0a10';
+            ctx.fillRect(px + 3, py + 3, 35, h - py);
+            // 石柱主体
+            const pillarGrad = ctx.createLinearGradient(px, py, px + 35, py);
+            pillarGrad.addColorStop(0, '#3a4048');
+            pillarGrad.addColorStop(0.3, '#4a5058');
+            pillarGrad.addColorStop(0.7, '#3a4048');
+            pillarGrad.addColorStop(1, '#2a3038');
+            ctx.fillStyle = pillarGrad;
+            ctx.fillRect(px, py, 35, h - py);
+            // 石柱纹理
+            ctx.strokeStyle = 'rgba(80, 90, 100, 0.3)';
+            ctx.lineWidth = 1;
+            for (let line = py + 20; line < h; line += 25) {
                 ctx.beginPath();
-                ctx.arc(sparkX, sparkY, 2, 0, Math.PI * 2);
+                ctx.moveTo(px + 5, line);
+                ctx.lineTo(px + 30, line);
+                ctx.stroke();
+            }
+            // 石柱顶部装饰
+            ctx.fillStyle = '#4a5560';
+            ctx.fillRect(px - 5, py - 10, 45, 15);
+            // 神秘符文光效
+            const runeGlow = Math.sin(time * 2 + i) * 0.3 + 0.5;
+            ctx.fillStyle = `rgba(100, 200, 255, ${runeGlow * 0.4})`;
+            ctx.beginPath();
+            ctx.arc(px + 17, py + 50, 8, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        // 藤蔓装饰
+        ctx.strokeStyle = '#1a3020';
+        ctx.lineWidth = 3;
+        for (let v = 0; v < 8; v++) {
+            const vx = v * 140 + 50;
+            ctx.beginPath();
+            ctx.moveTo(vx, 0);
+            for (let vy = 0; vy < h * 0.4; vy += 10) {
+                ctx.lineTo(vx + Math.sin(vy * 0.05 + v) * 15, vy);
+            }
+            ctx.stroke();
+            // 藤蔓叶子
+            ctx.fillStyle = '#2a4535';
+            for (let leaf = 0; leaf < 4; leaf++) {
+                const ly = 30 + leaf * 35;
+                const lx = vx + Math.sin(ly * 0.05 + v) * 15;
+                ctx.beginPath();
+                ctx.ellipse(lx + (leaf % 2 === 0 ? 8 : -8), ly, 6, 10, (leaf % 2 === 0 ? 0.5 : -0.5), 0, Math.PI * 2);
                 ctx.fill();
             }
-            ctx.globalAlpha = 1;
-        });
-
-        // 蜘蛛网 - 4个角落
-        ctx.globalAlpha = 0.1;
-        ctx.strokeStyle = '#aaa';
-        ctx.lineWidth = 1;
-        [[0, 0, 1, 1], [w, 0, -1, 1], [0, h, 1, -1], [w, h, -1, -1]].forEach(([wx, wy, dx, dy]) => {
-            for (let i = 0; i < 8; i++) {
-                const a = (Math.PI / 16) * i * dx * dy;
-                ctx.beginPath();
-                ctx.moveTo(wx, wy);
-                ctx.lineTo(wx + Math.cos(a) * 80 * dx, wy + Math.sin(a) * 80 * dy);
-                ctx.stroke();
-            }
-            for (let r = 20; r < 80; r += 20) {
-                ctx.beginPath();
-                ctx.arc(wx, wy, r, dx > 0 ? 0 : Math.PI, dy > 0 ? Math.PI/2 : -Math.PI/2, dx * dy < 0);
-                ctx.stroke();
-            }
-        });
-        ctx.globalAlpha = 1;
-
-        // 漂浮灰尘粒子
-        ctx.fillStyle = 'rgba(180, 170, 200, 0.35)';
-        for (let i = 0; i < 20; i++) {
-            const px = (i * 97 + time * 12) % w;
-            const py = (i * 61 + time * 8) % h;
+        }
+        
+        // 神秘萤火虫
+        for (let i = 0; i < 15; i++) {
+            const fx = (i * 127 + time * 20) % w;
+            const fy = h * 0.3 + Math.sin(time * 1.5 + i * 2) * 50 + (i * 43 % 200);
+            const glow = 0.4 + Math.sin(time * 4 + i * 1.5) * 0.3;
+            ctx.fillStyle = `rgba(180, 255, 150, ${glow})`;
             ctx.beginPath();
-            ctx.arc(px, py, 1.5, 0, Math.PI * 2);
+            ctx.arc(fx, fy, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = `rgba(150, 255, 120, ${glow * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(fx, fy, 8, 0, Math.PI * 2);
             ctx.fill();
         }
-
-        // 地面阴影
-        ctx.globalAlpha = 0.3;
-        const floorShadow = ctx.createLinearGradient(0, h - 60, 0, h);
-        floorShadow.addColorStop(0, 'transparent');
-        floorShadow.addColorStop(1, '#000');
-        ctx.fillStyle = floorShadow;
-        ctx.fillRect(0, h - 60, w, 60);
+        
+        // 地面 - 青苔石砖
+        const groundY = h - 80;
+        ctx.fillStyle = '#1a2520';
+        ctx.fillRect(0, groundY, w, 80);
+        // 石砖纹理
+        for (let gx = 0; gx < w; gx += 60) {
+            ctx.fillStyle = '#253530';
+            ctx.fillRect(gx + 2, groundY + 5, 56, 35);
+            ctx.fillStyle = '#1a2a25';
+            ctx.fillRect(gx + 30, groundY + 45, 56, 30);
+            // 青苔
+            ctx.fillStyle = 'rgba(80, 150, 100, 0.3)';
+            ctx.beginPath();
+            ctx.arc(gx + 20, groundY + 8, 8, Math.PI, 0);
+            ctx.fill();
+        }
+        
+        // 前景迷雾
+        ctx.globalAlpha = 0.15;
+        const fogGrad = ctx.createLinearGradient(0, h - 150, 0, h);
+        fogGrad.addColorStop(0, 'transparent');
+        fogGrad.addColorStop(0.5, '#2a4050');
+        fogGrad.addColorStop(1, '#1a3040');
+        ctx.fillStyle = fogGrad;
+        ctx.fillRect(0, h - 150, w, 150);
         ctx.globalAlpha = 1;
+        
+        // 漂浮魔法粒子
+        for (let i = 0; i < 25; i++) {
+            const px = (i * 97 + time * 15) % w;
+            const py = (i * 61 + Math.sin(time + i) * 30) % h;
+            const pAlpha = 0.2 + Math.sin(time * 3 + i) * 0.15;
+            ctx.fillStyle = `rgba(150, 200, 255, ${pAlpha})`;
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     // ==========================================
