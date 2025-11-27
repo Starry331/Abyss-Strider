@@ -232,8 +232,8 @@ export class BossRushScene {
         this.player = new this.Player(canvas.width / 2, canvas.height / 2, this.inputManager);
         this.player.maxHp = 250; // Boss战更高初始血量
         this.player.hp = 250;
-        this.player.resurrectCount = 0; // 重置复活次数
         this.player.invincibleTime = 0; // 重置无敌时间
+        this.hasUsedRevive = false; // 重置复活机会（只有一次）
         
         // 重置战斗系统
         this.combatSystem.projectiles = [];
@@ -1078,15 +1078,16 @@ export class BossRushScene {
         
         // 检查玩家死亡
         if (this.player.hp <= 0 && !this.isResurrecting) {
-            // 检查复活机会
-            if (this.player.resurrectCount && this.player.resurrectCount > 0) {
-                this.player.resurrectCount--;
+            // 第一次血量耗尽时触发复活（只能触发一次）
+            if (!this.hasUsedRevive) {
+                this.hasUsedRevive = true; // 标记已使用
                 this.player.hp = this.player.maxHp; // 满血复活
-                this.isResurrecting = true; // 复活中标记
-                this.player.invincibleTime = 2.0; // 2秒无敌时间
+                this.player.shield = (this.player.shield || 0) + 100; // +100护盾
+                this.player.invincibleTime = 1.0; // 1秒无敌时间
+                this.isResurrecting = true;
                 
                 // 显示复活特效
-                this.showRewardNotification('💀 冥界复活！ 💀', () => {
+                this.showRewardNotification('💀 复活！ +100护盾 💀', () => {
                     this.isResurrecting = false;
                 });
                 

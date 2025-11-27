@@ -155,27 +155,44 @@ export class MenuScene {
 
         // Check for save
         const save = this.saveSystem.loadRun();
-        if (save && btnContinue) {
-            btnContinue.disabled = false;
-        }
         
-        // Boss战按钮 - 只有通关后才显示
-        const btnBossRush = document.getElementById('btn-boss-rush');
-        if (btnBossRush) {
-            // 检查是否解锁Boss战模式
-            if (BossRushMode.isUnlocked()) {
-                btnBossRush.classList.remove('hidden');
+        // 检查是否解锁Boss战模式
+        const bossRushUnlocked = BossRushMode.isUnlocked();
+        
+        if (btnContinue) {
+            if (bossRushUnlocked) {
+                // 通关后：继续游戏按钮变成万神殿挑战
+                btnContinue.disabled = false;
+                btnContinue.querySelector('.btn-icon').textContent = '👑';
+                btnContinue.querySelector('.btn-text').textContent = '万神殿挑战';
+                
+                // 移除之前的事件
+                if (this.continueHandler) {
+                    btnContinue.removeEventListener('click', this.continueHandler);
+                    btnContinue.removeEventListener('touchend', this.continueHandler);
+                }
+                
+                // 绑定Boss战事件
                 this.bossRushHandler = (e) => {
                     e.preventDefault();
                     console.log("Boss Rush Button Clicked");
                     if (this.audioManager && this.audioManager.resume) this.audioManager.resume();
                     if (this.onBossRush) this.onBossRush();
                 };
-                btnBossRush.addEventListener('click', this.bossRushHandler);
-                btnBossRush.addEventListener('touchend', this.bossRushHandler);
+                btnContinue.addEventListener('click', this.bossRushHandler);
+                btnContinue.addEventListener('touchend', this.bossRushHandler);
             } else {
-                btnBossRush.classList.add('hidden');
+                // 未通关：正常显示继续游戏
+                btnContinue.querySelector('.btn-icon').textContent = '📜';
+                btnContinue.querySelector('.btn-text').textContent = '继续游戏';
+                btnContinue.disabled = !save;
             }
+        }
+        
+        // 隐藏独立的Boss战按钮（因为已替换到继续游戏按钮）
+        const btnBossRush = document.getElementById('btn-boss-rush');
+        if (btnBossRush) {
+            btnBossRush.classList.add('hidden');
         }
     }
 
@@ -256,27 +273,27 @@ export class MenuScene {
         this.menuContainer.classList.remove('hidden');
         // Re-check save
         const save = this.saveSystem.loadRun();
-        document.getElementById('btn-continue').disabled = !save;
+        const btnContinue = document.getElementById('btn-continue');
+        const bossRushUnlocked = BossRushMode.isUnlocked();
         
-        // 检查并更新Boss战按钮
+        if (btnContinue) {
+            if (bossRushUnlocked) {
+                // 通关后：继续游戏按钮变成万神殿挑战
+                btnContinue.disabled = false;
+                btnContinue.querySelector('.btn-icon').textContent = '👑';
+                btnContinue.querySelector('.btn-text').textContent = '万神殿挑战';
+            } else {
+                // 未通关：正常显示继续游戏
+                btnContinue.querySelector('.btn-icon').textContent = '📜';
+                btnContinue.querySelector('.btn-text').textContent = '继续游戏';
+                btnContinue.disabled = !save;
+            }
+        }
+        
+        // 隐藏独立的Boss战按钮
         const btnBossRush = document.getElementById('btn-boss-rush');
         if (btnBossRush) {
-            if (BossRushMode.isUnlocked()) {
-                btnBossRush.classList.remove('hidden');
-                // 如果之前没有绑定事件，现在绑定
-                if (!this.bossRushHandler && this.onBossRush) {
-                    this.bossRushHandler = (e) => {
-                        e.preventDefault();
-                        console.log("Boss Rush Button Clicked");
-                        if (this.audioManager && this.audioManager.resume) this.audioManager.resume();
-                        if (this.onBossRush) this.onBossRush();
-                    };
-                    btnBossRush.addEventListener('click', this.bossRushHandler);
-                    btnBossRush.addEventListener('touchend', this.bossRushHandler);
-                }
-            } else {
-                btnBossRush.classList.add('hidden');
-            }
+            btnBossRush.classList.add('hidden');
         }
         
         // 启动菜单动画
