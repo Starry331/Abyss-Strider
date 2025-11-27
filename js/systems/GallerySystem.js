@@ -35,7 +35,7 @@ export class GallerySystem {
             { id: 'bsd_swimsuit', level: 6, name: '波塞冬·特别服装', title: 'Poseidon Special', lockedName: '波塞冬·???', lockedTitle: '???', isMutated: false, image: 'bsd swim suit.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'all_except_lv7', unlockCount: 3, unlockHint: '除Lv7外全Boss击杀每个3次解锁' },
             { id: 'bsd_beach', level: 6, name: '波塞冬·沙滩', title: 'Poseidon Beach', lockedName: '波塞冬·???', lockedTitle: '???', isMutated: false, image: 'bsd beach.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'poseidon_kills', unlockCount: 6, unlockHint: '击败波塞冬6次解锁' },
             // 特别奖励
-            { id: 'bsd_emoji', level: 6, name: '波塞冬·表情包', title: 'Poseidon Emoji', lockedName: '???·???', lockedTitle: '???', isMutated: false, image: 'biaoqing.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'all_mutated', unlockCount: 2, unlockHint: '全部异化Boss各击杀2次解锁' }
+            { id: 'bsd_emoji', level: 6, name: '波塞冬·表情包', title: 'Poseidon Emoji', isMutated: false, image: 'biaoqing.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'all_mutated', unlockCount: 2, unlockHint: '全部异化Boss各击杀2次解锁' }
         ];
     }
     
