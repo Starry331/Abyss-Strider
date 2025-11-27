@@ -213,7 +213,7 @@ export class GhostPoseidonBoss {
                             radius: 10, damage: dmg * 0.5, lifetime: 1.8,
                             color: '#0088cc', isEnemy: true
                         });
-                    }, i * 150);
+                    }, i * 220);
                 }
                 break;
                 
@@ -312,7 +312,7 @@ export class GhostPoseidonBoss {
                             radius: 20, damage: dmg * 0.7, lifetime: 1.5,
                             color: '#00aadd', isEnemy: true
                         });
-                    }, i * 80);
+                    }, i * 130);
                 }
                 break;
                 
@@ -329,7 +329,7 @@ export class GhostPoseidonBoss {
                             radius: 35, damage: dmg, lifetime: 1.2,
                             color: '#004466', isEnemy: true
                         });
-                    }, i * 150);
+                    }, i * 220);
                 }
                 break;
                 
@@ -418,7 +418,7 @@ export class GhostPoseidonBoss {
                             radius: 20, damage: dmg * 0.5, lifetime: 1.5,
                             color: '#0088cc', isEnemy: true
                         });
-                    }, i * 100);
+                    }, i * 160);
                 }
                 break;
                 
@@ -442,7 +442,7 @@ export class GhostPoseidonBoss {
                                 color: '#00ddff', isEnemy: true
                             });
                         }, 500);
-                    }, i * 200);
+                    }, i * 280);
                 }
                 break;
                 
@@ -461,7 +461,7 @@ export class GhostPoseidonBoss {
                             radius: 25, damage: dmg * 0.8, lifetime: 2,
                             color: '#ff6688', isEnemy: true
                         });
-                    }, i * 80);
+                    }, i * 130);
                 }
                 break;
                 
@@ -479,7 +479,7 @@ export class GhostPoseidonBoss {
                             radius: 50, damage: dmg * 1.3, lifetime: 2.5,
                             color: '#005577', isEnemy: true
                         });
-                    }, i * 150);
+                    }, i * 220);
                 }
                 break;
         }

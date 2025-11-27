@@ -220,7 +220,7 @@ export class BerserkArtemisBoss {
                             radius: 8, damage: dmg * 0.5, lifetime: 1.5,
                             color: '#cc88ff', isEnemy: true
                         });
-                    }, i * 80);
+                    }, i * 130);
                 }
                 break;
                 
@@ -250,7 +250,7 @@ export class BerserkArtemisBoss {
                             radius: 25, damage: dmg * 0.4, lifetime: 0.3,
                             color: 'rgba(200, 150, 255, 0.5)', isEnemy: true
                         });
-                    }, i * 40);
+                    }, i * 70);
                 }
                 // 冲刺到目标
                 setTimeout(() => {
@@ -286,7 +286,7 @@ export class BerserkArtemisBoss {
                             radius: 6, damage: dmg * 0.4, lifetime: 1.5,
                             color: '#ddddff', isEnemy: true
                         });
-                    }, i * 50);
+                    }, i * 90);
                 }
                 break;
                 
@@ -330,7 +330,7 @@ export class BerserkArtemisBoss {
                             radius: 8, damage: dmg * 0.35, lifetime: 2,
                             color: '#ccccff', isEnemy: true
                         });
-                    }, i * 40);
+                    }, i * 70);
                 }
                 break;
                 
@@ -406,7 +406,7 @@ export class BerserkArtemisBoss {
                             radius: 8, damage: dmg * 0.3, lifetime: 1.5,
                             color: '#bb99dd', isEnemy: true
                         });
-                    }, i * 300);
+                    }, i * 400);
                 }
                 break;
                 
@@ -432,7 +432,7 @@ export class BerserkArtemisBoss {
                                 color: '#ffffaa', isEnemy: true
                             });
                         }, 500);
-                    }, i * 150);
+                    }, i * 220);
                 }
                 break;
                 
@@ -557,7 +557,7 @@ export class BerserkArtemisBoss {
                                 color: '#ffff88', isEnemy: true
                             });
                         }, 400);
-                    }, i * 100);
+                    }, i * 160);
                 }
                 break;
                 
@@ -611,7 +611,7 @@ export class BerserkArtemisBoss {
                                 color: '#ddaaff', isEnemy: true
                             });
                         }
-                    }, i * 50);
+                    }, i * 90);
                 }
                 break;
                 
