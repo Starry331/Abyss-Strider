@@ -118,12 +118,8 @@ export class BossManager {
 
     draw(ctx) {
         if (this.activeBoss) {
-            // Lv1使用CharacterRenderer，其他boss使用自定义draw方法
-            if (this.activeBoss.level === 1 && window.CharacterRenderer) {
-                window.CharacterRenderer.drawMonkeyBoss(ctx, this.activeBoss);
-            } else {
-                this.activeBoss.draw(ctx);
-            }
+            // 所有boss使用自定义draw方法(包含预警系统)
+            this.activeBoss.draw(ctx);
 
             // Draw HP bar above boss
             const boss = this.activeBoss;
