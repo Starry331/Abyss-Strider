@@ -42,6 +42,13 @@ export class BossRushScene {
         this.godBlessings = this.initGodBlessings();
         this.godBlessingLevels = [2, 4, 5, 6]; // 这些关卡后触发众神赐福
         
+        // 血包和限时buff系统
+        this.pickups = [];
+        this.pickupSpawnTimer = 0;
+        this.pickupSpawnInterval = 8; // 每8秒尝试生成
+        this.healthPackChance = 0.25; // 血包概率25%（略微增加）
+        this.buffChance = 0.15; // 限时buff概率15%
+        
         this.initBackground();
     }
     
@@ -317,11 +324,27 @@ export class BossRushScene {
         
         // 获取刚击败的Boss等级
         const defeatedLevel = this.bossRushMode.currentBossIndex; // 0-indexed, 所以+1是等级
+        this.currentDefeatedLevel = defeatedLevel; // 保存用于奖励流程判断
+        
+        // Lv5特殊奖励：4次构筑 + 2次赐福
+        if (defeatedLevel === 5) {
+            this.lv5BonusBuilds = 4;
+            this.lv5BonusBlessings = 2;
+        } else {
+            this.lv5BonusBuilds = 0;
+            this.lv5BonusBlessings = 0;
+        }
         
         // 检查是否触发众神赐福（Lv2, Lv4, Lv5, Lv6后）
         if (this.godBlessingLevels.includes(defeatedLevel)) {
             this.rewardPhase = 'godBlessing';
             this.showRewardNotification('🏛️ 众神降临！选择赐福 🏛️', () => {
+                this.showNextReward();
+            });
+        } else if (defeatedLevel === 5) {
+            // Lv5特殊奖励开始
+            this.rewardPhase = 'lv5_build1';
+            this.showRewardNotification('🎉 击败Lv5 Boss！丰厚奖励！ 🎉', () => {
                 this.showNextReward();
             });
         } else {
@@ -364,6 +387,20 @@ export class BossRushScene {
             case 'build1':
             case 'build2':
                 this.showBuildChoice(this.rewardPhase === 'build1' ? '第一次构筑选择' : '第二次构筑选择');
+                break;
+            // Lv5特殊奖励：4次构筑
+            case 'lv5_build1':
+            case 'lv5_build2':
+            case 'lv5_build3':
+            case 'lv5_build4':
+                const buildNum = parseInt(this.rewardPhase.split('_build')[1]);
+                this.showBuildChoice(`构筑选择 (${buildNum}/4)`);
+                break;
+            // Lv5特殊奖励：2次赐福
+            case 'lv5_blessing1':
+            case 'lv5_blessing2':
+                const blessNum = parseInt(this.rewardPhase.split('_blessing')[1]);
+                this.showBlessingChoice(`赐福选择 (${blessNum}/2)`);
                 break;
             case 'blessing':
                 this.showBlessingChoice();
@@ -466,15 +503,23 @@ export class BossRushScene {
         return shuffled.slice(0, 3);
     }
     
-    showBlessingChoice() {
+    showBlessingChoice(title = '选择赐福') {
         const blessings = [
-            { name: '生命祝福', desc: '恢复50生命', icon: '💖', color: '#ff6688',
-              effect: () => { this.player.hp = Math.min(this.player.hp + 50, this.player.maxHp); } },
-            { name: '力量祝福', desc: '伤害+25%', icon: '🔥', color: '#ff8844',
-              effect: () => { this.player.damageBonus = (this.player.damageBonus || 1) * 1.25; } },
-            { name: '守护祝福', desc: '减伤+15%', icon: '🛡️', color: '#4488ff',
-              effect: () => { this.player.damageReduction = (this.player.damageReduction || 0) + 0.15; } },
+            { name: '生命祝福', desc: '恢复80生命', icon: '💖', color: '#ff6688',
+              effect: () => { this.player.hp = Math.min(this.player.hp + 80, this.player.maxHp); } },
+            { name: '力量祝福', desc: '伤害+30%', icon: '🔥', color: '#ff8844',
+              effect: () => { this.player.damageBonus = (this.player.damageBonus || 1) * 1.3; } },
+            { name: '守护祝福', desc: '减伤+20%', icon: '🛡️', color: '#4488ff',
+              effect: () => { this.player.damageReduction = (this.player.damageReduction || 0) + 0.2; } },
+            { name: '速度祝福', desc: '移速+25%', icon: '💨', color: '#44ffaa',
+              effect: () => { this.player.speed *= 1.25; } },
+            { name: '暴击祝福', desc: '暴击率+15%', icon: '💥', color: '#ff44ff',
+              effect: () => { this.weaponSystem.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.15); } },
         ];
+        
+        // 随机选3个
+        const shuffled = blessings.sort(() => Math.random() - 0.5);
+        const selectedBlessings = shuffled.slice(0, 3);
         
         const panel = document.createElement('div');
         panel.id = 'boss-rush-blessing-panel';
@@ -486,9 +531,9 @@ export class BossRushScene {
         `;
         
         panel.innerHTML = `
-            <div style="color: #ffd700; font-size: clamp(22px, 5vw, 32px); margin-bottom: 25px; text-shadow: 0 0 10px #ffd700; text-align: center;">选择赐福</div>
+            <div style="color: #ffd700; font-size: clamp(22px, 5vw, 32px); margin-bottom: 25px; text-shadow: 0 0 10px #ffd700; text-align: center;">${title}</div>
             <div style="display: flex; gap: clamp(12px, 3vw, 30px); flex-wrap: wrap; justify-content: center;">
-                ${blessings.map((b, i) => `
+                ${selectedBlessings.map((b, i) => `
                     <div class="blessing-choice" data-index="${i}" style="
                         background: linear-gradient(135deg, rgba(50,30,60,0.9), rgba(20,10,30,0.9));
                         border: 3px solid ${b.color}; border-radius: 20px;
@@ -511,7 +556,7 @@ export class BossRushScene {
                 e.preventDefault();
                 e.stopPropagation();
                 const index = parseInt(card.dataset.index);
-                blessings[index].effect();
+                selectedBlessings[index].effect();
                 if (this.audioManager) this.audioManager.playSound('blessing');
                 panel.remove();
                 this.onRewardChosen();
@@ -715,8 +760,33 @@ export class BossRushScene {
         // 进入下一个奖励阶段
         switch(this.rewardPhase) {
             case 'godBlessing':
-                this.rewardPhase = 'build1'; // 众神赐福后继续正常奖励
+                // 众神赐福后，检查是否是Lv5
+                if (this.currentDefeatedLevel === 5) {
+                    this.rewardPhase = 'lv5_build1';
+                } else {
+                    this.rewardPhase = 'build1';
+                }
                 break;
+            // Lv5特殊奖励流程
+            case 'lv5_build1':
+                this.rewardPhase = 'lv5_build2';
+                break;
+            case 'lv5_build2':
+                this.rewardPhase = 'lv5_build3';
+                break;
+            case 'lv5_build3':
+                this.rewardPhase = 'lv5_build4';
+                break;
+            case 'lv5_build4':
+                this.rewardPhase = 'lv5_blessing1';
+                break;
+            case 'lv5_blessing1':
+                this.rewardPhase = 'lv5_blessing2';
+                break;
+            case 'lv5_blessing2':
+                this.rewardPhase = 'weapon';
+                break;
+            // 正常奖励流程
             case 'build1':
                 this.rewardPhase = 'build2';
                 break;
@@ -786,6 +856,63 @@ export class BossRushScene {
             const healAmount = this.player.maxHp * this.player.regenRate * deltaTime;
             this.player.hp = Math.min(this.player.hp + healAmount, this.player.maxHp);
         }
+        
+        // ===== 血包和限时buff系统 =====
+        this.pickupSpawnTimer += deltaTime;
+        if (this.pickupSpawnTimer >= this.pickupSpawnInterval && this.activeBoss) {
+            this.pickupSpawnTimer = 0;
+            const canvas = document.getElementById('game-canvas');
+            
+            // 尝试生成血包
+            if (Math.random() < this.healthPackChance) {
+                this.pickups.push({
+                    type: 'health',
+                    x: 100 + Math.random() * (canvas.width - 200),
+                    y: 100 + Math.random() * (canvas.height - 200),
+                    radius: 18,
+                    healAmount: 50,
+                    lifetime: 15
+                });
+            }
+            
+            // 尝试生成限时buff
+            if (Math.random() < this.buffChance) {
+                const buffTypes = ['damage', 'speed', 'shield'];
+                const buffType = buffTypes[Math.floor(Math.random() * buffTypes.length)];
+                this.pickups.push({
+                    type: 'buff',
+                    buffType: buffType,
+                    x: 100 + Math.random() * (canvas.width - 200),
+                    y: 100 + Math.random() * (canvas.height - 200),
+                    radius: 15,
+                    duration: 10,
+                    lifetime: 12
+                });
+            }
+        }
+        
+        // 更新和检测拾取物
+        this.pickups = this.pickups.filter(pickup => {
+            pickup.lifetime -= deltaTime;
+            if (pickup.lifetime <= 0) return false;
+            
+            // 检测玩家拾取
+            const dx = this.player.x - pickup.x;
+            const dy = this.player.y - pickup.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < pickup.radius + this.player.radius) {
+                if (pickup.type === 'health') {
+                    this.player.hp = Math.min(this.player.hp + pickup.healAmount, this.player.maxHp);
+                    if (this.audioManager) this.audioManager.playSound('pickup');
+                } else if (pickup.type === 'buff') {
+                    this.applyTempBuff(pickup.buffType, pickup.duration);
+                    if (this.audioManager) this.audioManager.playSound('powerup');
+                }
+                return false; // 移除拾取物
+            }
+            return true;
+        });
         
         // 边界检测
         const canvas = document.getElementById('game-canvas');
@@ -969,6 +1096,9 @@ export class BossRushScene {
         // 绘制战斗系统（投射物等）
         this.combatSystem.draw(ctx);
         
+        // 绘制拾取物
+        this.drawPickups(ctx);
+        
         // 绘制玩家
         this.player.draw(ctx);
         
@@ -1078,9 +1208,90 @@ export class BossRushScene {
         ctx.fillText(text, ctx.canvas.width - 20, 30);
     }
     
+    // 绘制拾取物
+    drawPickups(ctx) {
+        this.pickups.forEach(pickup => {
+            const pulse = Math.sin(Date.now() / 200) * 0.2 + 1;
+            const alpha = pickup.lifetime < 3 ? pickup.lifetime / 3 : 1;
+            
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            
+            if (pickup.type === 'health') {
+                // 血包：红色心形
+                ctx.fillStyle = '#ff4466';
+                ctx.shadowColor = '#ff4466';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(pickup.x, pickup.y, pickup.radius * pulse, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('❤', pickup.x, pickup.y + 5);
+            } else if (pickup.type === 'buff') {
+                // 限时buff：不同颜色
+                const buffColors = {
+                    damage: '#ff8844',
+                    speed: '#44ff88',
+                    shield: '#4488ff'
+                };
+                const buffIcons = {
+                    damage: '⚔️',
+                    speed: '💨',
+                    shield: '🛡️'
+                };
+                ctx.fillStyle = buffColors[pickup.buffType];
+                ctx.shadowColor = buffColors[pickup.buffType];
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(pickup.x, pickup.y, pickup.radius * pulse, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(buffIcons[pickup.buffType], pickup.x, pickup.y + 5);
+            }
+            
+            ctx.restore();
+        });
+    }
+    
+    // 应用临时buff
+    applyTempBuff(buffType, duration) {
+        const originalValues = {};
+        
+        switch(buffType) {
+            case 'damage':
+                originalValues.damageBonus = this.player.damageBonus || 1;
+                this.player.damageBonus = (this.player.damageBonus || 1) * 1.5;
+                this.showRewardNotification('⚔️ 伤害提升! (10秒)', () => {});
+                break;
+            case 'speed':
+                originalValues.speed = this.player.speed;
+                this.player.speed *= 1.4;
+                this.showRewardNotification('💨 速度提升! (10秒)', () => {});
+                break;
+            case 'shield':
+                this.player.shield = (this.player.shield || 0) + 80;
+                this.showRewardNotification('🛡️ 临时护盾! (+80)', () => {});
+                return; // 护盾不需要恢复
+        }
+        
+        // 持续时间后恢复
+        setTimeout(() => {
+            if (buffType === 'damage') {
+                this.player.damageBonus = originalValues.damageBonus;
+            } else if (buffType === 'speed') {
+                this.player.speed = originalValues.speed;
+            }
+        }, duration * 1000);
+    }
+    
     exit() {
         this.isActive = false;
         this.activeBoss = null;
+        this.pickups = [];
         this.bossRushMode.end();
     }
 }
