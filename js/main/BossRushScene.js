@@ -6,6 +6,7 @@
 import { BossRushMode } from '../systems/BossRushMode.js';
 import { GhostPoseidonBoss } from '../enemies/PoseidonBoss.js';
 import { BerserkArtemisBoss } from '../enemies/ArtemisBoss.js';
+import { BossVariety } from '../enemies/BossVariety.js';
 
 export class BossRushScene {
     constructor(config) {
@@ -21,12 +22,15 @@ export class BossRushScene {
         this.sceneManager = config.sceneManager;
         this.InputManager = config.InputManager;
         this.Player = config.Player;
+        this.WeaponSystem = config.WeaponSystem;
+        this.BuildSystem = config.BuildSystem;
         
         this.bossRushMode = new BossRushMode();
         this.activeBoss = null;
         this.isActive = false;
         this.rewardPhase = null; // 'build1', 'build2', 'blessing', 'weapon'
         this.rewardCount = 0;
+        this.inputManager = null;
     }
     
     enter() {
@@ -34,24 +38,43 @@ export class BossRushScene {
         this.isActive = true;
         this.bossRushMode.start();
         
+        // 初始化输入管理器
+        this.inputManager = new this.InputManager();
+        
         // 初始化玩家
         const canvas = document.getElementById('game-canvas');
-        this.player = new this.Player(canvas.width / 2, canvas.height / 2, new this.InputManager());
-        this.player.maxHp = 200; // Boss战更高初始血量
-        this.player.hp = 200;
+        this.player = new this.Player(canvas.width / 2, canvas.height / 2, this.inputManager);
+        this.player.maxHp = 250; // Boss战更高初始血量
+        this.player.hp = 250;
         
-        // 初始化战斗系统
+        // 重置战斗系统
+        this.combatSystem.projectiles = [];
         this.combatSystem.player = this.player;
-        this.weaponSystem.player = this.player;
+        
+        // 重置武器系统
+        if (this.weaponSystem) {
+            this.weaponSystem.cooldownTimer = 0;
+            // 重置武器等级
+            this.weaponSystem.weapons.forEach(w => w.upgradeLevel = 1);
+        }
+        
+        // 清空特效
+        if (this.effectManager) {
+            this.effectManager.effects = [];
+        }
         
         // 显示HUD
-        document.getElementById('hud').classList.remove('hidden');
+        const hud = document.getElementById('hud');
+        if (hud) hud.classList.remove('hidden');
         this.uiManager.updateHealth(this.player.hp, this.player.maxHp);
+        
+        // 隐藏主菜单
+        const menu = document.getElementById('main-menu');
+        if (menu) menu.classList.add('hidden');
         
         // 播放Boss音乐
         if (this.audioManager) {
             this.audioManager.stopMusic();
-            this.audioManager.playBossMusic(1);
         }
         
         // 显示Boss战开始提示
@@ -84,8 +107,7 @@ export class BossRushScene {
         } else if (bossInfo.level === 7) {
             this.activeBoss = new BerserkArtemisBoss(x, y, this.player, this.combatSystem);
         } else {
-            // 异化Boss 1-5 需要从BossVariety获取
-            const { BossVariety } = require('../enemies/BossVariety.js');
+            // 异化Boss 1-5
             this.activeBoss = BossVariety.createBoss(bossInfo.level, x, y, this.player, this.combatSystem, true);
         }
         
@@ -280,12 +302,78 @@ export class BossRushScene {
         // 更新战斗系统
         this.combatSystem.update(deltaTime);
         
+        // 更新武器系统并处理攻击
+        if (this.weaponSystem) {
+            this.weaponSystem.update(deltaTime, this.player);
+            
+            // 处理武器攻击Boss
+            if (this.activeBoss && this.inputManager) {
+                const weapon = this.weaponSystem.currentWeapon;
+                if (this.weaponSystem.cooldownTimer <= 0 && this.inputManager.isAttacking) {
+                    // 检测是否击中Boss
+                    const dx = this.activeBoss.x - this.player.x;
+                    const dy = this.activeBoss.y - this.player.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < weapon.range + this.activeBoss.radius) {
+                        // 计算伤害
+                        let damage = weapon.damage;
+                        // 暴击计算
+                        if (Math.random() < (weapon.critChance || 0.2)) {
+                            damage *= (weapon.critMultiplier || 2.0);
+                        }
+                        
+                        this.activeBoss.hp -= damage;
+                        this.weaponSystem.cooldownTimer = weapon.cooldown;
+                        
+                        // 播放攻击音效
+                        if (this.audioManager) {
+                            this.audioManager.playSound('hit');
+                        }
+                    }
+                }
+            }
+        }
+        
         // 更新Boss
         if (this.activeBoss) {
             this.activeBoss.update(deltaTime);
             
+            // 检查玩家投射物对Boss的伤害
+            this.combatSystem.projectiles.forEach(proj => {
+                if (!proj.isEnemy && proj.lifetime > 0) {
+                    const dx = this.activeBoss.x - proj.x;
+                    const dy = this.activeBoss.y - proj.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < proj.radius + this.activeBoss.radius) {
+                        this.activeBoss.hp -= proj.damage;
+                        proj.lifetime = 0; // 销毁投射物
+                    }
+                }
+            });
+            
+            // 检查Boss投射物对玩家的伤害
+            this.combatSystem.projectiles.forEach(proj => {
+                if (proj.isEnemy && proj.lifetime > 0) {
+                    const dx = this.player.x - proj.x;
+                    const dy = this.player.y - proj.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < proj.radius + this.player.radius) {
+                        const dmg = proj.damage * (1 - (this.player.damageReduction || 0));
+                        this.player.hp -= dmg;
+                        proj.lifetime = 0;
+                        if (this.audioManager) {
+                            this.audioManager.playSound('hurt');
+                        }
+                    }
+                }
+            });
+            
             // 检查Boss是否被击败
             if (this.activeBoss.hp <= 0) {
+                if (this.audioManager) {
+                    this.audioManager.playSound('boss_death');
+                }
                 this.activeBoss = null;
                 this.onBossDefeated();
             } else {
@@ -294,11 +382,10 @@ export class BossRushScene {
             }
         }
         
-        // 更新武器系统
-        this.weaponSystem.update(deltaTime, this.player);
-        
         // 更新特效
-        this.effectManager.update(deltaTime);
+        if (this.effectManager) {
+            this.effectManager.update(deltaTime);
+        }
         
         // 更新UI
         this.uiManager.updateHealth(this.player.hp, this.player.maxHp);

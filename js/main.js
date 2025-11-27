@@ -798,22 +798,29 @@ const menuScene = new MenuScene(
 );
 
 // ---------------------------
-// Boss Rush Scene Setup (简化版)
+// Boss Rush Scene Setup
 // ---------------------------
 import('./main/BossRushScene.js').then(module => {
     const { BossRushScene } = module;
+    
+    // 为Boss战创建独立的战斗系统和武器系统
+    const bossRushCombatSystem = new CombatSystem(audioManager);
+    const bossRushWeaponSystem = new WeaponSystem(bossRushCombatSystem, audioManager);
+    
     const bossRushScene = new BossRushScene({
-        combatSystem: new CombatSystem(audioManager),
-        weaponSystem: null, // 延迟初始化
+        combatSystem: bossRushCombatSystem,
+        weaponSystem: bossRushWeaponSystem,
         uiManager: uiManager,
         audioManager: audioManager,
         effectManager: effectManager,
         levelBackground: levelBackground,
-        buildSystem: null,
+        buildSystem: null, // 在enter时动态创建
         achievementSystem: achievementSystem,
         sceneManager: sceneManager,
         InputManager: InputManager,
-        Player: Player
+        Player: Player,
+        WeaponSystem: WeaponSystem,
+        BuildSystem: BuildSystem
     });
     sceneManager.addScene('bossRush', bossRushScene);
     console.log('Boss战场景已注册');
