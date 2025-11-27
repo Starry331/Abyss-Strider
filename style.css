@@ -1566,11 +1566,12 @@ button:disabled {
         font-size: 12px;
     }
     
-    /* 版权信息位置调整 */
+    /* 版权信息位置调整 - 避免与底部按钮重叠 */
     #menu-footer {
         position: relative;
         bottom: auto;
-        margin-top: 10px;
+        margin-top: 15px;
+        margin-bottom: 80px;
         font-size: 10px;
     }
     
