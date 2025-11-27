@@ -183,6 +183,16 @@ export class AchievementSystem {
                 condition: '解锁全部成就',
                 rarity: 'platinum',
                 unlocked: false
+            },
+            // ===== 隐藏超级杯成就 =====
+            {
+                id: 'pantheon_king',
+                name: '万神殿之王',
+                desc: '通关Boss战模式，击败所有神话Boss',
+                condition: '完成Boss战挑战',
+                rarity: 'super',
+                unlocked: false,
+                hidden: true
             }
         ];
         
@@ -194,7 +204,8 @@ export class AchievementSystem {
             buildsCollected: 0,
             nearDeathSurvived: false,
             highestLevel: 1,
-            perfectClears: 0
+            perfectClears: 0,
+            bossRushCompleted: false
         };
         
         this.load();
@@ -289,6 +300,7 @@ export class AchievementSystem {
             case 'silver': return '🥈';
             case 'gold': return '🏆';
             case 'platinum': return '💎';
+            case 'super': return '👑';
             default: return '🏆';
         }
     }
@@ -299,6 +311,7 @@ export class AchievementSystem {
             case 'silver': return '#c0c0c0';
             case 'gold': return '#ffd700';
             case 'platinum': return '#e5e4e2';
+            case 'super': return '#ff4444';
             default: return '#ffd700';
         }
     }
@@ -333,11 +346,14 @@ export class AchievementSystem {
         if (this.stats.perfectClears >= 1) this.unlock('perfect_clear');
         if (this.stats.mutatedBossesKilled >= 5) this.unlock('mutated_master');
         
-        // 深渊传奇 - 检查是否解锁了除legend外的所有成就
-        const otherAchievements = this.achievements.filter(a => a.id !== 'legend');
+        // 深渊传奇 - 检查是否解锁了除legend和hidden外的所有成就
+        const otherAchievements = this.achievements.filter(a => a.id !== 'legend' && !a.hidden);
         if (otherAchievements.every(a => a.unlocked)) {
             this.unlock('legend');
         }
+        
+        // ===== 超级杯 =====
+        if (this.stats.bossRushCompleted) this.unlock('pantheon_king');
     }
     
     // 记录击杀
@@ -393,6 +409,13 @@ export class AchievementSystem {
         this.unlock('master');
     }
     
+    // Boss战模式完成 - 解锁万神殿之王
+    unlockPantheonKing() {
+        this.stats.bossRushCompleted = true;
+        this.unlock('pantheon_king');
+        this.save();
+    }
+    
     // 渲染成就列表
     renderAchievementList() {
         const container = document.getElementById('achievement-list');
@@ -401,15 +424,22 @@ export class AchievementSystem {
         container.innerHTML = '';
         
         this.achievements.forEach(achievement => {
+            // 隐藏成就只有解锁后才显示
+            if (achievement.hidden && !achievement.unlocked) return;
+            
             const item = document.createElement('div');
-            item.className = `achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'}`;
+            item.className = `achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'} ${achievement.rarity === 'super' ? 'super-achievement' : ''}`;
+            
+            // 超级杯成就特殊样式
+            const isSuper = achievement.rarity === 'super';
+            const nameStyle = isSuper ? 'color: #ff4444; text-shadow: 0 0 10px #ff0000;' : '';
             
             item.innerHTML = `
                 <div class="achievement-cup ${achievement.rarity}">
                     ${this.getCupIcon(achievement.rarity)}
                 </div>
                 <div class="achievement-details">
-                    <div class="achievement-name">${achievement.name}</div>
+                    <div class="achievement-name" style="${nameStyle}">${achievement.name}</div>
                     <div class="achievement-condition">${achievement.condition}</div>
                 </div>
                 <div class="achievement-status">

@@ -1,12 +1,14 @@
 import { MenuAnimation } from '../ui/MenuAnimation.js';
+import { BossRushMode } from '../systems/BossRushMode.js';
 
 export class MenuScene {
-    constructor(uiManager, saveSystem, onStart, onContinue, audioManager = null) {
+    constructor(uiManager, saveSystem, onStart, onContinue, audioManager = null, onBossRush = null) {
         console.log("=== MenuScene Constructor Called ===");
         this.uiManager = uiManager;
         this.saveSystem = saveSystem;
         this.onStart = onStart;
         this.onContinue = onContinue;
+        this.onBossRush = onBossRush;
         this.audioManager = audioManager;
 
         this.menuContainer = document.getElementById('main-menu');
@@ -156,6 +158,25 @@ export class MenuScene {
         if (save && btnContinue) {
             btnContinue.disabled = false;
         }
+        
+        // Boss战按钮 - 只有通关后才显示
+        const btnBossRush = document.getElementById('btn-boss-rush');
+        if (btnBossRush) {
+            // 检查是否解锁Boss战模式
+            if (BossRushMode.isUnlocked()) {
+                btnBossRush.classList.remove('hidden');
+                this.bossRushHandler = (e) => {
+                    e.preventDefault();
+                    console.log("Boss Rush Button Clicked");
+                    if (this.audioManager && this.audioManager.resume) this.audioManager.resume();
+                    if (this.onBossRush) this.onBossRush();
+                };
+                btnBossRush.addEventListener('click', this.bossRushHandler);
+                btnBossRush.addEventListener('touchend', this.bossRushHandler);
+            } else {
+                btnBossRush.classList.add('hidden');
+            }
+        }
     }
 
     unbindEvents() {
@@ -212,6 +233,12 @@ export class MenuScene {
             btnCloseAchievement.removeEventListener('click', this.closeAchievementHandler);
             btnCloseAchievement.removeEventListener('touchend', this.closeAchievementHandler);
         }
+        
+        const btnBossRush = document.getElementById('btn-boss-rush');
+        if (btnBossRush && this.bossRushHandler) {
+            btnBossRush.removeEventListener('click', this.bossRushHandler);
+            btnBossRush.removeEventListener('touchend', this.bossRushHandler);
+        }
     }
 
     showLeaderboard() {
@@ -230,6 +257,27 @@ export class MenuScene {
         // Re-check save
         const save = this.saveSystem.loadRun();
         document.getElementById('btn-continue').disabled = !save;
+        
+        // 检查并更新Boss战按钮
+        const btnBossRush = document.getElementById('btn-boss-rush');
+        if (btnBossRush) {
+            if (BossRushMode.isUnlocked()) {
+                btnBossRush.classList.remove('hidden');
+                // 如果之前没有绑定事件，现在绑定
+                if (!this.bossRushHandler && this.onBossRush) {
+                    this.bossRushHandler = (e) => {
+                        e.preventDefault();
+                        console.log("Boss Rush Button Clicked");
+                        if (this.audioManager && this.audioManager.resume) this.audioManager.resume();
+                        if (this.onBossRush) this.onBossRush();
+                    };
+                    btnBossRush.addEventListener('click', this.bossRushHandler);
+                    btnBossRush.addEventListener('touchend', this.bossRushHandler);
+                }
+            } else {
+                btnBossRush.classList.add('hidden');
+            }
+        }
         
         // 启动菜单动画
         if (this.menuAnimation) {

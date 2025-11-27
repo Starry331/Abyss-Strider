@@ -789,8 +789,37 @@ const menuScene = new MenuScene(
         gameScene.loadFromSave = true;
         sceneManager.switchTo('game');
     },
-    audioManager
+    audioManager,
+    () => {
+        // Boss Rush mode
+        if (audioManager && audioManager.playSound) audioManager.playSound('menu_click');
+        sceneManager.switchTo('bossRush');
+    }
 );
+
+// ---------------------------
+// Boss Rush Scene Setup (简化版)
+// ---------------------------
+import('./main/BossRushScene.js').then(module => {
+    const { BossRushScene } = module;
+    const bossRushScene = new BossRushScene({
+        combatSystem: new CombatSystem(audioManager),
+        weaponSystem: null, // 延迟初始化
+        uiManager: uiManager,
+        audioManager: audioManager,
+        effectManager: effectManager,
+        levelBackground: levelBackground,
+        buildSystem: null,
+        achievementSystem: achievementSystem,
+        sceneManager: sceneManager,
+        InputManager: InputManager,
+        Player: Player
+    });
+    sceneManager.addScene('bossRush', bossRushScene);
+    console.log('Boss战场景已注册');
+}).catch(err => {
+    console.error('Boss战场景加载失败:', err);
+});
 
 // Register scenes
 sceneManager.addScene('menu', menuScene);

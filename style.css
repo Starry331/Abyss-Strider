@@ -1662,3 +1662,132 @@ button:disabled {
         margin-bottom: 20px;
     }
 }
+
+/* ==================== Boss战模式 ==================== */
+
+/* Boss战按钮 - 发光红色 */
+.boss-rush-btn {
+    background: linear-gradient(135deg, #8B0000, #ff4444, #8B0000) !important;
+    border: 2px solid #ff6666 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5), 0 0 40px rgba(255, 0, 0, 0.3), inset 0 0 20px rgba(255, 100, 100, 0.2) !important;
+    animation: bossRushGlow 2s ease-in-out infinite !important;
+}
+
+.boss-rush-btn:hover {
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.8), 0 0 60px rgba(255, 0, 0, 0.5), inset 0 0 30px rgba(255, 100, 100, 0.3) !important;
+    transform: scale(1.05);
+}
+
+@keyframes bossRushGlow {
+    0%, 100% { 
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.5), 0 0 40px rgba(255, 0, 0, 0.3); 
+    }
+    50% { 
+        box-shadow: 0 0 30px rgba(255, 0, 0, 0.8), 0 0 60px rgba(255, 0, 0, 0.5); 
+    }
+}
+
+/* Boss战胜利画面 */
+#boss-rush-victory {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, #2a0a0a 0%, #0a0a0a 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    pointer-events: auto;
+}
+
+.boss-rush-victory-content {
+    text-align: center;
+    animation: bossRushVictoryFadeIn 1.5s ease-out;
+    position: relative;
+}
+
+@keyframes bossRushVictoryFadeIn {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.boss-rush-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255, 50, 50, 0.3) 0%, transparent 70%);
+    animation: bossRushGlowPulse 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes bossRushGlowPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.8; }
+}
+
+.boss-rush-title {
+    font-size: 80px;
+    font-weight: bold;
+    color: #ff4444;
+    text-shadow: 0 0 40px #ff0000, 0 0 80px #ff4444, 0 0 120px #ff0000;
+    margin-bottom: 20px;
+    animation: bossRushTitlePulse 2s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes bossRushTitlePulse {
+    0%, 100% { transform: scale(1); text-shadow: 0 0 40px #ff0000, 0 0 80px #ff4444; }
+    50% { transform: scale(1.05); text-shadow: 0 0 60px #ff0000, 0 0 100px #ff4444, 0 0 140px #ff0000; }
+}
+
+.boss-rush-subtitle {
+    font-size: 36px;
+    color: #ffd700;
+    margin-bottom: 10px;
+    font-style: italic;
+    text-shadow: 0 0 20px #ffd700;
+    position: relative;
+    z-index: 1;
+}
+
+.boss-rush-cn {
+    font-size: 48px;
+    color: #ff6666;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-shadow: 0 0 30px #ff4444;
+    position: relative;
+    z-index: 1;
+}
+
+.boss-rush-desc {
+    font-size: 18px;
+    color: #ccc;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 1;
+}
+
+.boss-rush-achievement {
+    background: linear-gradient(135deg, rgba(100, 0, 0, 0.8), rgba(50, 0, 0, 0.9)) !important;
+    border: 2px solid #ff4444 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.3) !important;
+}
+
+.boss-rush-victory-btn {
+    background: linear-gradient(135deg, #4a1a1a, #8B0000) !important;
+    border: 2px solid #ff4444 !important;
+    font-size: 18px;
+    padding: 15px 40px;
+    margin-top: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.boss-rush-victory-btn:hover {
+    background: linear-gradient(135deg, #6a2a2a, #aa2222) !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5) !important;
+}
