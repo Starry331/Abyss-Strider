@@ -461,65 +461,24 @@ export class BossRushScene {
     }
     
     showBuildChoice(title) {
-        // 创建构筑选择UI（触屏优化）
-        const builds = this.generateBuilds();
-        
-        const panel = document.createElement('div');
-        panel.id = 'boss-rush-build-panel';
-        panel.style.cssText = `
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 10000;
-            padding: 20px; box-sizing: border-box;
-        `;
-        
-        panel.innerHTML = `
-            <div style="color: #ffd700; font-size: clamp(22px, 5vw, 32px); margin-bottom: 25px; text-shadow: 0 0 10px #ffd700; text-align: center;">${title}</div>
-            <div style="display: flex; gap: clamp(10px, 2vw, 20px); flex-wrap: wrap; justify-content: center; max-width: 100%;">
-                ${builds.map((b, i) => `
-                    <div class="build-choice" data-index="${i}" style="
-                        background: linear-gradient(135deg, ${b.bgColor}, #1a1a2e);
-                        border: 2px solid ${b.borderColor}; border-radius: 15px;
-                        padding: clamp(15px, 3vw, 25px); width: clamp(130px, 28vw, 200px);
-                        cursor: pointer; transition: all 0.3s; text-align: center; color: #fff;
-                    ">
-                        <div style="font-size: clamp(30px, 7vw, 40px); margin-bottom: 8px;">${b.icon}</div>
-                        <div style="font-size: clamp(14px, 3.5vw, 18px); color: ${b.borderColor}; margin-bottom: 6px;">${b.name}</div>
-                        <div style="font-size: clamp(11px, 2.5vw, 14px); color: #aaa;">${b.desc}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-        
-        document.body.appendChild(panel);
-        
-        // 绑定点击和触屏事件
-        panel.querySelectorAll('.build-choice').forEach(card => {
-            const handleSelect = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const index = parseInt(card.dataset.index);
-                builds[index].apply();
-                if (this.audioManager) this.audioManager.playSound('menu_click');
-                panel.remove();
+        // 使用原有的BuildSystem
+        if (this.buildSystem) {
+            // 更新player引用确保正确
+            this.buildSystem.player = this.player;
+            // 设置回调
+            this.buildSystem.onBuildSelected = () => {
                 this.onRewardChosen();
             };
-            
-            card.addEventListener('click', handleSelect);
-            card.addEventListener('touchend', handleSelect);
-            
-            // 悬停效果
-            card.addEventListener('mouseenter', () => {
-                card.style.transform = 'scale(1.05)';
-                card.style.boxShadow = '0 0 20px rgba(255,255,255,0.3)';
-            });
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'scale(1)';
-                card.style.boxShadow = 'none';
-            });
-        });
+            // 显示构筑选择界面
+            this.buildSystem.showBuildChoice();
+        } else {
+            // 降级方案：跳过构筑
+            console.warn('BuildSystem not available');
+            this.onRewardChosen();
+        }
     }
     
+    // 保留generateBuilds作为备用（已改用BuildSystem）
     generateBuilds() {
         const allBuilds = [
             { name: '生命强化', desc: '最大生命+50', icon: '❤️', bgColor: '#3a1a2a', borderColor: '#ff6666',
@@ -977,24 +936,32 @@ export class BossRushScene {
                     if (dist < weapon.range + this.activeBoss.radius) {
                         // 计算伤害（含damageBonus加成）
                         let damage = weapon.damage * (this.player.damageBonus || 1);
+                        let isCrit = false;
                         
                         // 暴击计算
                         if (Math.random() < (weapon.critChance || 0.2)) {
                             damage *= (weapon.critMultiplier || 2.0);
+                            isCrit = true;
                         }
                         
                         this.activeBoss.hp -= damage;
                         this.weaponSystem.cooldownTimer = weapon.cooldown;
                         
+                        // 显示伤害数字
+                        this.showDamageNumber(this.activeBoss.x, this.activeBoss.y, Math.round(damage), isCrit);
+                        
+                        // 打击感：特效+音效+屏幕震动
+                        if (this.effectManager) {
+                            this.effectManager.spawnHitEffect(this.activeBoss.x, this.activeBoss.y);
+                        }
+                        if (this.audioManager) {
+                            this.audioManager.playSound(isCrit ? 'crit' : 'hit');
+                        }
+                        
                         // 吸血效果
                         if (weapon.lifesteal && weapon.lifesteal > 0) {
                             const healAmount = damage * weapon.lifesteal;
                             this.player.hp = Math.min(this.player.hp + healAmount, this.player.maxHp);
-                        }
-                        
-                        // 播放攻击音效
-                        if (this.audioManager) {
-                            this.audioManager.playSound('hit');
                         }
                     }
                 }
@@ -1012,16 +979,28 @@ export class BossRushScene {
                     const dy = this.activeBoss.y - proj.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < (proj.radius || 10) + (this.activeBoss.radius || 50)) {
-                        this.activeBoss.hp -= (proj.damage || 10);
+                        let dmg = proj.damage || 10;
+                        let isCrit = false;
+                        
+                        // 投射物暴击
+                        if (proj.critChance && Math.random() < proj.critChance) {
+                            dmg *= (proj.critMultiplier || 2.0);
+                            isCrit = true;
+                        }
+                        
+                        this.activeBoss.hp -= dmg;
                         proj.markedForDeletion = true;
                         proj.lifetime = 0;
+                        
+                        // 显示伤害数字
+                        this.showDamageNumber(this.activeBoss.x, this.activeBoss.y, Math.round(dmg), isCrit);
                         
                         // 打击感：特效+音效
                         if (this.effectManager) {
                             this.effectManager.spawnHitEffect(this.activeBoss.x, this.activeBoss.y);
                         }
                         if (this.audioManager) {
-                            this.audioManager.playSound('hit');
+                            this.audioManager.playSound(isCrit ? 'crit' : 'hit');
                         }
                     }
                 }
@@ -1125,6 +1104,9 @@ export class BossRushScene {
         if (this.player.invincibleTime && this.player.invincibleTime > 0) {
             this.player.invincibleTime -= deltaTime;
         }
+        
+        // 更新伤害数字
+        this.updateDamageNumbers(deltaTime);
     }
     
     onPlayerDeath() {
@@ -1190,6 +1172,9 @@ export class BossRushScene {
         if (this.effectManager) {
             this.effectManager.draw(ctx);
         }
+        
+        // 绘制伤害数字
+        this.drawDamageNumbers(ctx);
         
         // 绘制进度指示
         this.drawProgress(ctx);
@@ -1403,6 +1388,60 @@ export class BossRushScene {
         } else {
             if (pauseMenu) pauseMenu.classList.add('hidden');
         }
+    }
+    
+    // 显示伤害数字
+    showDamageNumber(x, y, damage, isCrit = false) {
+        if (!this.damageNumbers) this.damageNumbers = [];
+        
+        this.damageNumbers.push({
+            x: x + (Math.random() - 0.5) * 30,
+            y: y - 20,
+            damage: damage,
+            isCrit: isCrit,
+            life: 1.0,
+            vy: -80
+        });
+    }
+    
+    // 更新和绘制伤害数字
+    updateDamageNumbers(deltaTime) {
+        if (!this.damageNumbers) return;
+        
+        this.damageNumbers = this.damageNumbers.filter(dn => {
+            dn.life -= deltaTime;
+            dn.y += dn.vy * deltaTime;
+            dn.vy += 100 * deltaTime; // 重力
+            return dn.life > 0;
+        });
+    }
+    
+    drawDamageNumbers(ctx) {
+        if (!this.damageNumbers) return;
+        
+        this.damageNumbers.forEach(dn => {
+            ctx.save();
+            ctx.globalAlpha = Math.min(1, dn.life * 2);
+            ctx.font = dn.isCrit ? 'bold 28px Arial' : 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            
+            if (dn.isCrit) {
+                // 暴击：金色+描边
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.strokeText(`${dn.damage}!`, dn.x, dn.y);
+                ctx.fillStyle = '#ffd700';
+                ctx.fillText(`${dn.damage}!`, dn.x, dn.y);
+            } else {
+                // 普通：白色
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.strokeText(dn.damage, dn.x, dn.y);
+                ctx.fillStyle = '#fff';
+                ctx.fillText(dn.damage, dn.x, dn.y);
+            }
+            ctx.restore();
+        });
     }
     
     // 绘制拾取物
