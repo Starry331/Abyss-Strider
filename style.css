@@ -861,13 +861,14 @@ canvas {
     bottom: 0;
     background: linear-gradient(135deg, rgba(15,15,30,0.98) 0%, rgba(25,25,50,0.98) 100%);
     padding: 30px;
-    padding-bottom: 100px;
+    padding-bottom: 80px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 20px;
     z-index: 9999;
-    overflow-y: auto;
+    overflow-y: scroll;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -989,7 +990,11 @@ canvas {
 }
 
 #gallery-overlay .menu-btn {
-    margin-top: 20px;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
 }
 
 /* 其他菜单通用样式 */
