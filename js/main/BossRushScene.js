@@ -110,13 +110,19 @@ export class BossRushScene {
                 ]
             },
             hades: {
-                name: '哈迪斯', title: 'Hades', icon: '💀', rarity: 'blue',
+                name: '哈迪斯', title: 'Hades', icon: '💀', rarity: 'red',
                 desc: '冥王，死亡主宰',
                 color: '#aa44aa', bgColor: '#2a1a2a',
                 effects: [
-                    { name: '冥王之握', desc: '击杀回复8%生命', apply: (p, ws) => { p.killHeal = (p.killHeal || 0) + 0.08; } },
-                    { name: '死亡印记', desc: '攻击附加强力持续伤害', apply: (p, ws) => { ws.weapons.forEach(w => w.dot = 12); } },
-                    { name: '冥界庇护', desc: '受致命伤时保留1HP(2次)', apply: (p, ws) => { p.deathSaveCount = (p.deathSaveCount || 0) + 2; } }
+                    { name: '冥王之握', desc: '攻击5%吸血', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => w.lifesteal = (w.lifesteal || 0) + 0.05);
+                    }},
+                    { name: '死亡印记', desc: '攻击附加强力持续伤害', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => w.dot = (w.dot || 0) + 12);
+                    }},
+                    { name: '冥界复活', desc: '死亡时复活一次(满血)', apply: (p, ws) => { 
+                        p.resurrectCount = (p.resurrectCount || 0) + 1;
+                    }}
                 ]
             },
             
@@ -774,6 +780,13 @@ export class BossRushScene {
         // 更新玩家
         this.player.update(deltaTime);
         
+        // ===== 众神赐福效果处理 =====
+        // 生命回复
+        if (this.player.regenRate && this.player.regenRate > 0) {
+            const healAmount = this.player.maxHp * this.player.regenRate * deltaTime;
+            this.player.hp = Math.min(this.player.hp + healAmount, this.player.maxHp);
+        }
+        
         // 边界检测
         const canvas = document.getElementById('game-canvas');
         this.player.x = Math.max(this.player.radius, Math.min(canvas.width - this.player.radius, this.player.x));
@@ -796,8 +809,9 @@ export class BossRushScene {
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     
                     if (dist < weapon.range + this.activeBoss.radius) {
-                        // 计算伤害
-                        let damage = weapon.damage;
+                        // 计算伤害（含damageBonus加成）
+                        let damage = weapon.damage * (this.player.damageBonus || 1);
+                        
                         // 暴击计算
                         if (Math.random() < (weapon.critChance || 0.2)) {
                             damage *= (weapon.critMultiplier || 2.0);
@@ -805,6 +819,12 @@ export class BossRushScene {
                         
                         this.activeBoss.hp -= damage;
                         this.weaponSystem.cooldownTimer = weapon.cooldown;
+                        
+                        // 吸血效果
+                        if (weapon.lifesteal && weapon.lifesteal > 0) {
+                            const healAmount = damage * weapon.lifesteal;
+                            this.player.hp = Math.min(this.player.hp + healAmount, this.player.maxHp);
+                        }
                         
                         // 播放攻击音效
                         if (this.audioManager) {
@@ -839,11 +859,39 @@ export class BossRushScene {
                     const dy = this.player.y - proj.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < proj.radius + this.player.radius) {
-                        const dmg = proj.damage * (1 - (this.player.damageReduction || 0));
-                        this.player.hp -= dmg;
                         proj.lifetime = 0;
-                        if (this.audioManager) {
-                            this.audioManager.playSound('hurt');
+                        
+                        // 闪避检测
+                        if (this.player.dodgeChance && Math.random() < this.player.dodgeChance) {
+                            // 闪避成功，不受伤
+                            return;
+                        }
+                        
+                        // 格挡检测
+                        let dmg = proj.damage;
+                        if (this.player.blockChance && Math.random() < this.player.blockChance) {
+                            dmg *= 0.5; // 格挡减半伤害
+                        }
+                        
+                        // 减伤
+                        dmg *= (1 - (this.player.damageReduction || 0));
+                        
+                        // 护盾优先吸收伤害
+                        if (this.player.shield && this.player.shield > 0) {
+                            if (this.player.shield >= dmg) {
+                                this.player.shield -= dmg;
+                                dmg = 0;
+                            } else {
+                                dmg -= this.player.shield;
+                                this.player.shield = 0;
+                            }
+                        }
+                        
+                        if (dmg > 0) {
+                            this.player.hp -= dmg;
+                            if (this.audioManager) {
+                                this.audioManager.playSound('hurt');
+                            }
                         }
                     }
                 }
@@ -872,7 +920,18 @@ export class BossRushScene {
         
         // 检查玩家死亡
         if (this.player.hp <= 0) {
-            this.onPlayerDeath();
+            // 检查复活机会
+            if (this.player.resurrectCount && this.player.resurrectCount > 0) {
+                this.player.resurrectCount--;
+                this.player.hp = this.player.maxHp; // 满血复活
+                // 显示复活特效
+                this.showRewardNotification('💀 冥界复活！ 💀', () => {});
+                if (this.audioManager) {
+                    this.audioManager.playSound('levelup');
+                }
+            } else {
+                this.onPlayerDeath();
+            }
         }
     }
     
