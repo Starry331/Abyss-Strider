@@ -59,6 +59,7 @@ canvas {
 #blessing-menu,
 #build-panel,
 #mobile-controls button,
+#gallery-overlay,
 #hud {
     pointer-events: auto;
 }
@@ -870,6 +871,11 @@ canvas {
     overflow-y: scroll;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    pointer-events: auto;
+}
+
+#gallery-overlay * {
+    pointer-events: auto;
 }
 
 #gallery-overlay h2 {
