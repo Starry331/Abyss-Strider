@@ -492,9 +492,9 @@ export class BossRushScene {
                 break;
             case 'weapon':
             case 'weapon1':
-                // 偶数关卡显示(1/2)，奇数关卡不显示
-                const isEvenLevel = this.currentDefeatedLevel % 2 === 0;
-                this.showWeaponUpgrade(isEvenLevel ? '武器升级 (1/2)' : '武器升级');
+                // Lv1和Lv4有2次武器升级
+                const hasTwoUpgrades = this.currentDefeatedLevel === 1 || this.currentDefeatedLevel === 4;
+                this.showWeaponUpgrade(hasTwoUpgrades ? '武器升级 (1/2)' : '武器升级');
                 break;
             case 'weapon2':
                 this.showWeaponUpgrade('武器升级 (2/2)');
@@ -850,8 +850,8 @@ export class BossRushScene {
                 this.rewardPhase = 'weapon1';
                 break;
             case 'weapon1':
-                // 偶数关卡(2,4,6)有2次武器升级
-                if (this.currentDefeatedLevel % 2 === 0) {
+                // 武器升级模式: 2-1-1-2-1-1 (Lv1和Lv4有2次)
+                if (this.currentDefeatedLevel === 1 || this.currentDefeatedLevel === 4) {
                     this.rewardPhase = 'weapon2';
                 } else {
                     this.rewardPhase = 'done';

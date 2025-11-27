@@ -1648,9 +1648,9 @@ export class BerserkArtemisBoss {
         let targetX = this.x + (dx / dist) * escapeDist;
         let targetY = this.y + (dy / dist) * escapeDist;
         
-        // 边界检查
-        targetX = Math.max(100, Math.min(targetX, 700));
-        targetY = Math.max(100, Math.min(targetY, 500));
+        // 边界检查（扩大范围）
+        targetX = Math.max(60, Math.min(targetX, 740));
+        targetY = Math.max(60, Math.min(targetY, 540));
         
         const startX = this.x, startY = this.y;
         
