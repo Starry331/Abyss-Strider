@@ -91,7 +91,7 @@ export class GallerySystem {
             return this.getKillCount('artemis') >= boss.unlockCount;
         }
         if (boss.unlockType === 'all_except_lv7') {
-            // 除Lv7外的所有Boss都击杀达到指定次数
+            // 除阿尔忒弥斯外的所有Boss都击杀达到指定次数
             const requiredBosses = this.bossData.filter(b => b.level < 7 && !b.unlockType);
             return requiredBosses.every(b => this.getKillCount(b.id) >= boss.unlockCount);
         }
