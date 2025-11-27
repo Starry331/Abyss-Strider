@@ -52,15 +52,18 @@ export class MutatedPaladinBoss {
                          ctx.restore(); }
                 }); } break;
             case 'SHADOW_DASH': const target = { ...this.dashTarget };
-                // 削弱：5段冲刺，间隔更长，碰撞范围更小
-                const player = this.player; // 保存引用
-                for (let i = 0; i < 5; i++) { setTimeout(() => {
-                    if (!player || !this.player) return; // 安全检查
+                // 5段冲刺，间隔递增
+                const player = this.player;
+                let dashDelay = 0;
+                for (let i = 0; i < 5; i++) { 
+                    dashDelay += 150 + i * 100; // 150, 250, 350, 450, 550ms 递增间隔
+                    setTimeout(() => {
+                    if (!player || !this.player) return;
                     this.dashTrail.push({ x: this.x, y: this.y, life: 0.5 });
                     this.x += (target.x - this.x) / (5 - i); this.y += (target.y - this.y) / (5 - i);
                     const dist = Math.sqrt((player.x - this.x) ** 2 + (player.y - this.y) ** 2);
                     if (dist < 45 && player.hp) player.hp -= this.calcDamage(this.damage * 0.9).damage;
-                }, i * 60); }
+                }, dashDelay); }
                 // 削弱：6个投射物，伤害降低
                 setTimeout(() => { for (let j = 0; j < 6; j++) { const sa = (Math.PI * 2 / 6) * j;
                     this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(sa) * 350, vy: Math.sin(sa) * 350,

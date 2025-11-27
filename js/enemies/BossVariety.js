@@ -4128,9 +4128,11 @@ class PaladinBoss extends BaseBoss {
                 break;
                 
             case 'KINGS_CHARGE':
-                // 王者冲锋 - 多段突进
+                // 王者冲锋 - 多段突进（每次间隔递增）
                 const chargeTarget = { ...this.dashTarget };
+                let chargeDelay = 0;
                 for (let c = 0; c < 4; c++) {
+                    chargeDelay += 250 + c * 150; // 250, 400, 550, 700ms 递增间隔
                     setTimeout(() => {
                         this.dashTrail.push({ x: this.x, y: this.y, life: 0.4 });
                         const ca = Math.atan2(chargeTarget.y - this.y, chargeTarget.x - this.x);
@@ -4146,7 +4148,7 @@ class PaladinBoss extends BaseBoss {
                         }
                         const dist = Math.sqrt((this.player.x - this.x) ** 2 + (this.player.y - this.y) ** 2);
                         if (dist < 70) this.player.takeDamage(25);
-                    }, c * 200);
+                    }, chargeDelay);
                 }
                 break;
                 

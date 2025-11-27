@@ -132,8 +132,8 @@ export class GhostPoseidonBoss {
         this.breathe = Math.sin(Date.now() / 500) * 3;
         this.tridentGlow = (Math.sin(Date.now() / 300) + 1) * 0.5;
         
-        // 相位切换 - 更快进入2阶段
-        if (this.hp <= this.maxHp * 0.8 && this.phase === 1) {
+        // 相位切换
+        if (this.hp <= this.maxHp * 0.6 && this.phase === 1) {
             this.phase = 2;
             this.attackCooldown = 0.5;
             console.log('☠️ 波塞冬进入狂暴阶段！解锁强力技能！');
