@@ -33,30 +33,103 @@ export class BossRushScene {
         this.rewardCount = 0;
         this.inputManager = null;
         
-        // 万神殿背景粒子（优化：预生成）
-        this.bgParticles = [];
-        this.bgPillars = [];
+        // 背景缓存（性能优化：离屏canvas）
+        this.bgCache = null;
+        this.bgCacheValid = false;
+        this.starPositions = []; // 预计算星星位置
+        
+        // 众神赐福系统
+        this.godBlessings = this.initGodBlessings();
+        this.godBlessingLevels = [2, 4, 5, 6]; // 这些关卡后触发众神赐福
+        
         this.initBackground();
     }
     
-    // 初始化万神殿背景元素
+    // 初始化众神赐福
+    initGodBlessings() {
+        return {
+            zeus: {
+                name: '宙斯', title: 'Zeus', icon: '⚡',
+                desc: '天神之王，雷霆加护',
+                color: '#ffdd44', bgColor: '#3a3a1a',
+                effects: [
+                    { name: '雷霆之力', desc: '攻击+30%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.3; } },
+                    { name: '天神庇护', desc: '最大生命+80', apply: (p, ws) => { p.maxHp += 80; p.hp += 80; } },
+                    { name: '闪电链', desc: '攻击有20%概率连锁', apply: (p, ws) => { ws.weapons.forEach(w => w.chainChance = 0.2); } }
+                ]
+            },
+            hera: {
+                name: '赫拉', title: 'Hera', icon: '👑',
+                desc: '婚姻女神，家庭守护',
+                color: '#ff88cc', bgColor: '#3a1a2a',
+                effects: [
+                    { name: '女王威严', desc: '减伤+25%', apply: (p, ws) => { p.damageReduction = (p.damageReduction || 0) + 0.25; } },
+                    { name: '家庭祝福', desc: '每秒回复1%生命', apply: (p, ws) => { p.regenRate = (p.regenRate || 0) + 0.01; } },
+                    { name: '神后恩典', desc: '护盾+100', apply: (p, ws) => { p.shield = (p.shield || 0) + 100; } }
+                ]
+            },
+            poseidon: {
+                name: '波塞冬', title: 'Poseidon', icon: '🔱',
+                desc: '海神，风暴主宰',
+                color: '#44aaff', bgColor: '#1a2a3a',
+                effects: [
+                    { name: '海神之怒', desc: '攻击击退敌人', apply: (p, ws) => { ws.weapons.forEach(w => w.knockback = 50); } },
+                    { name: '潮汐护盾', desc: '受伤时30%概率免疫', apply: (p, ws) => { p.dodgeChance = (p.dodgeChance || 0) + 0.3; } },
+                    { name: '深海力量', desc: '暴击伤害+50%', apply: (p, ws) => { ws.weapons.forEach(w => w.critMultiplier = (w.critMultiplier || 2) + 0.5); } }
+                ]
+            },
+            athena: {
+                name: '雅典娜', title: 'Athena', icon: '🦉',
+                desc: '智慧女神，战争策略',
+                color: '#aaaaff', bgColor: '#2a2a3a',
+                effects: [
+                    { name: '战争智慧', desc: '暴击率+20%', apply: (p, ws) => { ws.weapons.forEach(w => w.critChance = (w.critChance || 0.2) + 0.2); } },
+                    { name: '神盾庇护', desc: '格挡+15%伤害', apply: (p, ws) => { p.blockChance = (p.blockChance || 0) + 0.15; } },
+                    { name: '智慧光芒', desc: '移速+20%', apply: (p, ws) => { p.speed *= 1.2; } }
+                ]
+            },
+            apollo: {
+                name: '阿波罗', title: 'Apollo', icon: '☀️',
+                desc: '光明之神，预言主宰',
+                color: '#ffaa44', bgColor: '#3a2a1a',
+                effects: [
+                    { name: '光明箭矢', desc: '投射物速度+40%', apply: (p, ws) => { ws.projectileSpeedMult = (ws.projectileSpeedMult || 1) * 1.4; } },
+                    { name: '预言之眼', desc: '攻击范围+25%', apply: (p, ws) => { ws.weapons.forEach(w => w.range *= 1.25); } },
+                    { name: '太阳祝福', desc: '恢复100生命', apply: (p, ws) => { p.hp = Math.min(p.hp + 100, p.maxHp); } }
+                ]
+            },
+            artemis: {
+                name: '阿尔忒弥斯', title: 'Artemis', icon: '🌙',
+                desc: '狩猎女神，月之守护',
+                color: '#cc88ff', bgColor: '#2a1a3a',
+                effects: [
+                    { name: '猎手本能', desc: '攻速+30%', apply: (p, ws) => { ws.weapons.forEach(w => w.cooldown *= 0.7); } },
+                    { name: '月光箭', desc: '攻击穿透敌人', apply: (p, ws) => { ws.weapons.forEach(w => w.pierce = true); } },
+                    { name: '野兽之力', desc: '攻击+25%', apply: (p, ws) => { p.damageBonus = (p.damageBonus || 1) * 1.25; } }
+                ]
+            },
+            hades: {
+                name: '哈迪斯', title: 'Hades', icon: '💀',
+                desc: '冥王，死亡主宰',
+                color: '#aa44aa', bgColor: '#2a1a2a',
+                effects: [
+                    { name: '冥王之握', desc: '击杀回复5%生命', apply: (p, ws) => { p.killHeal = (p.killHeal || 0) + 0.05; } },
+                    { name: '死亡印记', desc: '攻击附加持续伤害', apply: (p, ws) => { ws.weapons.forEach(w => w.dot = 5); } },
+                    { name: '冥界庇护', desc: '受致命伤时保留1HP(1次)', apply: (p, ws) => { p.deathSave = true; } }
+                ]
+            }
+        };
+    }
+    
+    // 初始化背景（优化版）
     initBackground() {
-        // 生成星空粒子
-        for (let i = 0; i < 60; i++) {
-            this.bgParticles.push({
+        // 预计算星星位置
+        for (let i = 0; i < 30; i++) { // 减少到30个
+            this.starPositions.push({
                 x: Math.random(),
-                y: Math.random(),
-                size: Math.random() * 2 + 0.5,
-                speed: Math.random() * 0.0001 + 0.00005,
-                alpha: Math.random() * 0.5 + 0.3
-            });
-        }
-        // 生成石柱位置
-        for (let i = 0; i < 8; i++) {
-            this.bgPillars.push({
-                x: i / 8 + 0.0625,
-                height: Math.random() * 0.3 + 0.5,
-                width: 0.04
+                y: Math.random() * 0.6, // 只在上方60%
+                size: Math.random() * 1.5 + 0.5,
+                twinkleOffset: Math.random() * Math.PI * 2
             });
         }
     }
@@ -171,13 +244,23 @@ export class BossRushScene {
     
     startRewardPhase() {
         this.isPaused = true;
-        this.rewardPhase = 'build1';
         this.rewardCount = 0;
         
-        // 显示胜利提示
-        this.showRewardNotification('Boss击败！选择奖励', () => {
-            this.showNextReward();
-        });
+        // 获取刚击败的Boss等级
+        const defeatedLevel = this.bossRushMode.currentBossIndex; // 0-indexed, 所以+1是等级
+        
+        // 检查是否触发众神赐福（Lv2, Lv4, Lv5, Lv6后）
+        if (this.godBlessingLevels.includes(defeatedLevel)) {
+            this.rewardPhase = 'godBlessing';
+            this.showRewardNotification('🏛️ 众神降临！选择赐福 🏛️', () => {
+                this.showNextReward();
+            });
+        } else {
+            this.rewardPhase = 'build1';
+            this.showRewardNotification('Boss击败！选择奖励', () => {
+                this.showNextReward();
+            });
+        }
     }
     
     showRewardNotification(text, callback) {
@@ -206,6 +289,9 @@ export class BossRushScene {
     
     showNextReward() {
         switch(this.rewardPhase) {
+            case 'godBlessing':
+                this.showGodBlessingChoice();
+                break;
             case 'build1':
             case 'build2':
                 this.showBuildChoice(this.rewardPhase === 'build1' ? '第一次构筑选择' : '第二次构筑选择');
@@ -231,30 +317,31 @@ export class BossRushScene {
     }
     
     showBuildChoice(title) {
-        // 创建构筑选择UI
+        // 创建构筑选择UI（触屏优化）
         const builds = this.generateBuilds();
         
         const panel = document.createElement('div');
         panel.id = 'boss-rush-build-panel';
         panel.style.cssText = `
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+            background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 10000;
+            padding: 20px; box-sizing: border-box;
         `;
         
         panel.innerHTML = `
-            <div style="color: #ffd700; font-size: 32px; margin-bottom: 30px; text-shadow: 0 0 10px #ffd700;">${title}</div>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+            <div style="color: #ffd700; font-size: clamp(22px, 5vw, 32px); margin-bottom: 25px; text-shadow: 0 0 10px #ffd700; text-align: center;">${title}</div>
+            <div style="display: flex; gap: clamp(10px, 2vw, 20px); flex-wrap: wrap; justify-content: center; max-width: 100%;">
                 ${builds.map((b, i) => `
                     <div class="build-choice" data-index="${i}" style="
                         background: linear-gradient(135deg, ${b.bgColor}, #1a1a2e);
-                        border: 2px solid ${b.borderColor}; border-radius: 15px; padding: 25px;
-                        width: 200px; cursor: pointer; transition: all 0.3s;
-                        text-align: center; color: #fff;
+                        border: 2px solid ${b.borderColor}; border-radius: 15px;
+                        padding: clamp(15px, 3vw, 25px); width: clamp(130px, 28vw, 200px);
+                        cursor: pointer; transition: all 0.3s; text-align: center; color: #fff;
                     ">
-                        <div style="font-size: 40px; margin-bottom: 10px;">${b.icon}</div>
-                        <div style="font-size: 18px; color: ${b.borderColor}; margin-bottom: 8px;">${b.name}</div>
-                        <div style="font-size: 14px; color: #aaa;">${b.desc}</div>
+                        <div style="font-size: clamp(30px, 7vw, 40px); margin-bottom: 8px;">${b.icon}</div>
+                        <div style="font-size: clamp(14px, 3.5vw, 18px); color: ${b.borderColor}; margin-bottom: 6px;">${b.name}</div>
+                        <div style="font-size: clamp(11px, 2.5vw, 14px); color: #aaa;">${b.desc}</div>
                     </div>
                 `).join('')}
             </div>
@@ -262,15 +349,20 @@ export class BossRushScene {
         
         document.body.appendChild(panel);
         
-        // 绑定点击事件
+        // 绑定点击和触屏事件
         panel.querySelectorAll('.build-choice').forEach(card => {
-            card.addEventListener('click', (e) => {
+            const handleSelect = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 const index = parseInt(card.dataset.index);
                 builds[index].apply();
                 if (this.audioManager) this.audioManager.playSound('menu_click');
                 panel.remove();
                 this.onRewardChosen();
-            });
+            };
+            
+            card.addEventListener('click', handleSelect);
+            card.addEventListener('touchend', handleSelect);
             
             // 悬停效果
             card.addEventListener('mouseenter', () => {
@@ -319,23 +411,25 @@ export class BossRushScene {
         panel.id = 'boss-rush-blessing-panel';
         panel.style.cssText = `
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+            background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 10000;
+            padding: 20px; box-sizing: border-box;
         `;
         
         panel.innerHTML = `
-            <div style="color: #ffd700; font-size: 32px; margin-bottom: 30px; text-shadow: 0 0 10px #ffd700;">选择赐福</div>
-            <div style="display: flex; gap: 30px;">
+            <div style="color: #ffd700; font-size: clamp(22px, 5vw, 32px); margin-bottom: 25px; text-shadow: 0 0 10px #ffd700; text-align: center;">选择赐福</div>
+            <div style="display: flex; gap: clamp(12px, 3vw, 30px); flex-wrap: wrap; justify-content: center;">
                 ${blessings.map((b, i) => `
                     <div class="blessing-choice" data-index="${i}" style="
                         background: linear-gradient(135deg, rgba(50,30,60,0.9), rgba(20,10,30,0.9));
-                        border: 3px solid ${b.color}; border-radius: 20px; padding: 30px;
-                        width: 180px; cursor: pointer; transition: all 0.3s; text-align: center;
+                        border: 3px solid ${b.color}; border-radius: 20px;
+                        padding: clamp(18px, 4vw, 30px); width: clamp(120px, 26vw, 180px);
+                        cursor: pointer; transition: all 0.3s; text-align: center;
                         box-shadow: 0 0 20px ${b.color}40;
                     ">
-                        <div style="font-size: 50px; margin-bottom: 15px;">${b.icon}</div>
-                        <div style="font-size: 20px; color: ${b.color}; margin-bottom: 10px;">${b.name}</div>
-                        <div style="font-size: 14px; color: #ccc;">${b.desc}</div>
+                        <div style="font-size: clamp(36px, 9vw, 50px); margin-bottom: 12px;">${b.icon}</div>
+                        <div style="font-size: clamp(15px, 4vw, 20px); color: ${b.color}; margin-bottom: 8px;">${b.name}</div>
+                        <div style="font-size: clamp(11px, 2.5vw, 14px); color: #ccc;">${b.desc}</div>
                     </div>
                 `).join('')}
             </div>
@@ -344,13 +438,18 @@ export class BossRushScene {
         document.body.appendChild(panel);
         
         panel.querySelectorAll('.blessing-choice').forEach(card => {
-            card.addEventListener('click', () => {
+            const handleSelect = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 const index = parseInt(card.dataset.index);
                 blessings[index].effect();
                 if (this.audioManager) this.audioManager.playSound('blessing');
                 panel.remove();
                 this.onRewardChosen();
-            });
+            };
+            
+            card.addEventListener('click', handleSelect);
+            card.addEventListener('touchend', handleSelect);
             
             card.addEventListener('mouseenter', () => {
                 card.style.transform = 'scale(1.08)';
@@ -368,26 +467,28 @@ export class BossRushScene {
         panel.id = 'boss-rush-weapon-panel';
         panel.style.cssText = `
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+            background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 10000;
+            padding: 20px; box-sizing: border-box;
         `;
         
         panel.innerHTML = `
-            <div style="color: #ffd700; font-size: 32px; margin-bottom: 30px; text-shadow: 0 0 10px #ffd700;">武器升级</div>
-            <div style="display: flex; gap: 25px;">
+            <div style="color: #ffd700; font-size: clamp(22px, 5vw, 32px); margin-bottom: 25px; text-shadow: 0 0 10px #ffd700; text-align: center;">武器升级</div>
+            <div style="display: flex; gap: clamp(10px, 2vw, 25px); flex-wrap: wrap; justify-content: center;">
                 ${weapons.map((w, i) => {
                     const maxed = w.upgradeLevel >= 8;
                     return `
                     <div class="weapon-upgrade-choice" data-index="${i}" style="
                         background: linear-gradient(135deg, #2a2a3a, #1a1a2a);
-                        border: 2px solid ${maxed ? '#666' : '#ffd700'}; border-radius: 15px; padding: 25px;
-                        width: 180px; cursor: ${maxed ? 'not-allowed' : 'pointer'}; transition: all 0.3s;
+                        border: 2px solid ${maxed ? '#666' : '#ffd700'}; border-radius: 15px;
+                        padding: clamp(15px, 3vw, 25px); width: clamp(120px, 26vw, 180px);
+                        cursor: ${maxed ? 'not-allowed' : 'pointer'}; transition: all 0.3s;
                         text-align: center; opacity: ${maxed ? 0.5 : 1};
                     ">
-                        <div style="font-size: 36px; margin-bottom: 10px;">${w.name === 'Staff' ? '🪄' : w.name === 'Longsword' ? '🗡️' : '⚔️'}</div>
-                        <div style="font-size: 18px; color: #ffd700; margin-bottom: 8px;">${w.cnName}</div>
-                        <div style="font-size: 14px; color: #aaa;">Lv${w.upgradeLevel} → Lv${Math.min(w.upgradeLevel + 1, 8)}</div>
-                        ${maxed ? '<div style="color: #666; font-size: 12px; margin-top: 5px;">已满级</div>' : ''}
+                        <div style="font-size: clamp(28px, 7vw, 36px); margin-bottom: 8px;">${w.name === 'Staff' ? '🪄' : w.name === 'Longsword' ? '🗡️' : '⚔️'}</div>
+                        <div style="font-size: clamp(14px, 3.5vw, 18px); color: #ffd700; margin-bottom: 6px;">${w.cnName}</div>
+                        <div style="font-size: clamp(11px, 2.5vw, 14px); color: #aaa;">Lv${w.upgradeLevel} → Lv${Math.min(w.upgradeLevel + 1, 8)}</div>
+                        ${maxed ? '<div style="color: #666; font-size: clamp(10px, 2vw, 12px); margin-top: 4px;">已满级</div>' : ''}
                     </div>
                 `}).join('')}
             </div>
@@ -400,12 +501,17 @@ export class BossRushScene {
             const weapon = weapons[index];
             
             if (weapon.upgradeLevel < 8) {
-                card.addEventListener('click', () => {
+                const handleSelect = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     weapon.upgradeLevel++;
                     if (this.audioManager) this.audioManager.playSound('upgrade');
                     panel.remove();
                     this.onRewardChosen();
-                });
+                };
+                
+                card.addEventListener('click', handleSelect);
+                card.addEventListener('touchend', handleSelect);
                 
                 card.addEventListener('mouseenter', () => {
                     card.style.transform = 'scale(1.05)';
@@ -419,9 +525,115 @@ export class BossRushScene {
         });
     }
     
+    // 众神赐福选择（触屏优化）
+    showGodBlessingChoice() {
+        // 随机选3位神明
+        const godKeys = Object.keys(this.godBlessings);
+        const shuffled = godKeys.sort(() => Math.random() - 0.5);
+        const selectedGods = shuffled.slice(0, 3);
+        
+        const panel = document.createElement('div');
+        panel.id = 'god-blessing-panel';
+        panel.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(180deg, rgba(20,10,40,0.95), rgba(10,5,20,0.98));
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10000;
+            padding: 20px; box-sizing: border-box;
+        `;
+        
+        // 为每位神明随机选一个效果
+        const godChoices = selectedGods.map(key => {
+            const god = this.godBlessings[key];
+            const effect = god.effects[Math.floor(Math.random() * god.effects.length)];
+            return { key, god, effect };
+        });
+        
+        panel.innerHTML = `
+            <div style="color: #ffd700; font-size: clamp(24px, 5vw, 36px); margin-bottom: 20px; text-shadow: 0 0 20px #ffd700; text-align: center;">
+                🏛️ 众神的赐福 🏛️
+            </div>
+            <div style="color: #aaa; font-size: clamp(14px, 3vw, 18px); margin-bottom: 30px; text-align: center;">
+                选择一位神明获得其赐福
+            </div>
+            <div style="display: flex; gap: clamp(10px, 2vw, 25px); flex-wrap: wrap; justify-content: center; max-width: 100%; padding: 0 10px;">
+                ${godChoices.map((choice, i) => `
+                    <div class="god-card" data-index="${i}" style="
+                        background: linear-gradient(135deg, ${choice.god.bgColor}, #0a0510);
+                        border: 3px solid ${choice.god.color}; border-radius: 20px;
+                        padding: clamp(15px, 3vw, 30px); width: clamp(140px, 28vw, 200px);
+                        cursor: pointer; transition: all 0.3s; text-align: center;
+                        box-shadow: 0 0 25px ${choice.god.color}40;
+                        min-height: 180px; display: flex; flex-direction: column;
+                        justify-content: space-between;
+                    ">
+                        <div style="font-size: clamp(36px, 8vw, 56px); margin-bottom: 10px;">${choice.god.icon}</div>
+                        <div style="font-size: clamp(16px, 4vw, 22px); color: ${choice.god.color}; font-weight: bold; margin-bottom: 5px;">
+                            ${choice.god.name}
+                        </div>
+                        <div style="font-size: clamp(10px, 2.5vw, 12px); color: #888; margin-bottom: 10px; font-style: italic;">
+                            ${choice.god.title}
+                        </div>
+                        <div style="
+                            background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px;
+                            border: 1px solid ${choice.god.color}50;
+                        ">
+                            <div style="font-size: clamp(12px, 3vw, 16px); color: #fff; font-weight: bold; margin-bottom: 5px;">
+                                ${choice.effect.name}
+                            </div>
+                            <div style="font-size: clamp(11px, 2.5vw, 14px); color: #ccc;">
+                                ${choice.effect.desc}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        document.body.appendChild(panel);
+        
+        // 绑定点击事件
+        panel.querySelectorAll('.god-card').forEach(card => {
+            const handleSelect = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const index = parseInt(card.dataset.index);
+                const choice = godChoices[index];
+                
+                // 应用赐福效果
+                choice.effect.apply(this.player, this.weaponSystem);
+                
+                // 播放音效
+                if (this.audioManager) this.audioManager.playSound('blessing');
+                
+                // 显示获得提示
+                this.showRewardNotification(`获得 ${choice.god.name} 的赐福：${choice.effect.name}`, () => {});
+                
+                panel.remove();
+                this.onRewardChosen();
+            };
+            
+            card.addEventListener('click', handleSelect);
+            card.addEventListener('touchend', handleSelect);
+            
+            // 悬停效果
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'scale(1.08) translateY(-5px)';
+                card.style.boxShadow = `0 0 40px ${godChoices[parseInt(card.dataset.index)].god.color}80`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'scale(1)';
+                card.style.boxShadow = `0 0 25px ${godChoices[parseInt(card.dataset.index)].god.color}40`;
+            });
+        });
+    }
+    
     onRewardChosen() {
         // 进入下一个奖励阶段
         switch(this.rewardPhase) {
+            case 'godBlessing':
+                this.rewardPhase = 'build1'; // 众神赐福后继续正常奖励
+                break;
             case 'build1':
                 this.rewardPhase = 'build2';
                 break;
@@ -645,93 +857,79 @@ export class BossRushScene {
         }
     }
     
-    // 万神殿背景绘制
+    // 万神殿背景绘制（性能优化版）
     drawPantheonBackground(ctx, w, h) {
-        // 深邃天空渐变
+        // 缓存静态背景到离屏canvas
+        if (!this.bgCache || this.bgCache.width !== w || this.bgCache.height !== h) {
+            this.createBackgroundCache(w, h);
+        }
+        
+        // 绘制缓存的静态背景
+        ctx.drawImage(this.bgCache, 0, 0);
+        
+        // 只绘制动态元素（星星闪烁和光环）
+        const time = Date.now();
+        
+        // 简化的星星闪烁
+        ctx.save();
+        this.starPositions.forEach(star => {
+            const twinkle = Math.sin(time / 800 + star.twinkleOffset) * 0.4 + 0.6;
+            ctx.globalAlpha = twinkle * 0.7;
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(star.x * w - star.size/2, star.y * h - star.size/2, star.size, star.size);
+        });
+        ctx.restore();
+        
+        // 简化的中央光环脉动
+        ctx.save();
+        ctx.globalAlpha = 0.1 + Math.sin(time / 1500) * 0.05;
+        ctx.fillStyle = 'rgba(255, 200, 100, 0.15)';
+        ctx.beginPath();
+        ctx.arc(w/2, h/2 - 30, 150, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    // 创建背景缓存
+    createBackgroundCache(w, h) {
+        this.bgCache = document.createElement('canvas');
+        this.bgCache.width = w;
+        this.bgCache.height = h;
+        const ctx = this.bgCache.getContext('2d');
+        
+        // 天空渐变
         const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
-        skyGrad.addColorStop(0, '#0a0515');
-        skyGrad.addColorStop(0.3, '#150820');
-        skyGrad.addColorStop(0.6, '#1a0a25');
-        skyGrad.addColorStop(1, '#0d0510');
+        skyGrad.addColorStop(0, '#080412');
+        skyGrad.addColorStop(0.4, '#100818');
+        skyGrad.addColorStop(1, '#0a0510');
         ctx.fillStyle = skyGrad;
         ctx.fillRect(0, 0, w, h);
         
-        // 星空粒子
-        const time = Date.now();
-        ctx.save();
-        this.bgParticles.forEach(p => {
-            const twinkle = Math.sin(time * p.speed * 100) * 0.3 + 0.7;
-            ctx.globalAlpha = p.alpha * twinkle;
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.arc(p.x * w, p.y * h, p.size, 0, Math.PI * 2);
-            ctx.fill();
-        });
-        ctx.restore();
-        
-        // 神殿光柱（中央）
-        ctx.save();
-        const beamGrad = ctx.createLinearGradient(w/2 - 100, 0, w/2 + 100, 0);
-        beamGrad.addColorStop(0, 'transparent');
-        beamGrad.addColorStop(0.3, 'rgba(255, 200, 100, 0.05)');
-        beamGrad.addColorStop(0.5, 'rgba(255, 180, 80, 0.1)');
-        beamGrad.addColorStop(0.7, 'rgba(255, 200, 100, 0.05)');
-        beamGrad.addColorStop(1, 'transparent');
-        ctx.fillStyle = beamGrad;
-        ctx.fillRect(w/2 - 150, 0, 300, h);
-        ctx.restore();
-        
-        // 石柱
-        this.bgPillars.forEach(pillar => {
-            const px = pillar.x * w;
-            const pw = pillar.width * w;
-            const ph = pillar.height * h;
+        // 简化石柱（4根）
+        const pillarPositions = [0.15, 0.35, 0.65, 0.85];
+        pillarPositions.forEach(xRatio => {
+            const px = xRatio * w;
+            const pw = w * 0.035;
+            const ph = h * 0.55;
             
-            // 柱身
-            const pillarGrad = ctx.createLinearGradient(px - pw/2, h - ph, px + pw/2, h - ph);
-            pillarGrad.addColorStop(0, '#1a1520');
-            pillarGrad.addColorStop(0.5, '#2a2030');
-            pillarGrad.addColorStop(1, '#1a1520');
-            ctx.fillStyle = pillarGrad;
+            ctx.fillStyle = '#1a1520';
             ctx.fillRect(px - pw/2, h - ph, pw, ph);
-            
-            // 柱顶
-            ctx.fillStyle = '#2a2535';
-            ctx.fillRect(px - pw/2 - 5, h - ph - 15, pw + 10, 15);
-            
-            // 柱底
-            ctx.fillRect(px - pw/2 - 5, h - 20, pw + 10, 20);
+            ctx.fillStyle = '#252030';
+            ctx.fillRect(px - pw/2 - 4, h - ph - 12, pw + 8, 12);
+            ctx.fillRect(px - pw/2 - 4, h - 15, pw + 8, 15);
         });
         
         // 地面
-        const floorGrad = ctx.createLinearGradient(0, h - 60, 0, h);
-        floorGrad.addColorStop(0, '#151015');
-        floorGrad.addColorStop(1, '#0a0508');
-        ctx.fillStyle = floorGrad;
-        ctx.fillRect(0, h - 60, w, 60);
+        ctx.fillStyle = '#0c0810';
+        ctx.fillRect(0, h - 50, w, 50);
         
-        // 地面纹理
-        ctx.strokeStyle = 'rgba(100, 80, 120, 0.2)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < w; i += 80) {
-            ctx.beginPath();
-            ctx.moveTo(i, h - 60);
-            ctx.lineTo(i, h);
-            ctx.stroke();
-        }
-        
-        // 神圣光环（中央装饰）
-        ctx.save();
-        ctx.globalAlpha = 0.15 + Math.sin(time / 1000) * 0.05;
-        const haloGrad = ctx.createRadialGradient(w/2, h/2 - 50, 0, w/2, h/2 - 50, 200);
-        haloGrad.addColorStop(0, 'rgba(255, 200, 100, 0.3)');
-        haloGrad.addColorStop(0.5, 'rgba(200, 150, 80, 0.1)');
-        haloGrad.addColorStop(1, 'transparent');
-        ctx.fillStyle = haloGrad;
-        ctx.beginPath();
-        ctx.arc(w/2, h/2 - 50, 200, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        // 中央光柱（静态部分）
+        const beamGrad = ctx.createLinearGradient(w/2 - 80, 0, w/2 + 80, 0);
+        beamGrad.addColorStop(0, 'transparent');
+        beamGrad.addColorStop(0.5, 'rgba(255, 200, 100, 0.06)');
+        beamGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = beamGrad;
+        ctx.fillRect(w/2 - 100, 0, 200, h);
     }
     
     drawProgress(ctx) {
