@@ -1016,7 +1016,11 @@ export class BossRushScene {
                             let isCrit = Math.random() < (weapon.critChance || 0.2);
                             if (isCrit) damage *= (weapon.critMultiplier || 2.0);
                             
-                            this.activeBoss.hp -= damage;
+                            if (this.activeBoss.takeDamage) {
+                                this.activeBoss.takeDamage(damage);
+                            } else {
+                                this.activeBoss.hp -= damage;
+                            }
                             this.weaponSystem.cooldownTimer = weapon.cooldown;
                             
                             this.showDamageNumber(this.activeBoss.x, this.activeBoss.y, Math.round(damage), isCrit);
@@ -1060,7 +1064,11 @@ export class BossRushScene {
                                 let isCrit = proj.critChance && Math.random() < proj.critChance;
                                 if (isCrit) dmg *= (proj.critMultiplier || 2.0);
                                 
-                                boss.hp -= dmg;
+                                if (boss.takeDamage) {
+                                    boss.takeDamage(dmg);
+                                } else {
+                                    boss.hp -= dmg;
+                                }
                                 proj.markedForDeletion = true;
                                 proj.lifetime = 0;
                                 

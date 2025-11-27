@@ -226,8 +226,8 @@ export class BerserkArtemisBoss {
         // 计算5秒内总伤害
         const recentDamage = this.damageHistory.reduce((sum, d) => sum + d.damage, 0);
         
-        // 强制触发月神逃脱 (5秒内受到超过2500伤害)
-        if (recentDamage >= 2500 && !this.escapeTriggered && now - this.lastEscapeTime > 3000) {
+        // 强制触发月神逃脱 (5秒内受到超过1800伤害)
+        if (recentDamage >= 1800 && !this.escapeTriggered && now - this.lastEscapeTime > 3000) {
             this.escapeTriggered = true;
             this.lastEscapeTime = now;
             this.damageHistory = []; // 清空伤害记录
@@ -1644,7 +1644,7 @@ export class BerserkArtemisBoss {
         const dx = this.x - this.player.x;
         const dy = this.y - this.player.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const escapeDist = 300;
+        const escapeDist = 400; // 远距离位移
         let targetX = this.x + (dx / dist) * escapeDist;
         let targetY = this.y + (dy / dist) * escapeDist;
         
@@ -1744,14 +1744,25 @@ export class BerserkArtemisBoss {
                 });
             }
             
-            // 如果是强制触发，立即释放一次其他技能
+            // 如果是强制触发，立即释放两次技能，然后进入正常冷却
             if (isForced) {
+                let skills = this.phase === 3 ? this.phase3Skills : (this.phase === 2 ? this.phase2Skills : this.skills);
+                skills = skills.filter(s => s !== 'LUNAR_ESCAPE' && s !== 'LUNAR_EXECUTION' && s !== 'STAR_MOON_DOOM');
+                
+                // 第一次技能
                 setTimeout(() => {
-                    let skills = this.phase === 3 ? this.phase3Skills : (this.phase === 2 ? this.phase2Skills : this.skills);
-                    skills = skills.filter(s => s !== 'LUNAR_ESCAPE' && s !== 'LUNAR_EXECUTION' && s !== 'STAR_MOON_DOOM');
                     this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
                     this.executeAttack();
-                }, 200);
+                }, 150);
+                
+                // 第二次技能
+                setTimeout(() => {
+                    this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
+                    this.executeAttack();
+                    // 进入正常冷却
+                    this.timer = 0;
+                    this.state = 'IDLE';
+                }, 400);
             }
         }, totalDuration * 1000);
     }
