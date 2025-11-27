@@ -115,16 +115,16 @@ export class EnemyManager {
     // 将普通怪物转化为精英怪
     makeElite(enemy) {
         enemy.isElite = true;
-        enemy.hp *= 2.5;         // 2.5倍血量 (调低)
-        enemy.maxHp *= 2.5;
-        enemy.damage *= 1.6;     // 1.6倍伤害
+        enemy.hp *= 3.2;         // 3.2倍血量
+        enemy.maxHp *= 3.2;
+        enemy.damage *= 1.8;     // 1.8倍伤害
         enemy.scoreReward *= 5;  // 5倍积分
-        enemy.radius *= 1.3;     // 体型变大
-        enemy.speed *= 1.05;     // 略微加速
+        enemy.radius *= 1.35;    // 体型变大
+        enemy.speed *= 1.08;     // 略微加速
         
         // 精英怪特殊能力
-        enemy.eliteArmor = 0.1;  // 10%伤害减免
-        enemy.eliteRegen = 0.5;  // 每秒回复0.5血量 (调低)
+        enemy.eliteArmor = 0.12; // 12%伤害减免
+        enemy.eliteRegen = 1.2;  // 每秒回复1.2血量
         
         // 精英怪视觉效果标记
         enemy.eliteGlow = true;
