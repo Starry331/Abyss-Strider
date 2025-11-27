@@ -99,13 +99,13 @@ export class MutatedMonkeyBoss {
                     setTimeout(() => { this.combatSystem.spawnProjectile({ x: rx, y: ry, radius: 35, damage: dmg, owner: 'enemy', life: 0.6, maxLife: 0.6,
                         update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                         draw(ctx) { const a = this.life / this.maxLife; ctx.fillStyle = `rgba(100,0,150,${a*0.7})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
-                    }); }, i * 80); } break;
+                    }); }, i * 120); } break;
             case 'DARK_FRENZY':
                 for (let i = 0; i < 8; i++) { setTimeout(() => { const fa = (Math.PI * 2 / 8) * i;
                     this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(fa) * 420, vy: Math.sin(fa) * 420, radius: 9, damage: dmg, owner: 'enemy',
                         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
                         draw(ctx) { ctx.fillStyle = '#a000ff'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
-                    }); }, i * 80); } break;
+                    }); }, i * 120); } break;
             case 'DEMON_RAGE':
                 this.x += Math.cos(angle) * 180; this.y += Math.sin(angle) * 180;
                 for (let w = 0; w < 3; w++) { setTimeout(() => {
@@ -1069,7 +1069,7 @@ export class MutatedCerberusBoss {
                         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
                         draw(ctx) { ctx.fillStyle = '#660000'; 
                             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();  }
-                    }); }, i * 100); } } break;
+                    }); }, i * 150); } } break;
             case 'HELL_RIFT': for (let i = 0; i < 5; i++) { const rx = this.x + (Math.random() - 0.5) * 400, ry = this.y + (Math.random() - 0.5) * 300;
                 setTimeout(() => { this.combatSystem.spawnProjectile({ x: rx, y: ry, radius: 60, damage: this.damage * 1.2, owner: 'enemy', life: 2, maxLife: 2,
                     update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
@@ -1106,7 +1106,7 @@ export class MutatedCerberusBoss {
                     radius: 16, damage: this.damage + 5, owner: 'enemy', life: 0.6,
                     update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) { ctx.fillStyle = '#880000'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
-                }); } }, d * 180); } break;
+                }); } }, d * 250); } break;
             case 'SOUL_CONSUME': if (this.player.screenShake) { this.player.screenShake.intensity = 15; this.player.screenShake.duration = 2; }
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 0, maxRadius: 220, damage: 0, owner: 'enemy', life: 2.0, maxLife: 2.0, boss: this, player: this.player,
                     update(dt) { this.x = this.boss.x; this.y = this.boss.y; this.radius = this.maxRadius * (1 - this.life / this.maxLife);
@@ -1350,7 +1350,7 @@ export class MutatedZeusBoss {
                     draw(ctx) { this.trail.forEach(t => { ctx.fillStyle = `rgba(255,100,0,${t.life * 6})`; ctx.beginPath(); ctx.arc(t.x, t.y, 10, 0, Math.PI * 2); ctx.fill(); });
                         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
                         ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.moveTo(28, 0); ctx.lineTo(-12, -7); ctx.lineTo(-12, 7); ctx.closePath(); ctx.fill(); ctx.restore(); }
-                }); }, i * 70); } break;
+                }); }, i * 100); } break;
             case 'TYRANT_SMITE': if (this.player.screenShake) { this.player.screenShake.intensity = 18; this.player.screenShake.duration = 2.5; }
                 for (let i = 0; i < 10; i++) { setTimeout(() => {
                     const tx = this.player.x + (Math.random() - 0.5) * 120, ty = this.player.y + (Math.random() - 0.5) * 120;
@@ -1378,7 +1378,7 @@ export class MutatedZeusBoss {
                         this.combatSystem.spawnProjectile({ x: jx, y: 0, targetY: jy, radius: 35, damage: this.damage - 3, owner: 'enemy', life: 0.22,
                             update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                             draw(ctx) { ctx.strokeStyle = `rgba(255,200,0,${this.life * 4})`; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(this.x, 0); ctx.lineTo(this.x, this.targetY); ctx.stroke(); }
-                        }); } }, wave * 350); } break;
+                        }); } }, wave * 450); } break;
             case 'DARK_JUDGMENT': if (this.player.screenShake) { this.player.screenShake.intensity = 32; this.player.screenShake.duration = 3.5; }
                 const djX = this.player.x, djY = this.player.y;
                 this.combatSystem.spawnProjectile({ x: djX, y: djY, radius: 170, damage: 0, owner: 'enemy', life: 2.2, maxLife: 2.2,

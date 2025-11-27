@@ -79,7 +79,7 @@ export class MutatedPaladinBoss {
                         ctx.beginPath(); ctx.moveTo(25, 0); ctx.lineTo(-15, -12); ctx.lineTo(-10, 0); ctx.lineTo(-15, 12); ctx.closePath(); ctx.fill();
                          ctx.restore(); }
                 }); }, i * 200); } break;
-            case 'PHANTOM_STRIKE': for (let b = 0; b < 6; b++) { setTimeout(() => {
+            case 'PHANTOM_STRIKE': for (let b = 0; b < 5; b++) { setTimeout(() => { // 减少到5次，间隔增加
                 const ba = Math.random() * Math.PI * 2, bd = 80 + Math.random() * 80;
                 this.dashTrail.push({ x: this.x, y: this.y, life: 0.4 });
                 this.x = this.player.x + Math.cos(ba) * bd; this.y = this.player.y + Math.sin(ba) * bd;
@@ -89,7 +89,7 @@ export class MutatedPaladinBoss {
                     update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
                         ctx.fillStyle = '#cc00cc'; ctx.beginPath(); ctx.moveTo(25, 0); ctx.lineTo(-10, -10); ctx.lineTo(-10, 10); ctx.closePath(); ctx.fill(); ctx.restore(); }
-                }); }, b * 180); } break;
+                }); }, b * 280); } break;
             case 'DARK_VORTEX': this.combatSystem.spawnProjectile({ x: this.player.x, y: this.player.y, radius: 180, damage: 0, owner: 'enemy', life: 3, maxLife: 3,
                 player: this.player, dmg: this.damage * 0.4,
                 update(dt) { this.life -= dt;
@@ -120,7 +120,7 @@ export class MutatedPaladinBoss {
                         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                         draw(ctx) { ctx.fillStyle = '#990099'; 
                             ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();  }
-                    }); } }, w * 150); } break;
+                    }); } }, w * 220); } break;
             case 'DARK_APOCALYPSE': if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 4; }
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 250, damage: 0, owner: 'enemy', life: 2, maxLife: 2,
                     player: this.player, dmg: this.damage * 0.6,
@@ -214,8 +214,8 @@ export class MutatedPaladinBoss {
                             draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
                                 ctx.fillStyle = '#cc00cc'; ctx.beginPath(); ctx.moveTo(22, 0); ctx.lineTo(-10, -8); ctx.lineTo(-10, 8); ctx.closePath(); ctx.fill(); ctx.restore(); }
                         }); } }, 700); break;
-            case 'SHADOW_COMBO': // 暗影连击
-                for (let hit = 0; hit < 7; hit++) { setTimeout(() => {
+            case 'SHADOW_COMBO': // 暗影连击（削弱：5次连击，间隔增加）
+                for (let hit = 0; hit < 5; hit++) { setTimeout(() => {
                     const ha = Math.random() * Math.PI * 2, hd = 45 + Math.random() * 35;
                     this.dashTrail.push({ x: this.x, y: this.y, life: 0.35 });
                     this.x = this.player.x + Math.cos(ha) * hd; this.y = this.player.y + Math.sin(ha) * hd;
@@ -225,7 +225,7 @@ export class MutatedPaladinBoss {
                         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                         draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
                             ctx.fillStyle = '#aa00aa'; ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
-                    }); } }, hit * 130); } break;
+                    }); } }, hit * 200); } break;
             case 'VOID_SHIELD': // 虚空护盾（削弱：持续时间缩短，伤害降低）
                 if (this.player.screenShake) { this.player.screenShake.intensity = 8; this.player.screenShake.duration = 1.5; }
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 70, damage: 0, owner: 'enemy', life: 2.0, maxLife: 2.0, boss: this, player: this.player,
