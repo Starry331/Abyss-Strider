@@ -59,11 +59,26 @@ export class MutatedMonkeyBoss {
         const dmg = this.damage;
         switch (this.currentSkill) {
             case 'SHADOW_DASH':
-                // 暗影突袭：延迟0.3秒后到达，给玩家躲避时间
-                const dashDelay = 0.3;
+                // 暗影突袭：延迟0.8秒后到达，给玩家充足躲避时间
+                const dashDelay = 0.8;
+                // 预警效果
+                this.combatSystem.spawnProjectile({
+                    x: this.dashTarget.x, y: this.dashTarget.y, vx: 0, vy: 0, radius: 60, damage: 0, lifetime: dashDelay, maxLife: dashDelay,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.fillStyle = `rgba(150,0,200,${0.2 + p * 0.3})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 60, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#cc00ff'; ctx.lineWidth = 3; ctx.setLineDash([8, 4]);
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 60 - p * 40, 0, Math.PI * 2); ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.fillStyle = '#ff88ff'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠️ 暗影突袭！', this.x, this.y - 75);
+                    }
+                });
                 setTimeout(() => {
                     this.x = this.dashTarget.x; this.y = this.dashTarget.y;
-                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 55, damage: dmg, owner: 'enemy', life: 0.25, maxLife: 0.25,
+                    this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 50, damage: dmg * 0.8, owner: 'enemy', life: 0.25, maxLife: 0.25,
                         update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                         draw(ctx) { ctx.fillStyle = `rgba(80,0,120,${this.life/this.maxLife*0.6})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
                     });

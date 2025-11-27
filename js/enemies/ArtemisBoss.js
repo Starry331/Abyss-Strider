@@ -25,8 +25,8 @@ export class BerserkArtemisBoss {
         this.damage = 100; // 增强伤害
         
         // 战斗属性
-        this.telegraphDuration = 0.4; // 更快预警
-        this.attackCooldown = 0.5; // 更频繁攻击
+        this.telegraphDuration = 0.6; // 预警时间
+        this.attackCooldown = 0.85; // 攻击间隔
         this.state = 'IDLE';
         this.timer = 0;
         this.currentSkill = null;

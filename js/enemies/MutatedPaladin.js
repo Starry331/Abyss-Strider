@@ -52,17 +52,31 @@ export class MutatedPaladinBoss {
                          ctx.restore(); }
                 }); } break;
             case 'SHADOW_DASH': const target = { ...this.dashTarget };
-                // 5段冲刺，间隔递增
+                // 预警效果（0.6秒）
+                this.combatSystem.spawnProjectile({
+                    x: target.x, y: target.y, vx: 0, vy: 0, radius: 50, damage: 0, lifetime: 0.6, maxLife: 0.6,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const p = 1 - this.life / this.maxLife;
+                        ctx.fillStyle = `rgba(100,0,150,${0.2 + p * 0.25})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 50, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#9900cc'; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, 50 - p * 35, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = '#cc88ff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠️ 暗影冲刺！', this.x, this.y - 65);
+                    }
+                });
+                // 4段冲刺，间隔更长
                 const player = this.player;
-                let dashDelay = 0;
-                for (let i = 0; i < 5; i++) { 
-                    dashDelay += 150 + i * 100; // 150, 250, 350, 450, 550ms 递增间隔
+                let dashDelay = 600; // 预警后开始
+                for (let i = 0; i < 4; i++) { 
+                    dashDelay += 200 + i * 120; // 200, 320, 440, 560ms 递增间隔
                     setTimeout(() => {
                     if (!player || !this.player) return;
                     this.dashTrail.push({ x: this.x, y: this.y, life: 0.5 });
-                    this.x += (target.x - this.x) / (5 - i); this.y += (target.y - this.y) / (5 - i);
+                    this.x += (target.x - this.x) / (4 - i); this.y += (target.y - this.y) / (4 - i);
                     const dist = Math.sqrt((player.x - this.x) ** 2 + (player.y - this.y) ** 2);
-                    if (dist < 45 && player.hp) player.hp -= this.calcDamage(this.damage * 0.9).damage;
+                    if (dist < 40 && player.hp) player.hp -= this.calcDamage(this.damage * 0.7).damage;
                 }, dashDelay); }
                 // 削弱：6个投射物，伤害降低
                 setTimeout(() => { for (let j = 0; j < 6; j++) { const sa = (Math.PI * 2 / 6) * j;

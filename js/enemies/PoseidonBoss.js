@@ -17,7 +17,7 @@ export class GhostPoseidonBoss {
         this.isBossRush = true;
         
         // 基础属性 (大幅增强)
-        this.maxHp = 12000; // 增强血量
+        this.maxHp = 8500; // 平衡血量
         this.hp = this.maxHp;
         this.radius = 70;
         this.color = '#0066aa';
