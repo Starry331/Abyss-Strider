@@ -2,12 +2,12 @@
  * 异化Boss系统 - Lv1-Lv4
  */
 
-// Lv1 异化猴王 - 0.9倍血量, 1.1倍伤害
+// Lv1 异化猴王 - 0.75倍血量, 1.1倍伤害
 export class MutatedMonkeyBoss {
     constructor(x, y, player, combatSystem) {
         this.x = x; this.y = y; this.player = player; this.combatSystem = combatSystem;
         this.level = 1; this.name = '噬魂猿魔'; this.isMutated = true;
-        this.maxHp = Math.round(300 * 0.9); this.hp = this.maxHp;
+        this.maxHp = Math.round(300 * 0.75); this.hp = this.maxHp;
         this.radius = 48; this.color = '#4a0080';
         this.damage = Math.round(15 * 1.1);
         this.telegraphDuration = 1.1; this.attackCooldown = 1.5;
