@@ -142,6 +142,30 @@ export class MenuScene {
             btnCloseAchievement.addEventListener('touchend', this.closeAchievementHandler);
         }
 
+        // 画廊按钮
+        const galleryOverlay = document.getElementById('gallery-overlay');
+        const btnGallery = document.getElementById('btn-gallery');
+        if (btnGallery && galleryOverlay) {
+            this.galleryHandler = (e) => {
+                e.preventDefault();
+                console.log("Gallery Button Clicked");
+                galleryOverlay.classList.remove('hidden');
+                this.renderGallery();
+            };
+            btnGallery.addEventListener('click', this.galleryHandler);
+            btnGallery.addEventListener('touchend', this.galleryHandler);
+        }
+
+        const btnCloseGallery = document.getElementById('btn-close-gallery');
+        if (btnCloseGallery && galleryOverlay) {
+            this.closeGalleryHandler = (e) => {
+                e.preventDefault();
+                galleryOverlay.classList.add('hidden');
+            };
+            btnCloseGallery.addEventListener('click', this.closeGalleryHandler);
+            btnCloseGallery.addEventListener('touchend', this.closeGalleryHandler);
+        }
+
         const btnLeaderboard = document.getElementById('btn-leaderboard');
         if (btnLeaderboard) {
             this.leaderboardHandler = (e) => {
@@ -256,6 +280,18 @@ export class MenuScene {
             btnBossRush.removeEventListener('click', this.bossRushHandler);
             btnBossRush.removeEventListener('touchend', this.bossRushHandler);
         }
+        
+        const btnGallery = document.getElementById('btn-gallery');
+        if (btnGallery && this.galleryHandler) {
+            btnGallery.removeEventListener('click', this.galleryHandler);
+            btnGallery.removeEventListener('touchend', this.galleryHandler);
+        }
+        
+        const btnCloseGallery = document.getElementById('btn-close-gallery');
+        if (btnCloseGallery && this.closeGalleryHandler) {
+            btnCloseGallery.removeEventListener('click', this.closeGalleryHandler);
+            btnCloseGallery.removeEventListener('touchend', this.closeGalleryHandler);
+        }
     }
 
     showLeaderboard() {
@@ -267,6 +303,51 @@ export class MenuScene {
         });
         if (data.length === 0) text += "暂无数据 (No Data)";
         alert(text);
+    }
+
+    renderGallery() {
+        const grid = document.getElementById('gallery-grid');
+        const progressText = document.getElementById('gallery-progress-text');
+        if (!grid || !window.gallerySystem) return;
+        
+        const bossData = window.gallerySystem.getAllBossData();
+        const progress = window.gallerySystem.getProgress();
+        
+        if (progressText) {
+            progressText.textContent = `${progress.unlocked}/${progress.total} (${progress.percent}%)`;
+        }
+        
+        grid.innerHTML = '';
+        
+        bossData.forEach(boss => {
+            const card = document.createElement('div');
+            card.className = `gallery-card ${boss.unlocked ? '' : 'locked'}`;
+            
+            const levelText = boss.isMutated ? `Lv${boss.level} 异化` : `Lv${boss.level}`;
+            const killText = boss.unlocked ? `击杀: ${boss.kills}次` : '未解锁 (击杀1次解锁)';
+            
+            // 确定显示的图片
+            let imageContent;
+            if (boss.unlocked) {
+                imageContent = `<img src="assets/gallery/${boss.image}" onerror="this.parentElement.innerHTML='🎭'">`;
+            } else if (boss.lockedImage) {
+                imageContent = `<img src="assets/gallery/${boss.lockedImage}" onerror="this.parentElement.innerHTML='❓'">`;
+            } else {
+                imageContent = '❓';
+            }
+            
+            card.innerHTML = `
+                <div class="gallery-image">
+                    ${imageContent}
+                </div>
+                <div class="gallery-name">${boss.name}</div>
+                <div class="gallery-title">${boss.title}</div>
+                ${boss.isMutated ? '<div class="gallery-mutated">⚡ 异化形态</div>' : ''}
+                <div class="gallery-kills">${killText}</div>
+            `;
+            
+            grid.appendChild(card);
+        });
     }
 
     enter() {

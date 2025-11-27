@@ -18,6 +18,7 @@ import { BuildSystem } from './systems/BuildSystem.js';
 import { EffectManager } from './effects/EffectManager.js';
 import { gameAudio } from './audio/GameAudio.js';
 import { AchievementSystem } from './systems/AchievementSystem.js';
+import { gallerySystem } from './systems/GallerySystem.js';
 import { MenuScene } from './main/MenuScene.js';
 import { HealthPackManager } from './levels/HealthPackManager.js';
 import { Renderer2D } from './effects/Renderer2D.js';
@@ -30,6 +31,7 @@ import { HalloweenRenderer } from './effects/HalloweenRenderer.js';
 window.Renderer2D = Renderer2D;
 window.CharacterRenderer = CharacterRenderer;
 window.HalloweenRenderer = HalloweenRenderer;
+window.gallerySystem = gallerySystem;
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');

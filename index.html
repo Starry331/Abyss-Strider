@@ -108,6 +108,7 @@
                 <!-- 副菜单按钮 -->
                 <div id="menu-buttons-secondary">
                     <button id="btn-tutorial" class="menu-btn-small">📖 教程</button>
+                    <button id="btn-gallery" class="menu-btn-small">🖼️ 画廊</button>
                     <button id="btn-achievements" class="menu-btn-small">🏆 成就</button>
                     <button id="btn-credits" class="menu-btn-small">⭐ 制作</button>
                 </div>
@@ -175,6 +176,19 @@
                 <button id="btn-close-credits" class="menu-btn">
                     <span class="btn-icon">✓</span>
                     <span class="btn-text">返回</span>
+                </button>
+            </div>
+
+            <!-- Gallery Overlay -->
+            <div id="gallery-overlay" class="hidden">
+                <h2>🖼️ Boss画廊</h2>
+                <div id="gallery-progress">解锁进度: <span id="gallery-progress-text">0/12</span></div>
+                <div id="gallery-grid">
+                    <!-- Boss卡片将通过JS动态生成 -->
+                </div>
+                <button id="btn-close-gallery" class="menu-btn">
+                    <span class="btn-icon">✓</span>
+                    <span class="btn-text">返回主菜单</span>
                 </button>
             </div>
 

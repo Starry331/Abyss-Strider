@@ -1144,6 +1144,11 @@ export class BossRushScene {
             
             // 检查Boss是否被击败
             if (this.activeBoss.hp <= 0) {
+                // 记录Boss击杀到画廊
+                if (window.gallerySystem && this.activeBoss.name) {
+                    window.gallerySystem.recordKill(this.activeBoss.name);
+                }
+                
                 if (this.audioManager) {
                     this.audioManager.playSound('boss_death');
                 }

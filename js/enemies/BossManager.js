@@ -53,6 +53,12 @@ export class BossManager {
                 // Boss Defeated
                 console.log("Boss Defeated! HP:", this.activeBoss.hp);
                 console.log("onBossDeath callback exists:", !!this.onBossDeath);
+                
+                // 记录Boss击杀到画廊
+                if (window.gallerySystem && this.activeBoss.name) {
+                    window.gallerySystem.recordKill(this.activeBoss.name);
+                }
+                
                 this.hideBossHPUI();
                 // this.uiManager.showBlessingMenu(); // Now handled by BuildSystem
                 this.activeBoss = null;
