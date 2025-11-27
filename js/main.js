@@ -126,6 +126,9 @@ const gameScene = {
         this.enemyManager = new EnemyManager(this.combatSystem, this.player);
         this.healthPackManager = new HealthPackManager(this.player);
         this.powerUpManager = new PowerUpManager(this.player, uiManager);
+        
+        // 连接武器系统与敌人管理器（用于法杖Lv1-3自动追踪）
+        this.weaponSystem.setEnemyManager(this.enemyManager);
 
         // Link level manager
         this.levelManager.enemyManager = this.enemyManager;

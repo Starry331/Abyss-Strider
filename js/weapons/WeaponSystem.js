@@ -5,17 +5,18 @@ export class WeaponSystem {
     constructor(combatSystem, audioManager = null) {
         this.combatSystem = combatSystem;
         this.audioManager = audioManager;
+        this.enemyManager = null; // 敌人管理器引用（用于法杖追踪）
         this.weapons = [
             {
                 name: 'Staff',
                 cnName: '法杖',
                 type: 'AOE',
-                damage: 13,           // 基础伤害（构筑倍率基准）
-                range: 160,
-                cooldown: 1.0,        // 攻击间隔
+                damage: 16,           // 基础伤害（增强：13→16）
+                range: 180,           // 基础范围（增强：160→180）
+                cooldown: 0.9,        // 攻击间隔（增强：1.0→0.9）
                 color: '#9b59b6',
-                aoeRadius: 55,
-                critChance: 0.2,      // 基础20%暴击率
+                aoeRadius: 60,        // AOE半径（增强：55→60）
+                critChance: 0.22,     // 基础22%暴击率（增强：20%→22%）
                 critMultiplier: 2.0,  // 基础2倍暴击伤害
                 lifesteal: 0,
                 manaSteal: 0,
@@ -60,6 +61,38 @@ export class WeaponSystem {
 
     get currentWeapon() {
         return this.weapons[this.currentIndex];
+    }
+    
+    // 设置敌人管理器（用于法杖Lv1-3自动追踪）
+    setEnemyManager(enemyManager) {
+        this.enemyManager = enemyManager;
+    }
+    
+    // 查找朝向方向最近的敌人
+    findNearestEnemyInDirection(player, baseAngle, maxAngle = Math.PI / 3) {
+        if (!this.enemyManager || !this.enemyManager.enemies) return null;
+        
+        let nearest = null;
+        let nearestDist = Infinity;
+        
+        this.enemyManager.enemies.forEach(enemy => {
+            const dx = enemy.x - player.x;
+            const dy = enemy.y - player.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const enemyAngle = Math.atan2(dy, dx);
+            
+            // 计算角度差
+            let angleDiff = Math.abs(enemyAngle - baseAngle);
+            if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+            
+            // 只锁定在朝向方向扇形范围内的敌人
+            if (angleDiff <= maxAngle && dist < nearestDist && dist < 400) {
+                nearestDist = dist;
+                nearest = enemy;
+            }
+        });
+        
+        return nearest;
     }
 
     switchWeapon() {
@@ -227,8 +260,9 @@ export class WeaponSystem {
         // Normal staff attack - 从上方砸下的法球
         const count = upgrade.projectileCount;
         
-        // Lv1-3使用更快的弹幕速度
+        // Lv1-3使用更快的弹幕速度 + 自动追踪
         const projectileSpeed = weapon.upgradeLevel <= 3 ? 550 : 400;
+        const hasAutoAim = weapon.upgradeLevel <= 3; // Lv1-3有自动追踪
         
         // 计算最终伤害
         const baseDamage = upgrade.damage;
@@ -236,13 +270,24 @@ export class WeaponSystem {
         const playerDamageMult = player.damageMultiplier || 1;
         const finalDamage = Math.round(baseDamage * weaponDamageMult * playerDamageMult);
         const combatSystem = this.combatSystem;
+        
+        // Lv1-3时寻找朝向方向最近的敌人
+        let lockedEnemy = null;
+        if (hasAutoAim) {
+            lockedEnemy = this.findNearestEnemyInDirection(player, baseAngle);
+        }
 
         // 生成目标位置（玩家面朝方向）
         for (let i = 0; i < count; i++) {
             setTimeout(() => {
                 // 计算目标落点
                 let targetX, targetY;
-                if (count === 1) {
+                
+                // Lv1-3时如果有锁定敌人，直接瞄准敌人
+                if (hasAutoAim && lockedEnemy && lockedEnemy.hp > 0) {
+                    targetX = lockedEnemy.x + (Math.random() - 0.5) * 30;
+                    targetY = lockedEnemy.y + (Math.random() - 0.5) * 30;
+                } else if (count === 1) {
                     targetX = player.x + Math.cos(baseAngle) * weapon.range;
                     targetY = player.y + Math.sin(baseAngle) * weapon.range;
                 } else if (count >= 5) {

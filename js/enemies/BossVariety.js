@@ -2946,8 +2946,8 @@ class PaladinBoss extends BaseBoss {
         this.damage = 40;
         this.critChance = 0.35;  // 35%暴击率
         this.critMultiplier = 1.5;  // 150%暴击伤害
-        this.telegraphDuration = 0.55;  // 更快前摇
-        this.attackCooldown = 0.85;  // 更快攻击
+        this.telegraphDuration = 0.5;   // 更快前摇
+        this.attackCooldown = 0.7;     // 更快攻击
         // 剑技为主的技能
         this.skills = [
             'SWIFT_SLASH',      // 迅斩
@@ -2971,7 +2971,14 @@ class PaladinBoss extends BaseBoss {
             'KINGS_WRATH',        // 王者之怒
             'AVALON_SHIELD',      // 阿瓦隆护盾
             'DIVINE_STORM',       // 神圣风暴
-            'ROUND_TABLE'         // 圆桌剑阵
+            'ROUND_TABLE',        // 圆桌剑阵
+            // 新增强力技能
+            'SOUL_BLADE',         // 灵魂剑
+            'GOLDEN_CROSS',       // 黄金十字
+            'HEAVEN_FALL',        // 天堂陨落
+            'SACRED_CHAINS',      // 神圣锁链
+            'ULTIMATE_SLASH',     // 终极斩击
+            'EXCALIBUR_APOCALYPSE' // 终焉圣剑 (秒杀)
         ];
         this.swordAngle = 0;    // 剑角度动画
         this.dashTrail = [];    // 冲刺残影
@@ -3654,6 +3661,225 @@ class PaladinBoss extends BaseBoss {
                         });
                     }
                 }, 800);
+                break;
+                
+            // ===== 新增强力Phase2技能 =====
+            case 'SOUL_BLADE':
+                // 灵魂剑 - 追踪+分裂的灵魂剑
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, targetPlayer: this.player, speed: 280, rotation: 0,
+                            radius: 22, damage: 28, owner: 'enemy', life: 3.0, splitDone: false, boss: this,
+                            update(dt) {
+                                const dx = this.targetPlayer.x - this.x, dy = this.targetPlayer.y - this.y;
+                                const dist = Math.sqrt(dx*dx + dy*dy);
+                                this.rotation = Math.atan2(dy, dx);
+                                this.x += (dx/dist) * this.speed * dt; this.y += (dy/dist) * this.speed * dt;
+                                this.life -= dt;
+                                // 1.5秒后分裂
+                                if (this.life < 1.5 && !this.splitDone) {
+                                    this.splitDone = true;
+                                    for (let s = 0; s < 4; s++) {
+                                        const sa = this.rotation + (s - 1.5) * 0.5;
+                                        this.boss.combatSystem.spawnProjectile({
+                                            x: this.x, y: this.y, vx: Math.cos(sa) * 400, vy: Math.sin(sa) * 400,
+                                            radius: 12, damage: 15, owner: 'enemy', rotation: sa, life: 0.8,
+                                            update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                            draw(ctx) { drawSwordWave(ctx, this.x, this.y, this.rotation, '#88ccff'); }
+                                        });
+                                    }
+                                }
+                                if (this.life <= 0) this.markedForDeletion = true;
+                            },
+                            draw(ctx) {
+                                ctx.fillStyle = `rgba(136, 200, 255, ${0.6 + Math.sin(Date.now()/100) * 0.3})`;
+                                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                                drawSwordWave(ctx, this.x, this.y, this.rotation, '#88ccff');
+                            }
+                        });
+                    }, i * 400);
+                }
+                break;
+                
+            case 'GOLDEN_CROSS':
+                // 黄金十字 - 十字范围大伤害
+                if (this.player.screenShake) { this.player.screenShake.intensity = 18; this.player.screenShake.duration = 1.5; }
+                // 竖线
+                for (let i = 0; i < 15; i++) {
+                    setTimeout(() => {
+                        this.combatSystem.spawnProjectile({
+                            x: this.player.x, y: i * 60 - 100, radius: 30, damage: 25, owner: 'enemy', life: 0.4, maxLife: 0.4,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.fillStyle = `rgba(255, 215, 0, ${this.life / this.maxLife})`; ctx.fillRect(this.x - 25, this.y - 30, 50, 60); }
+                        });
+                    }, i * 30);
+                }
+                // 横线
+                setTimeout(() => {
+                    for (let i = 0; i < 20; i++) {
+                        setTimeout(() => {
+                            this.combatSystem.spawnProjectile({
+                                x: i * 60 - 100, y: this.player.y, radius: 30, damage: 25, owner: 'enemy', life: 0.4, maxLife: 0.4,
+                                update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                                draw(ctx) { ctx.fillStyle = `rgba(255, 215, 0, ${this.life / this.maxLife})`; ctx.fillRect(this.x - 30, this.y - 25, 60, 50); }
+                            });
+                        }, i * 25);
+                    }
+                }, 300);
+                break;
+                
+            case 'HEAVEN_FALL':
+                // 天堂陨落 - 大范围延迟AOE
+                const fallPositions = [];
+                for (let i = 0; i < 12; i++) {
+                    fallPositions.push({ x: 100 + Math.random() * 800, y: 80 + Math.random() * 440 });
+                }
+                fallPositions.forEach((pos, idx) => {
+                    // 预警圈
+                    this.combatSystem.spawnProjectile({
+                        x: pos.x, y: pos.y, radius: 60, damage: 0, owner: 'enemy', life: 1.5, maxLife: 1.5,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            const progress = 1 - this.life / this.maxLife;
+                            ctx.strokeStyle = `rgba(255, 100, 0, ${0.5 + progress * 0.5})`; ctx.lineWidth = 3;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - progress * 0.3), 0, Math.PI * 2); ctx.stroke();
+                            ctx.fillStyle = `rgba(255, 200, 0, ${progress * 0.3})`; ctx.fill();
+                        }
+                    });
+                    // 陨落伤害
+                    setTimeout(() => {
+                        const dist = Math.sqrt((this.player.x - pos.x) ** 2 + (this.player.y - pos.y) ** 2);
+                        if (dist < 70) this.player.takeDamage(40);
+                        this.combatSystem.spawnProjectile({
+                            x: pos.x, y: pos.y, radius: 70, damage: 0, owner: 'enemy', life: 0.3, maxLife: 0.3,
+                            update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                            draw(ctx) { ctx.fillStyle = `rgba(255, 255, 200, ${this.life / this.maxLife})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
+                        });
+                    }, 1500);
+                });
+                break;
+                
+            case 'SACRED_CHAINS':
+                // 神圣锁链 - 减速+伤害区域
+                const chainCount = 8;
+                for (let i = 0; i < chainCount; i++) {
+                    const ca = (Math.PI * 2 / chainCount) * i;
+                    const cx = this.player.x + Math.cos(ca) * 120;
+                    const cy = this.player.y + Math.sin(ca) * 120;
+                    this.combatSystem.spawnProjectile({
+                        x: cx, y: cy, radius: 25, damage: 12, owner: 'enemy', life: 2.5, maxLife: 2.5,
+                        targetX: this.player.x, targetY: this.player.y, chainAngle: ca,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            const alpha = this.life / this.maxLife;
+                            // 锁链柱
+                            ctx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.8})`;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                            // 连接线
+                            ctx.strokeStyle = `rgba(255, 200, 100, ${alpha * 0.6})`; ctx.lineWidth = 4;
+                            ctx.setLineDash([10, 5]);
+                            ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.targetX, this.targetY); ctx.stroke();
+                            ctx.setLineDash([]);
+                        }
+                    });
+                }
+                break;
+                
+            case 'ULTIMATE_SLASH':
+                // 终极斩击 - 超长距离高伤害剑气
+                if (this.player.screenShake) { this.player.screenShake.intensity = 25; this.player.screenShake.duration = 1; }
+                const ultAngle = angle;
+                for (let w = 0; w < 3; w++) {
+                    setTimeout(() => {
+                        this.combatSystem.spawnProjectile({
+                            x: this.x, y: this.y, vx: Math.cos(ultAngle + (w-1) * 0.15) * 800, vy: Math.sin(ultAngle + (w-1) * 0.15) * 800,
+                            radius: 35, damage: 45, owner: 'enemy', rotation: ultAngle + (w-1) * 0.15, life: 1.5, trail: [],
+                            update(dt) {
+                                this.trail.push({ x: this.x, y: this.y, life: 0.2 });
+                                this.trail = this.trail.filter(t => { t.life -= dt; return t.life > 0; });
+                                this.x += this.vx * dt; this.y += this.vy * dt;
+                                this.life -= dt; if (this.life <= 0) this.markedForDeletion = true;
+                            },
+                            draw(ctx) {
+                                this.trail.forEach(t => {
+                                    ctx.fillStyle = `rgba(255, 255, 200, ${t.life * 3})`; ctx.beginPath();
+                                    ctx.arc(t.x, t.y, 25, 0, Math.PI * 2); ctx.fill();
+                                });
+                                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
+                                ctx.fillStyle = '#ffffff';
+                                ctx.beginPath(); ctx.moveTo(70, 0); ctx.lineTo(-35, -20); ctx.lineTo(-35, 20); ctx.closePath(); ctx.fill();
+                                ctx.fillStyle = '#ffd700';
+                                ctx.beginPath(); ctx.moveTo(50, 0); ctx.lineTo(-25, -14); ctx.lineTo(-25, 14); ctx.closePath(); ctx.fill();
+                                ctx.restore();
+                            }
+                        });
+                    }, w * 100);
+                }
+                break;
+                
+            case 'EXCALIBUR_APOCALYPSE':
+                // 终焉圣剑 - 秒杀技能（大前摇3秒，预警明显，好躲）
+                // 特殊：这个技能使用更长的前摇时间
+                if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 4; }
+                const apocX = this.player.x, apocY = this.player.y;
+                // 3秒预警阶段
+                this.combatSystem.spawnProjectile({
+                    x: apocX, y: apocY, radius: 150, damage: 0, owner: 'enemy', life: 3.0, maxLife: 3.0,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const progress = 1 - this.life / this.maxLife;
+                        const time = Date.now() / 1000;
+                        // 外圈警告
+                        ctx.strokeStyle = `rgba(255, 0, 0, ${0.5 + Math.sin(time * 10) * 0.3})`;
+                        ctx.lineWidth = 8;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - progress * 0.3), 0, Math.PI * 2); ctx.stroke();
+                        // 内圈填充
+                        ctx.fillStyle = `rgba(255, 50, 0, ${progress * 0.4})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * (1 - progress * 0.3), 0, Math.PI * 2); ctx.fill();
+                        // 警告文字
+                        ctx.fillStyle = `rgba(255, 255, 0, ${0.8 + Math.sin(time * 8) * 0.2})`;
+                        ctx.font = 'bold 28px Arial'; ctx.textAlign = 'center';
+                        ctx.fillText('⚠ 终焉圣剑 ⚠', this.x, this.y - this.radius - 30);
+                        ctx.font = 'bold 20px Arial';
+                        ctx.fillText(`${Math.ceil(this.life)}秒`, this.x, this.y);
+                        // 十字准星
+                        ctx.strokeStyle = `rgba(255, 200, 0, ${0.7})`;
+                        ctx.lineWidth = 4;
+                        ctx.beginPath();
+                        ctx.moveTo(this.x - 180, this.y); ctx.lineTo(this.x + 180, this.y);
+                        ctx.moveTo(this.x, this.y - 180); ctx.lineTo(this.x, this.y + 180);
+                        ctx.stroke();
+                    }
+                });
+                // 3秒后造成秒杀伤害
+                setTimeout(() => {
+                    const dist = Math.sqrt((this.player.x - apocX) ** 2 + (this.player.y - apocY) ** 2);
+                    if (dist < 160) {
+                        // 秒杀伤害 (999)
+                        this.player.takeDamage(999);
+                    }
+                    // 爆炸特效
+                    this.combatSystem.spawnProjectile({
+                        x: apocX, y: apocY, radius: 0, maxRadius: 200, damage: 0, owner: 'enemy', life: 0.5, maxLife: 0.5,
+                        update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            ctx.fillStyle = `rgba(255, 255, 200, ${this.life / this.maxLife})`;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                            ctx.strokeStyle = `rgba(255, 215, 0, ${this.life / this.maxLife})`; ctx.lineWidth = 10;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        }
+                    });
+                    // 光柱
+                    this.combatSystem.spawnProjectile({
+                        x: apocX, y: 0, radius: 80, damage: 0, owner: 'enemy', life: 1.0, maxLife: 1.0, targetY: apocY,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            ctx.fillStyle = `rgba(255, 255, 200, ${this.life / this.maxLife * 0.8})`;
+                            ctx.fillRect(this.x - 60, 0, 120, 800);
+                        }
+                    });
+                }, 3000);
                 break;
         }
     }
