@@ -4,9 +4,9 @@
  */
 
 import { BossRushMode } from '../systems/BossRushMode.js';
+import { BossVariety } from '../enemies/BossVariety.js';
 import { GhostPoseidonBoss } from '../enemies/PoseidonBoss.js';
 import { BerserkArtemisBoss } from '../enemies/ArtemisBoss.js';
-import { BossVariety } from '../enemies/BossVariety.js';
 
 export class BossRushScene {
     constructor(config) {
@@ -262,6 +262,14 @@ export class BossRushScene {
         const menu = document.getElementById('main-menu');
         if (menu) menu.classList.add('hidden');
         
+        // 绑定Esc暂停菜单
+        this.escHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.togglePause();
+            }
+        };
+        document.addEventListener('keydown', this.escHandler);
+        
         // 播放Boss音乐
         if (this.audioManager) {
             this.audioManager.stopMusic();
@@ -297,15 +305,17 @@ export class BossRushScene {
         const x = Math.min(canvas.width * 0.7, canvas.width - 100);
         const y = canvas.height / 2;
         
-        // 根据Boss类型创建
+        // 创建Boss
         console.log('创建Boss, 位置:', x, y, '等级:', bossInfo.level);
         try {
             if (bossInfo.level === 6) {
+                // Lv6: 鬼化波塞冬
                 this.activeBoss = new GhostPoseidonBoss(x, y, this.player, this.combatSystem);
             } else if (bossInfo.level === 7) {
+                // Lv7: 狂化阿尔忒弥斯
                 this.activeBoss = new BerserkArtemisBoss(x, y, this.player, this.combatSystem);
             } else {
-                // 异化Boss 1-5
+                // Lv1-5: 异化Boss
                 this.activeBoss = BossVariety.createBoss(bossInfo.level, x, y, this.player, this.combatSystem, true);
             }
             console.log('Boss已创建:', this.activeBoss ? this.activeBoss.name : 'null');
@@ -316,14 +326,9 @@ export class BossRushScene {
         // 更新Boss血条UI
         this.updateBossHPUI();
         
-        // 播放对应Boss专属BGM
+        // 播放Boss专属BGM
         if (this.audioManager) {
-            // 尝试播放专属BGM，若不存在则使用默认Boss音乐
-            if (bossInfo.bgm && this.audioManager.sounds[bossInfo.bgm]) {
-                this.audioManager.playMusic(bossInfo.bgm);
-            } else {
-                this.audioManager.playBossMusic(bossInfo.level);
-            }
+            this.audioManager.playBossMusic(bossInfo.level);
         }
         
         // 清空场上的拾取物
@@ -1010,6 +1015,14 @@ export class BossRushScene {
                         this.activeBoss.hp -= (proj.damage || 10);
                         proj.markedForDeletion = true;
                         proj.lifetime = 0;
+                        
+                        // 打击感：特效+音效
+                        if (this.effectManager) {
+                            this.effectManager.spawnHitEffect(this.activeBoss.x, this.activeBoss.y);
+                        }
+                        if (this.audioManager) {
+                            this.audioManager.playSound('hit');
+                        }
                     }
                 }
             });
@@ -1347,11 +1360,15 @@ export class BossRushScene {
         
         const nameEl = document.getElementById('boss-name');
         const fillEl = document.getElementById('boss-hp-fill');
+        const textEl = document.getElementById('boss-hp-text');
         
         if (nameEl) nameEl.textContent = this.activeBoss.name;
         if (fillEl) {
-            const percent = (this.activeBoss.hp / this.activeBoss.maxHp) * 100;
+            const percent = Math.max(0, (this.activeBoss.hp / this.activeBoss.maxHp) * 100);
             fillEl.style.width = `${percent}%`;
+        }
+        if (textEl) {
+            textEl.textContent = `HP: ${Math.ceil(Math.max(0, this.activeBoss.hp))} / ${this.activeBoss.maxHp}`;
         }
     }
     
@@ -1359,6 +1376,33 @@ export class BossRushScene {
     hideBossHPUI() {
         const container = document.getElementById('boss-hp-container');
         if (container) container.style.display = 'none';
+    }
+    
+    // 暂停/继续游戏
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        const pauseMenu = document.getElementById('pause-menu');
+        
+        if (this.isPaused) {
+            if (pauseMenu) pauseMenu.classList.remove('hidden');
+            // 绑定暂停菜单按钮
+            const btnResume = document.getElementById('btn-resume');
+            const btnQuit = document.getElementById('btn-quit-game');
+            
+            if (btnResume) {
+                btnResume.onclick = () => this.togglePause();
+            }
+            if (btnQuit) {
+                btnQuit.onclick = () => {
+                    this.isPaused = false;
+                    if (pauseMenu) pauseMenu.classList.add('hidden');
+                    this.exit();
+                    if (this.onExit) this.onExit();
+                };
+            }
+        } else {
+            if (pauseMenu) pauseMenu.classList.add('hidden');
+        }
     }
     
     // 绘制拾取物
@@ -1446,5 +1490,17 @@ export class BossRushScene {
         this.activeBoss = null;
         this.pickups = [];
         this.bossRushMode.end();
+        
+        // 移除Esc事件监听器
+        if (this.escHandler) {
+            document.removeEventListener('keydown', this.escHandler);
+        }
+        
+        // 隐藏Boss血条
+        this.hideBossHPUI();
+        
+        // 隐藏HUD
+        const hud = document.getElementById('hud');
+        if (hud) hud.classList.add('hidden');
     }
 }
