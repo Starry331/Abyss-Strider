@@ -57,7 +57,13 @@ export class GhostPoseidonBoss {
             'POSEIDON_WRATH',    // 波塞冬之怒
             'KRAKEN_SUMMON',     // 召唤克拉肯触手
             'ABYSS_DOMAIN',      // 深渊领域
-            'DIVINE_JUDGMENT'    // 秒杀技：神罚海啸（有预警和后摇）
+            'DIVINE_JUDGMENT',   // 秒杀技：神罚海啸
+            // 新增5个技能
+            'STORM_SURGE',       // 风暴涌动：环形风暴
+            'RIPTIDE',           // 激流：拉扯玩家的水流
+            'OCEAN_PILLAR',      // 海洋柱：地面喷射水柱
+            'CORAL_CAGE',        // 珊瑚牢笼：围困玩家
+            'LEVIATHAN_CALL'     // 利维坦召唤：巨大海怪攻击
         ];
         
         // 视觉效果
@@ -375,6 +381,106 @@ export class GhostPoseidonBoss {
                         });
                     }
                 }, 2500);
+                break;
+                
+            case 'STORM_SURGE':
+                // 风暴涌动 - 环形扩散风暴
+                for (let wave = 0; wave < 3; wave++) {
+                    setTimeout(() => {
+                        for (let i = 0; i < 12; i++) {
+                            const a = (Math.PI * 2 / 12) * i;
+                            const startDist = 50 + wave * 30;
+                            this.combatSystem.spawnProjectile({
+                                x: this.x + Math.cos(a) * startDist,
+                                y: this.y + Math.sin(a) * startDist,
+                                vx: Math.cos(a) * 200, vy: Math.sin(a) * 200,
+                                radius: 15, damage: dmg * 0.6, lifetime: 2,
+                                color: '#66ccff', isEnemy: true
+                            });
+                        }
+                    }, wave * 300);
+                }
+                break;
+                
+            case 'RIPTIDE':
+                // 激流 - 向玩家拉扯的水流
+                const riptideAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                for (let i = 0; i < 8; i++) {
+                    const offset = (i - 3.5) * 0.15;
+                    setTimeout(() => {
+                        // 从玩家身后发射向Boss方向
+                        const startX = this.player.x + Math.cos(riptideAngle) * 300;
+                        const startY = this.player.y + Math.sin(riptideAngle) * 300;
+                        this.combatSystem.spawnProjectile({
+                            x: startX, y: startY,
+                            vx: -Math.cos(riptideAngle + offset) * 350,
+                            vy: -Math.sin(riptideAngle + offset) * 350,
+                            radius: 20, damage: dmg * 0.5, lifetime: 1.5,
+                            color: '#0088cc', isEnemy: true
+                        });
+                    }, i * 100);
+                }
+                break;
+                
+            case 'OCEAN_PILLAR':
+                // 海洋柱 - 地面喷射水柱
+                for (let i = 0; i < 6; i++) {
+                    setTimeout(() => {
+                        const px = this.player.x + (Math.random() - 0.5) * 200;
+                        const py = this.player.y + (Math.random() - 0.5) * 200;
+                        // 预警圈
+                        this.combatSystem.spawnProjectile({
+                            x: px, y: py, vx: 0, vy: 0,
+                            radius: 40, damage: 0, lifetime: 0.5,
+                            color: 'rgba(0, 150, 255, 0.3)', isEnemy: false
+                        });
+                        // 延迟喷发
+                        setTimeout(() => {
+                            this.combatSystem.spawnProjectile({
+                                x: px, y: py, vx: 0, vy: -300,
+                                radius: 35, damage: dmg * 1.1, lifetime: 1,
+                                color: '#00ddff', isEnemy: true
+                            });
+                        }, 500);
+                    }, i * 200);
+                }
+                break;
+                
+            case 'CORAL_CAGE':
+                // 珊瑚牢笼 - 围困玩家
+                const cageX = this.player.x;
+                const cageY = this.player.y;
+                for (let i = 0; i < 8; i++) {
+                    const cageAngle = (Math.PI * 2 / 8) * i;
+                    setTimeout(() => {
+                        this.combatSystem.spawnProjectile({
+                            x: cageX + Math.cos(cageAngle) * 150,
+                            y: cageY + Math.sin(cageAngle) * 150,
+                            vx: -Math.cos(cageAngle) * 100,
+                            vy: -Math.sin(cageAngle) * 100,
+                            radius: 25, damage: dmg * 0.8, lifetime: 2,
+                            color: '#ff6688', isEnemy: true
+                        });
+                    }, i * 80);
+                }
+                break;
+                
+            case 'LEVIATHAN_CALL':
+                // 利维坦召唤 - 巨大海怪攻击
+                // 从屏幕边缘召唤巨大触手横扫
+                const levSide = Math.random() > 0.5 ? 1 : -1;
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        const startY = 100 + i * 100;
+                        this.combatSystem.spawnProjectile({
+                            x: levSide > 0 ? -50 : 850,
+                            y: startY,
+                            vx: levSide * 400, vy: 0,
+                            radius: 50, damage: dmg * 1.3, lifetime: 2.5,
+                            color: '#005577', isEnemy: true
+                        });
+                    }, i * 150);
+                }
                 break;
         }
     }

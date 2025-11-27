@@ -66,7 +66,13 @@ export class BerserkArtemisBoss {
             'OLYMPUS_JUDGMENT',  // 奥林匹斯审判
             'ETERNAL_HUNT',      // 永恒狩猎
             'CRESCENT_SLASH',    // 近身技：月牙斩
-            'LUNAR_EXECUTION'    // 秒杀技：月神处刑（有预警和后摇）
+            'LUNAR_EXECUTION',   // 秒杀技：月神处刑
+            // 新增5个技能
+            'STAR_SHOWER',       // 星辰坠落：从天而降的星光箭
+            'SHADOW_STEP',       // 影步：瞬移并留下残影攻击
+            'MOONBEAM_SWEEP',    // 月光束横扫：激光扫射
+            'FERAL_CHARGE',      // 野性冲锋：近身连续突进
+            'CELESTIAL_SNIPE'    // 天穹狙击：远距离高伤害精准射击
         ];
         
         // 视觉效果
@@ -528,6 +534,133 @@ export class BerserkArtemisBoss {
                         });
                     }
                 }, 3000);
+                break;
+                
+            case 'STAR_SHOWER':
+                // 星辰坠落 - 从天而降的星光箭
+                for (let i = 0; i < 15; i++) {
+                    setTimeout(() => {
+                        const starX = this.player.x + (Math.random() - 0.5) * 400;
+                        // 预警
+                        this.combatSystem.spawnProjectile({
+                            x: starX, y: this.player.y,
+                            vx: 0, vy: 0,
+                            radius: 25, damage: 0, lifetime: 0.4,
+                            color: 'rgba(255, 255, 150, 0.3)', isEnemy: false
+                        });
+                        // 星光箭
+                        setTimeout(() => {
+                            this.combatSystem.spawnProjectile({
+                                x: starX, y: -30,
+                                vx: (Math.random() - 0.5) * 50, vy: 500,
+                                radius: 12, damage: dmg * 0.7, lifetime: 1.5,
+                                color: '#ffff88', isEnemy: true
+                            });
+                        }, 400);
+                    }, i * 100);
+                }
+                break;
+                
+            case 'SHADOW_STEP':
+                // 影步 - 瞬移并留下残影攻击
+                const shadowPositions = [];
+                for (let i = 0; i < 4; i++) {
+                    const angle = (Math.PI * 2 / 4) * i + Math.random() * 0.5;
+                    const dist = 100 + Math.random() * 50;
+                    shadowPositions.push({
+                        x: this.player.x + Math.cos(angle) * dist,
+                        y: this.player.y + Math.sin(angle) * dist
+                    });
+                }
+                
+                shadowPositions.forEach((pos, idx) => {
+                    setTimeout(() => {
+                        // 瞬移到位置
+                        this.x = pos.x;
+                        this.y = pos.y;
+                        
+                        // 残影攻击
+                        const attackAngle = Math.atan2(this.player.y - pos.y, this.player.x - pos.x);
+                        for (let j = -1; j <= 1; j++) {
+                            this.combatSystem.spawnProjectile({
+                                x: pos.x, y: pos.y,
+                                vx: Math.cos(attackAngle + j * 0.2) * 400,
+                                vy: Math.sin(attackAngle + j * 0.2) * 400,
+                                radius: 10, damage: dmg * 0.5, lifetime: 1,
+                                color: '#aa66cc', isEnemy: true
+                            });
+                        }
+                    }, idx * 250);
+                });
+                break;
+                
+            case 'MOONBEAM_SWEEP':
+                // 月光束横扫 - 激光扫射
+                const sweepStartAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x) - Math.PI / 4;
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(() => {
+                        const sweepAngle = sweepStartAngle + (Math.PI / 2) * (i / 20);
+                        // 多段激光
+                        for (let j = 0; j < 5; j++) {
+                            this.combatSystem.spawnProjectile({
+                                x: this.x + Math.cos(sweepAngle) * (50 + j * 40),
+                                y: this.y + Math.sin(sweepAngle) * (50 + j * 40),
+                                vx: Math.cos(sweepAngle) * 300,
+                                vy: Math.sin(sweepAngle) * 300,
+                                radius: 8, damage: dmg * 0.3, lifetime: 0.8,
+                                color: '#ddaaff', isEnemy: true
+                            });
+                        }
+                    }, i * 50);
+                }
+                break;
+                
+            case 'FERAL_CHARGE':
+                // 野性冲锋 - 近身连续突进
+                for (let charge = 0; charge < 5; charge++) {
+                    setTimeout(() => {
+                        const chargeAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                        // 冲向玩家
+                        this.x = this.player.x - Math.cos(chargeAngle) * 50;
+                        this.y = this.player.y - Math.sin(chargeAngle) * 50;
+                        
+                        // 爪击
+                        for (let claw = -2; claw <= 2; claw++) {
+                            this.combatSystem.spawnProjectile({
+                                x: this.x, y: this.y,
+                                vx: Math.cos(chargeAngle + claw * 0.3) * 300,
+                                vy: Math.sin(chargeAngle + claw * 0.3) * 300,
+                                radius: 15, damage: dmg * 0.6, lifetime: 0.5,
+                                color: '#ff88aa', isEnemy: true
+                            });
+                        }
+                    }, charge * 300);
+                }
+                break;
+                
+            case 'CELESTIAL_SNIPE':
+                // 天穹狙击 - 远距离高伤害精准射击
+                // 蓄力预警
+                const snipeAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                // 显示瞄准线
+                this.combatSystem.spawnProjectile({
+                    x: this.x, y: this.y,
+                    vx: Math.cos(snipeAngle) * 800,
+                    vy: Math.sin(snipeAngle) * 800,
+                    radius: 3, damage: 0, lifetime: 1,
+                    color: '#ff4444', isEnemy: false
+                });
+                
+                // 延迟发射高伤害箭矢
+                setTimeout(() => {
+                    this.combatSystem.spawnProjectile({
+                        x: this.x, y: this.y,
+                        vx: Math.cos(snipeAngle) * 800,
+                        vy: Math.sin(snipeAngle) * 800,
+                        radius: 20, damage: dmg * 2.0, lifetime: 1.5,
+                        color: '#ffaaff', isEnemy: true
+                    });
+                }, 800);
                 break;
         }
     }
