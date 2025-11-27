@@ -46,7 +46,7 @@ export class BossRushScene {
         this.pickups = [];
         this.pickupSpawnTimer = 0;
         this.pickupSpawnInterval = 8; // 每8秒尝试生成
-        this.healthPackChance = 0.25; // 血包概率25%（略微增加）
+        this.healthPackChance = 0.32; // 血包概率32%（小幅提升）
         this.buffChance = 0.15; // 限时buff概率15%
         
         this.initBackground();
@@ -265,6 +265,11 @@ export class BossRushScene {
             if (weaponName) weaponName.textContent = weapon.cnName || weapon.name;
         }
         this.lastSwitchState = false; // 武器切换状态
+        
+        // 初始化构筑系统
+        if (this.BuildSystem && this.weaponSystem) {
+            this.buildSystem = new this.BuildSystem(this.weaponSystem, this.player, null);
+        }
         
         // 清空特效
         if (this.effectManager) {
@@ -985,6 +990,8 @@ export class BossRushScene {
                         // 打击感：特效+音效+屏幕震动
                         if (this.effectManager) {
                             this.effectManager.spawnHitEffect(this.activeBoss.x, this.activeBoss.y);
+                            // 屏幕震动（暴击更强）
+                            this.effectManager.triggerShake(isCrit ? 8 : 4, isCrit ? 0.15 : 0.08);
                         }
                         if (this.audioManager) {
                             this.audioManager.playSound(isCrit ? 'crit' : 'hit');
@@ -1029,9 +1036,10 @@ export class BossRushScene {
                         // 显示伤害数字
                         this.showDamageNumber(boss.x, boss.y, Math.round(dmg), isCrit);
                         
-                        // 打击感：特效+音效
+                        // 打击感：特效+音效+屏幕震动
                         if (this.effectManager) {
                             this.effectManager.spawnHitEffect(boss.x, boss.y);
+                            this.effectManager.triggerShake(isCrit ? 6 : 3, isCrit ? 0.12 : 0.06);
                         }
                         if (this.audioManager) {
                             this.audioManager.playSound(isCrit ? 'crit' : 'hit');
@@ -1082,6 +1090,11 @@ export class BossRushScene {
                         
                         if (dmg > 0) {
                             this.player.hp -= dmg;
+                            // Boss打击玩家的打击感
+                            if (this.effectManager) {
+                                this.effectManager.spawnHitEffect(this.player.x, this.player.y, '#ff4444');
+                                this.effectManager.triggerShake(10, 0.2); // 被击中震动更强
+                            }
                             if (this.audioManager) {
                                 this.audioManager.playSound('hurt');
                             }
@@ -1166,6 +1179,14 @@ export class BossRushScene {
         const w = canvas.width;
         const h = canvas.height;
         
+        // 应用屏幕震动
+        ctx.save();
+        if (this.effectManager && this.effectManager.shakeTimer > 0) {
+            const shakeX = (Math.random() - 0.5) * this.effectManager.shakeIntensity;
+            const shakeY = (Math.random() - 0.5) * this.effectManager.shakeIntensity;
+            ctx.translate(shakeX, shakeY);
+        }
+        
         // ===== 万神殿背景 =====
         this.drawPantheonBackground(ctx, w, h);
         
@@ -1218,6 +1239,9 @@ export class BossRushScene {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(0, 0, w, h);
         }
+        
+        // 恢复屏幕震动变换
+        ctx.restore();
     }
     
     // 万神殿背景绘制（性能优化版）
