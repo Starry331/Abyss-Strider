@@ -30,6 +30,7 @@ export class GallerySystem {
             { id: 'artemis', level: 7, name: '狂化阿尔忒弥斯', title: 'Berserk Artemis', isMutated: false, image: 'arti.PNG', wideImage: true, lockedImage: 'Arti lock.PNG' },
             // 特殊解锁 - 阿尔忒弥斯系列
             { id: 'artemis_summer', level: 7, name: '阿尔忒弥斯·夏日', title: 'Artemis Summer', lockedName: '阿尔忒弥斯·???', lockedTitle: '???', isMutated: false, image: 'arti beach.PNG', wideImage: true, lockedImage: 'Arti lock.PNG', unlockType: 'artemis_kills', unlockCount: 2, unlockHint: '击败阿尔忒弥斯2次解锁' },
+            { id: 'artemis_cake', level: 7, name: '阿尔忒弥斯·蛋糕裙', title: 'Artemis Cake', lockedName: '阿尔忒弥斯·日常装', lockedTitle: 'Artemis Casual', isMutated: false, image: 'Arti cake.PNG', wideImage: true, lockedImage: 'Arti lock.PNG', unlockType: 'artemis_kills', unlockCount: 3, unlockHint: '击败阿尔忒弥斯3次解锁' },
             // 特殊解锁 - BSD系列
             { id: 'bsd_swim', level: 6, name: '波塞冬·特别服装', title: 'Poseidon Special', lockedName: '波塞冬·???', lockedTitle: '???', isMutated: false, image: 'bsd swim.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'poseidon_kills', unlockCount: 3, unlockHint: '击败波塞冬3次解锁' },
             { id: 'bsd_swimsuit', level: 6, name: '波塞冬·特别服装', title: 'Poseidon Special', lockedName: '波塞冬·???', lockedTitle: '???', isMutated: false, image: 'bsd swim suit.PNG', wideImage: true, lockedImage: 'bsd locked.PNG', unlockType: 'all_except_lv7', unlockCount: 3, unlockHint: '除Lv7外全Boss击杀每个3次解锁' },
