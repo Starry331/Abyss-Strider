@@ -42,8 +42,8 @@ export class MutatedIceDragonBoss {
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350,
                     radius: 12, damage: this.damage, owner: 'enemy',
                     update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
-                    draw(ctx) { ctx.fillStyle = '#9932cc'; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+                    draw(ctx) { ctx.fillStyle = '#9932cc'; 
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();  }
                 }); } break;
             case 'FROST_DOMAIN': this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 200, damage: 0, owner: 'enemy', life: 4, maxLife: 4,
                 player: this.player, dmg: this.damage * 0.3,
@@ -126,9 +126,9 @@ export class MutatedIceDragonBoss {
         bodyGrad.addColorStop(0.5, '#9932cc');
         bodyGrad.addColorStop(1, '#4a0080');
         ctx.fillStyle = bodyGrad;
-        ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 40;
+        
         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // 龙鳞纹理
         ctx.strokeStyle = '#660099';
@@ -153,14 +153,14 @@ export class MutatedIceDragonBoss {
         ctx.stroke();
         // 尾刺
         ctx.fillStyle = '#cc00ff';
-        ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15;
+        
         ctx.beginPath();
         ctx.moveTo(this.x + 110, this.y + this.radius + 20);
         ctx.lineTo(this.x + 130, this.y + this.radius + 10);
         ctx.lineTo(this.x + 125, this.y + this.radius + 25);
         ctx.lineTo(this.x + 140, this.y + this.radius + 30);
         ctx.closePath(); ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 龙头（长颈）=====
         // 颈部
@@ -193,12 +193,12 @@ export class MutatedIceDragonBoss {
         
         // 龙眼（发光紫眼）
         ctx.fillStyle = '#ff0066';
-        ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
+        
         ctx.beginPath();
         ctx.ellipse(this.x - 15, headY - 5, 10, 7, 0, 0, Math.PI * 2);
         ctx.ellipse(this.x + 15, headY - 5, 10, 7, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         // 竖瞳
         ctx.fillStyle = '#000';
         ctx.beginPath();
@@ -235,10 +235,10 @@ export class MutatedIceDragonBoss {
         
         // ===== 异化标记 =====
         ctx.fillStyle = '#cc00ff';
-        ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15;
+        
         ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
         ctx.fillText('☠ 异化 ☠', this.x, headY - 55);
-        ctx.shadowBlur = 0;
+        
         
         if (this.state === 'TELEGRAPH') this.drawSkillIndicator(ctx);
     }
@@ -288,8 +288,8 @@ export class MutatedCerberusBoss {
                     this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(ha) * 400, vy: Math.sin(ha) * 400,
                         radius: 12, damage: this.damage, owner: 'enemy',
                         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
-                        draw(ctx) { ctx.fillStyle = '#660000'; ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 15;
-                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+                        draw(ctx) { ctx.fillStyle = '#660000'; 
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();  }
                     }); }, i * 100); } } break;
             case 'HELL_RIFT': for (let i = 0; i < 5; i++) { const rx = this.x + (Math.random() - 0.5) * 400, ry = this.y + (Math.random() - 0.5) * 300;
                 setTimeout(() => { this.combatSystem.spawnProjectile({ x: rx, y: ry, radius: 60, damage: this.damage * 1.2, owner: 'enemy', life: 2, maxLife: 2,
@@ -338,9 +338,9 @@ export class MutatedCerberusBoss {
             ctx.fill();
             // 熔岩爪子
             ctx.fillStyle = '#ff3300';
-            ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 8;
+            
             ctx.beginPath(); ctx.arc(this.x + leg.x, this.y + leg.y + 20 + legWave, 10, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
+            
             ctx.fillStyle = '#2a0000';
         });
         
@@ -350,14 +350,14 @@ export class MutatedCerberusBoss {
         bodyGrad.addColorStop(0.5, '#3a0000');
         bodyGrad.addColorStop(1, '#1a0000');
         ctx.fillStyle = bodyGrad;
-        ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 35;
+        
         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // 熔岩裂纹
         ctx.strokeStyle = '#ff4400';
         ctx.lineWidth = 3;
-        ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 10;
+        
         for (let i = 0; i < 6; i++) {
             const crackA = i * 1.0 + 0.2;
             ctx.beginPath();
@@ -365,7 +365,7 @@ export class MutatedCerberusBoss {
             ctx.lineTo(this.x + Math.cos(crackA) * (this.radius - 8), this.y + Math.sin(crackA) * (this.radius - 8));
             ctx.stroke();
         }
-        ctx.shadowBlur = 0;
+        
         
         // ===== 蛇尾（冥界之蛇）=====
         ctx.strokeStyle = '#3a0000';
@@ -378,11 +378,11 @@ export class MutatedCerberusBoss {
         ctx.stroke();
         // 蛇头（绿色火焰）
         ctx.fillStyle = '#00cc00';
-        ctx.shadowColor = '#00ff00'; ctx.shadowBlur = 20;
+        
         ctx.beginPath(); ctx.arc(this.x + 80, this.y + this.radius + 8, 12, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ff0000';
         ctx.beginPath(); ctx.arc(this.x + 78, this.y + this.radius + 5, 3, 0, Math.PI * 2); ctx.arc(this.x + 82, this.y + this.radius + 5, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 三个狼头 =====
         const headData = [
@@ -438,12 +438,12 @@ export class MutatedCerberusBoss {
             
             // 眼睛（燃烧红眼）
             ctx.fillStyle = '#ff0000';
-            ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 18;
+            
             ctx.beginPath();
             ctx.ellipse(hx - 10, hy - 4, 7, 5, head.angle, 0, Math.PI * 2);
             ctx.ellipse(hx + 10, hy - 4, 7, 5, head.angle, 0, Math.PI * 2);
             ctx.fill();
-            ctx.shadowBlur = 0;
+            
             // 竖瞳
             ctx.fillStyle = '#000';
             ctx.beginPath();
@@ -467,10 +467,10 @@ export class MutatedCerberusBoss {
         
         // ===== 异化标记 =====
         ctx.fillStyle = '#ff0000';
-        ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 15;
+        
         ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
         ctx.fillText('☠ 异化 ☠', this.x, this.y - this.radius - 60);
-        ctx.shadowBlur = 0;
+        
         
         if (this.state === 'TELEGRAPH') this.drawSkillIndicator(ctx);
     }
@@ -519,16 +519,16 @@ export class MutatedZeusBoss {
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 500, vy: Math.sin(a) * 500,
                     radius: 12, damage: this.damage, owner: 'enemy',
                     update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
-                    draw(ctx) { ctx.fillStyle = '#ffcc00'; ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 20;
-                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+                    draw(ctx) { ctx.fillStyle = '#ffcc00'; 
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();  }
                 }); } break;
             case 'TYRANT_THUNDER': for (let i = 0; i < 8; i++) { const tx = this.player.x + (Math.random() - 0.5) * 300, ty = this.player.y + (Math.random() - 0.5) * 300;
                 setTimeout(() => { this.combatSystem.spawnProjectile({ x: tx, y: 0, targetX: tx, targetY: ty, radius: 30, damage: this.damage * 1.3, owner: 'enemy', life: 0.3, maxLife: 0.3,
                     update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) { const alpha = this.life / this.maxLife; ctx.strokeStyle = `rgba(255,150,0,${alpha})`; ctx.lineWidth = 6;
-                        ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 30; ctx.beginPath(); ctx.moveTo(this.x, 0);
+                         ctx.beginPath(); ctx.moveTo(this.x, 0);
                         ctx.lineTo(this.targetX + (Math.random() - 0.5) * 20, this.targetY); ctx.stroke();
-                        ctx.fillStyle = `rgba(255,200,0,${alpha*0.5})`; ctx.beginPath(); ctx.arc(this.targetX, this.targetY, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+                        ctx.fillStyle = `rgba(255,200,0,${alpha*0.5})`; ctx.beginPath(); ctx.arc(this.targetX, this.targetY, this.radius, 0, Math.PI * 2); ctx.fill();  }
                 }); }, i * 150); } break;
             default: for (let i = 0; i < 6; i++) { const a = angle + (i - 2.5) * 0.2;
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * 400, vy: Math.sin(a) * 400,
@@ -559,7 +559,7 @@ export class MutatedZeusBoss {
                 const boltAngle = time * (2.5 + ring) + i * (Math.PI / 5);
                 const bx = this.x + Math.cos(boltAngle) * ringDist;
                 const by = this.y + Math.sin(boltAngle) * ringDist;
-                ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 15;
+                
                 ctx.beginPath();
                 ctx.moveTo(bx - 5, by - 10);
                 ctx.lineTo(bx + 3, by - 3);
@@ -568,7 +568,7 @@ export class MutatedZeusBoss {
                 ctx.stroke();
             }
         }
-        ctx.shadowBlur = 0;
+        
         
         // ===== 黑云座（暴君之座）=====
         ctx.fillStyle = 'rgba(50,50,70,0.8)';
@@ -598,11 +598,11 @@ export class MutatedZeusBoss {
         bodyGrad.addColorStop(0.8, '#4a3000');
         bodyGrad.addColorStop(1, '#2a1800');
         ctx.fillStyle = bodyGrad;
-        ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 45;
+        
         ctx.beginPath();
         ctx.ellipse(this.x, this.y - 5, this.radius * 0.9, this.radius * 0.8, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 肌肉手臂 =====
         ctx.fillStyle = '#cc9900';
@@ -612,7 +612,7 @@ export class MutatedZeusBoss {
         // ===== 雷霆之矛（暗金）=====
         ctx.strokeStyle = '#ff9900';
         ctx.lineWidth = 7;
-        ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 25;
+        
         ctx.beginPath();
         ctx.moveTo(this.x - 70, this.y - 35);
         ctx.lineTo(this.x - 58, this.y + 45);
@@ -627,7 +627,7 @@ export class MutatedZeusBoss {
         ctx.lineTo(this.x - 78, this.y - 48);
         ctx.closePath();
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 暴君权杖 =====
         ctx.strokeStyle = '#1a1a1a';
@@ -637,11 +637,11 @@ export class MutatedZeusBoss {
         ctx.lineTo(this.x + 65, this.y + 50);
         ctx.stroke();
         ctx.fillStyle = '#ff4400';
-        ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 20;
+        
         ctx.beginPath();
         ctx.arc(this.x + 60, this.y - 38, 14 + Math.sin(time * 5) * 3, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 暴君头部 =====
         // 白发（狂乱）
@@ -681,12 +681,12 @@ export class MutatedZeusBoss {
         
         // ===== 燃烧之眼 =====
         ctx.fillStyle = '#ff4400';
-        ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 25;
+        
         ctx.beginPath();
         ctx.ellipse(this.x - 13, this.y - 24, 9, 7, 0, 0, Math.PI * 2);
         ctx.ellipse(this.x + 13, this.y - 24, 9, 7, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         // 闪电瞳孔
         ctx.fillStyle = '#ffff00';
         ctx.beginPath();
@@ -717,23 +717,23 @@ export class MutatedZeusBoss {
         }
         // 红宝石
         ctx.fillStyle = '#ff0000';
-        ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 15;
+        
         ctx.beginPath(); ctx.arc(this.x, this.y - 60, 7, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 异化标记 =====
         ctx.fillStyle = '#ff6600';
-        ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 15;
+        
         ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center';
         ctx.fillText('☠ 异化 ☠', this.x, this.y - this.radius - 65);
-        ctx.shadowBlur = 0;
+        
         
         // ===== 随机闪电 =====
         if (Math.random() > 0.6) {
             const boltAngle = Math.random() * Math.PI * 2;
             ctx.strokeStyle = '#ffcc00';
             ctx.lineWidth = 3;
-            ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 20;
+            
             ctx.beginPath();
             let bx = this.x + Math.cos(boltAngle) * this.radius;
             let by = this.y + Math.sin(boltAngle) * this.radius;
@@ -744,7 +744,7 @@ export class MutatedZeusBoss {
                 ctx.lineTo(bx, by);
             }
             ctx.stroke();
-            ctx.shadowBlur = 0;
+            
         }
         
         if (this.state === 'TELEGRAPH') this.drawSkillIndicator(ctx);

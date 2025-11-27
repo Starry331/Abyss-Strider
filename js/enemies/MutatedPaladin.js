@@ -46,9 +46,9 @@ export class MutatedPaladinBoss {
                     radius: 15, damage: crit.damage, owner: 'enemy', rotation: a, life: 1, isCrit: crit.isCrit,
                     update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-                        ctx.fillStyle = this.isCrit ? '#ff00ff' : '#660066'; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 20;
+                        ctx.fillStyle = this.isCrit ? '#ff00ff' : '#660066'; 
                         ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(-12, -10); ctx.lineTo(-12, 10); ctx.closePath(); ctx.fill();
-                        ctx.shadowBlur = 0; ctx.restore(); }
+                         ctx.restore(); }
                 }); } break;
             case 'SHADOW_DASH': const target = { ...this.dashTarget };
                 for (let i = 0; i < 10; i++) { setTimeout(() => {
@@ -72,9 +72,9 @@ export class MutatedPaladinBoss {
                         this.x += Math.cos(this.angle) * this.speed * dt; this.y += Math.sin(this.angle) * this.speed * dt;
                         this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
-                        ctx.fillStyle = '#990099'; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 25;
+                        ctx.fillStyle = '#990099'; 
                         ctx.beginPath(); ctx.moveTo(25, 0); ctx.lineTo(-15, -12); ctx.lineTo(-10, 0); ctx.lineTo(-15, 12); ctx.closePath(); ctx.fill();
-                        ctx.shadowBlur = 0; ctx.restore(); }
+                         ctx.restore(); }
                 }); }, i * 200); } break;
             case 'PHANTOM_STRIKE': for (let b = 0; b < 6; b++) { setTimeout(() => {
                 const ba = Math.random() * Math.PI * 2, bd = 80 + Math.random() * 80;
@@ -115,8 +115,8 @@ export class MutatedPaladinBoss {
                     this.combatSystem.spawnProjectile({ x: this.x, y: this.y, vx: Math.cos(a) * (380 + w * 40), vy: Math.sin(a) * (380 + w * 40),
                         radius: 14, damage: this.damage, owner: 'enemy', life: 1.2,
                         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                        draw(ctx) { ctx.fillStyle = '#990099'; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15;
-                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+                        draw(ctx) { ctx.fillStyle = '#990099'; 
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();  }
                     }); } }, w * 150); } break;
             case 'DARK_APOCALYPSE': if (this.player.screenShake) { this.player.screenShake.intensity = 30; this.player.screenShake.duration = 4; }
                 this.combatSystem.spawnProjectile({ x: this.x, y: this.y, radius: 250, damage: 0, owner: 'enemy', life: 2, maxLife: 2,
@@ -146,9 +146,9 @@ export class MutatedPaladinBoss {
                             radius: 18, damage: this.damage * 1.1, owner: 'enemy', rotation: ta + s * 0.3, life: 1,
                             update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                             draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-                                ctx.fillStyle = '#cc00cc'; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 20;
+                                ctx.fillStyle = '#cc00cc'; 
                                 ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(-15, -12); ctx.lineTo(-15, 12); ctx.closePath(); ctx.fill();
-                                ctx.shadowBlur = 0; ctx.restore(); }
+                                 ctx.restore(); }
                         });
                     }
                 }, i * 150); } break;
@@ -169,9 +169,9 @@ export class MutatedPaladinBoss {
                         this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) { this.trail.forEach(t => { ctx.fillStyle = `rgba(150,0,150,${t.life})`; ctx.beginPath(); ctx.arc(t.x, t.y, 40, 0, Math.PI * 2); ctx.fill(); });
                         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-                        ctx.fillStyle = '#990099'; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 35;
+                        ctx.fillStyle = '#990099'; 
                         ctx.beginPath(); ctx.moveTo(70, 0); ctx.lineTo(-35, -30); ctx.lineTo(-35, 30); ctx.closePath(); ctx.fill();
-                        ctx.shadowBlur = 0; ctx.restore(); }
+                         ctx.restore(); }
                 }); break;
             case 'ROUND_TABLE_DARK': // 暗黑圆桌 - 16把暗剑
                 for (let i = 0; i < 16; i++) { const sa = (Math.PI * 2 / 16) * i;
@@ -179,9 +179,9 @@ export class MutatedPaladinBoss {
                     this.combatSystem.spawnProjectile({ x: sx, y: sy, radius: 20, damage: 0, owner: 'enemy', life: 0.8, swordAngle: sa,
                         update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                         draw(ctx) { ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.swordAngle + Math.PI / 2);
-                            ctx.fillStyle = `rgba(150,0,150,${this.life / 0.8})`; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15;
+                            ctx.fillStyle = `rgba(150,0,150,${this.life / 0.8})`; 
                             ctx.beginPath(); ctx.moveTo(0, -35); ctx.lineTo(8, 18); ctx.lineTo(-8, 18); ctx.closePath(); ctx.fill();
-                            ctx.shadowBlur = 0; ctx.restore(); }
+                             ctx.restore(); }
                     });
                 }
                 setTimeout(() => { for (let i = 0; i < 16; i++) { const sa = (Math.PI * 2 / 16) * i;
@@ -220,8 +220,8 @@ export class MutatedPaladinBoss {
         // 堕落铠甲
         const body = ctx.createRadialGradient(this.x - 10, this.y - 10, 0, this.x, this.y, this.radius);
         body.addColorStop(0, '#4a004a'); body.addColorStop(0.5, '#2a002a'); body.addColorStop(1, '#0a000a');
-        ctx.fillStyle = body; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = isRage ? 35 : 20;
-        ctx.beginPath(); ctx.ellipse(this.x, this.y, this.radius * 0.85, this.radius * 0.75, 0, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+        ctx.fillStyle = body;  ctx.shadowBlur = isRage ? 35 : 20;
+        ctx.beginPath(); ctx.ellipse(this.x, this.y, this.radius * 0.85, this.radius * 0.75, 0, 0, Math.PI * 2); ctx.fill(); 
         // 堕落纹饰
         ctx.strokeStyle = '#990099'; ctx.lineWidth = 2; ctx.beginPath();
         ctx.moveTo(this.x - 15, this.y - 20); ctx.lineTo(this.x, this.y + 15); ctx.lineTo(this.x + 15, this.y - 20); ctx.stroke();
@@ -235,14 +235,14 @@ export class MutatedPaladinBoss {
         ctx.beginPath(); ctx.moveTo(this.x + 20, this.y - 55);
         ctx.quadraticCurveTo(this.x + 25, this.y - 70, this.x + 15, this.y - 75); ctx.lineTo(this.x + 18, this.y - 50); ctx.closePath(); ctx.fill();
         // 发光红眼
-        ctx.fillStyle = '#ff0066'; ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
+        ctx.fillStyle = '#ff0066'; 
         ctx.beginPath(); ctx.ellipse(this.x - 8, this.y - 40, 5, 4, 0, 0, Math.PI * 2);
-        ctx.ellipse(this.x + 8, this.y - 40, 5, 4, 0, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+        ctx.ellipse(this.x + 8, this.y - 40, 5, 4, 0, 0, Math.PI * 2); ctx.fill(); 
         // 堕落之剑 Clarent
         ctx.save(); ctx.translate(this.x + 48, this.y - 12); ctx.rotate(-0.4 + Math.sin(time * 3) * 0.15);
         const sword = ctx.createLinearGradient(0, -85, 0, 20);
         sword.addColorStop(0, '#660066'); sword.addColorStop(0.5, '#330033'); sword.addColorStop(1, '#1a001a');
-        ctx.fillStyle = sword; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 25;
+        ctx.fillStyle = sword; 
         ctx.beginPath(); ctx.moveTo(0, -90); ctx.lineTo(10, -60); ctx.lineTo(10, 15); ctx.lineTo(-10, 15); ctx.lineTo(-10, -60); ctx.closePath(); ctx.fill();
         ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -85); ctx.lineTo(0, 10); ctx.stroke();
         ctx.fillStyle = '#990099'; ctx.beginPath(); ctx.moveTo(-22, 15); ctx.lineTo(-18, 24); ctx.lineTo(18, 24); ctx.lineTo(22, 15);
@@ -250,7 +250,7 @@ export class MutatedPaladinBoss {
         ctx.fillStyle = '#ff0066'; ctx.beginPath(); ctx.arc(0, 20, 6, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#1a001a'; ctx.fillRect(-6, 24, 12, 28);
         ctx.fillStyle = '#990099'; ctx.beginPath(); ctx.arc(0, 55, 9, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0; ctx.restore();
+         ctx.restore();
         // Phase2 效果
         if (isRage) { for (let ring = 0; ring < 2; ring++) {
             ctx.strokeStyle = `rgba(153,0,153,${0.5 - ring * 0.2 + Math.sin(time * 6) * 0.2})`; ctx.lineWidth = 3 - ring;

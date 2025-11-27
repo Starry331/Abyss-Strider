@@ -58,8 +58,8 @@ class BaseBoss {
         ctx.save();
         
         // 多层发光效果
-        ctx.shadowColor = `rgba(${color}, 0.8)`;
-        ctx.shadowBlur = 25;
+        
+        
         
         // 外层粗虚线路径 - 带脉冲
         const dashOffset = time * 100;
@@ -150,8 +150,8 @@ class BaseBoss {
         const pulseRadius = radius * (1 + Math.sin(time * 6) * 0.05);
         
         ctx.save();
-        ctx.shadowColor = `rgba(${color}, 0.6)`;
-        ctx.shadowBlur = 20;
+        
+        
         
         // 渐变填充
         const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, pulseRadius);
@@ -208,8 +208,8 @@ class BaseBoss {
         const pulseAlpha = 0.35 + Math.sin(time * 8) * 0.2;
         
         ctx.save();
-        ctx.shadowColor = `rgba(${color}, 0.5)`;
-        ctx.shadowBlur = 15;
+        
+        
         
         // 扇形填充
         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, range);
@@ -257,8 +257,8 @@ class BaseBoss {
         ctx.save();
         
         // 目标圆圈
-        ctx.shadowColor = `rgba(${color}, 0.6)`;
-        ctx.shadowBlur = 15;
+        
+        
         ctx.strokeStyle = `rgba(${color}, ${pulseAlpha + 0.3})`;
         ctx.lineWidth = 3;
         ctx.setLineDash([8, 4]);
@@ -413,12 +413,12 @@ class MonkeyBoss extends BaseBoss {
                             ctx.translate(this.x, this.y);
                             ctx.rotate(this.rotation);
                             ctx.fillStyle = '#ffff00';
-                            ctx.shadowColor = '#ffa500';
-                            ctx.shadowBlur = 10;
+                            
+                            
                             ctx.beginPath();
                             ctx.ellipse(0, 0, 12, 6, 0, 0, Math.PI * 2);
                             ctx.fill();
-                            ctx.shadowBlur = 0;
+                            
                             ctx.restore();
                         }
                     });
@@ -487,12 +487,12 @@ class MonkeyBoss extends BaseBoss {
                             update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
                             draw(ctx) {
                                 ctx.fillStyle = '#ff4500';
-                                ctx.shadowColor = '#ff0000';
-                                ctx.shadowBlur = 12;
+                                
+                                
                                 ctx.beginPath();
                                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                                 ctx.fill();
-                                ctx.shadowBlur = 0;
+                                
                             }
                         });
                     }, i * 100);
@@ -554,8 +554,8 @@ class MonkeyBoss extends BaseBoss {
                                 ctx.translate(this.x, this.y);
                                 ctx.rotate(this.rotation);
                                 ctx.fillStyle = '#8b4513';
-                                ctx.shadowColor = '#654321';
-                                ctx.shadowBlur = 8;
+                                
+                                
                                 ctx.beginPath();
                                 ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                                 ctx.fill();
@@ -565,7 +565,7 @@ class MonkeyBoss extends BaseBoss {
                                 ctx.arc(5, -3, 4, 0, Math.PI * 2);
                                 ctx.arc(0, 5, 4, 0, Math.PI * 2);
                                 ctx.fill();
-                                ctx.shadowBlur = 0;
+                                
                                 ctx.restore();
                             }
                         });
@@ -650,8 +650,8 @@ class MonkeyBoss extends BaseBoss {
         }
         
         ctx.fillStyle = gradient;
-        ctx.shadowColor = isRage ? '#ff4500' : '#8b4513';
-        ctx.shadowBlur = isRage ? 30 : 15;
+        
+        
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius * pulse, 0, Math.PI * 2);
         ctx.fill();
@@ -677,19 +677,19 @@ class MonkeyBoss extends BaseBoss {
         
         // 眼睛 - 狂暴时发红光
         ctx.fillStyle = '#fff';
-        ctx.shadowBlur = 0;
+        
         ctx.beginPath();
         ctx.arc(this.x - 12, this.y - 8, 8, 0, Math.PI * 2);
         ctx.arc(this.x + 12, this.y - 8, 8, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.fillStyle = isRage ? '#ff0000' : '#000';
-        if (isRage) { ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 10; }
+        if (isRage) {  }
         ctx.beginPath();
         ctx.arc(this.x - 12, this.y - 8, 4, 0, Math.PI * 2);
         ctx.arc(this.x + 12, this.y - 8, 4, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // 鼻子和嘴巴
         ctx.fillStyle = isRage ? '#8b0000' : '#654321';
@@ -899,12 +899,12 @@ class IceDragonBoss extends BaseBoss {
                                 },
                                 draw(ctx) {
                                     ctx.fillStyle = `rgba(135, 206, 235, ${this.life})`;
-                                    ctx.shadowColor = '#00ffff';
-                                    ctx.shadowBlur = 15;
+                                    
+                                    
                                     ctx.beginPath();
                                     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                                     ctx.fill();
-                                    ctx.shadowBlur = 0;
+                                    
                                 }
                             });
                         }
@@ -938,12 +938,12 @@ class IceDragonBoss extends BaseBoss {
                             },
                             draw(ctx) {
                                 ctx.fillStyle = '#87ceeb';
-                                ctx.shadowColor = '#00ffff';
-                                ctx.shadowBlur = 12;
+                                
+                                
                                 ctx.beginPath();
                                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                                 ctx.fill();
-                                ctx.shadowBlur = 0;
+                                
                             }
                         });
                     }
@@ -967,8 +967,8 @@ class IceDragonBoss extends BaseBoss {
                             },
                             draw(ctx) {
                                 ctx.fillStyle = '#b0e0e6';
-                                ctx.shadowColor = '#ffffff';
-                                ctx.shadowBlur = 15;
+                                
+                                
                                 // 冰柱形状
                                 ctx.beginPath();
                                 ctx.moveTo(this.x, this.y - 20);
@@ -976,7 +976,7 @@ class IceDragonBoss extends BaseBoss {
                                 ctx.lineTo(this.x - 8, this.y + 10);
                                 ctx.closePath();
                                 ctx.fill();
-                                ctx.shadowBlur = 0;
+                                
                             }
                         });
                     }, i * 100);
@@ -1003,15 +1003,15 @@ class IceDragonBoss extends BaseBoss {
                                     const alpha = this.life / this.maxLife;
                                     const height = 30 * alpha;
                                     ctx.fillStyle = `rgba(176, 224, 230, ${alpha})`;
-                                    ctx.shadowColor = '#00ffff';
-                                    ctx.shadowBlur = 10;
+                                    
+                                    
                                     ctx.beginPath();
                                     ctx.moveTo(this.x, this.y - height);
                                     ctx.lineTo(this.x + 10, this.y);
                                     ctx.lineTo(this.x - 10, this.y);
                                     ctx.closePath();
                                     ctx.fill();
-                                    ctx.shadowBlur = 0;
+                                    
                                 }
                             });
                         }, j * 150);
@@ -1037,12 +1037,12 @@ class IceDragonBoss extends BaseBoss {
                                 },
                                 draw(ctx) {
                                     ctx.fillStyle = '#e0ffff';
-                                    ctx.shadowColor = '#87ceeb';
-                                    ctx.shadowBlur = 8;
+                                    
+                                    
                                     ctx.beginPath();
                                     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                                     ctx.fill();
-                                    ctx.shadowBlur = 0;
+                                    
                                 }
                             });
                         }
@@ -1088,8 +1088,8 @@ class IceDragonBoss extends BaseBoss {
                                 radius: 10, damage: 9, owner: 'enemy', life: 1.2,
                                 update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                                 draw(ctx) {
-                                    ctx.fillStyle = `rgba(200, 240, 255, ${this.life})`; ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 12;
-                                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+                                    ctx.fillStyle = `rgba(200, 240, 255, ${this.life})`; 
+                                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); 
                                 }
                             });
                         }
@@ -1108,8 +1108,8 @@ class IceDragonBoss extends BaseBoss {
                             x: sx, y: sy - 150, vy: 300, radius: 12, damage: 8, owner: 'enemy', targetY: sy,
                             update(dt) { this.y += this.vy * dt; if (this.y >= this.targetY) this.markedForDeletion = true; },
                             draw(ctx) {
-                                ctx.fillStyle = '#e0ffff'; ctx.shadowColor = '#87ceeb'; ctx.shadowBlur = 10;
-                                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+                                ctx.fillStyle = '#e0ffff'; 
+                                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); 
                             }
                         });
                     }
@@ -1320,9 +1320,9 @@ class CerberusBoss extends BaseBoss {
                                     ctx.fillStyle = `rgba(255,69,0,${t.life})`;
                                     ctx.beginPath(); ctx.arc(t.x, t.y, 8, 0, Math.PI*2); ctx.fill();
                                 });
-                                ctx.fillStyle = '#ff4500'; ctx.shadowColor = '#ff4500'; ctx.shadowBlur = 20;
+                                ctx.fillStyle = '#ff4500'; 
                                 ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
-                                ctx.shadowBlur = 0;
+                                
                             }
                         });
                     }, i * 150);
@@ -1389,7 +1389,7 @@ class CerberusBoss extends BaseBoss {
                             x: this.player.x + (Math.random() - 0.5) * 300, y: this.player.y - 300,
                             vy: 500, radius: 20, damage: 18, owner: 'enemy', targetY: this.player.y,
                             update(dt) { this.y += this.vy * dt; if (this.y >= this.targetY) this.markedForDeletion = true; },
-                            draw(ctx) { ctx.fillStyle = '#ff4500'; ctx.shadowColor = '#ff4500'; ctx.shadowBlur = 20; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0; }
+                            draw(ctx) { ctx.fillStyle = '#ff4500';  ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();  }
                         });
                     }, i * 150);
                 }
@@ -1430,9 +1430,9 @@ class CerberusBoss extends BaseBoss {
                                 if (this.life <= 0) this.markedForDeletion = true;
                             },
                             draw(ctx) {
-                                ctx.fillStyle = '#00ff00'; ctx.shadowColor = '#00ff00'; ctx.shadowBlur = 20;
+                                ctx.fillStyle = '#00ff00'; 
                                 ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
-                                ctx.shadowBlur = 0;
+                                
                             }
                         });
                     }, idx * 200);
@@ -1484,7 +1484,7 @@ class CerberusBoss extends BaseBoss {
                                         x: this.x, y: this.y, vx: Math.cos(fireAngle) * 200, vy: Math.sin(fireAngle) * 200,
                                         radius: 10, damage: 14, owner: 'enemy', life: 1.5,
                                         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                                        draw(ctx) { ctx.fillStyle = '#ff4500'; ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 15; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+                                        draw(ctx) { ctx.fillStyle = '#ff4500';  ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();  }
                                     });
                                 }
                                 if (this.life <= 0) this.markedForDeletion = true;
@@ -1493,14 +1493,14 @@ class CerberusBoss extends BaseBoss {
                                 const alpha = Math.min(1, this.life / 0.5);
                                 ctx.strokeStyle = `rgba(139, 0, 0, ${alpha})`;
                                 ctx.lineWidth = 4;
-                                ctx.shadowColor = '#ff0000';
-                                ctx.shadowBlur = 20;
+                                
+                                
                                 ctx.beginPath();
                                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                                 ctx.stroke();
                                 ctx.fillStyle = `rgba(50, 0, 0, ${alpha * 0.5})`;
                                 ctx.fill();
-                                ctx.shadowBlur = 0;
+                                
                             },
                             combatSystem: this.combatSystem
                         });
@@ -1534,8 +1534,8 @@ class CerberusBoss extends BaseBoss {
                                 },
                                 draw(ctx) {
                                     ctx.fillStyle = '#8b0000';
-                                    ctx.shadowColor = '#ff4500';
-                                    ctx.shadowBlur = 25;
+                                    
+                                    
                                     ctx.beginPath();
                                     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                                     ctx.fill();
@@ -1545,7 +1545,7 @@ class CerberusBoss extends BaseBoss {
                                     ctx.arc(this.x - 4, this.y - 2, 3, 0, Math.PI * 2);
                                     ctx.arc(this.x + 4, this.y - 2, 3, 0, Math.PI * 2);
                                     ctx.fill();
-                                    ctx.shadowBlur = 0;
+                                    
                                 }
                             });
                         }
@@ -1573,9 +1573,9 @@ class CerberusBoss extends BaseBoss {
                                 startX: this.x, startY: this.y,
                                 draw(ctx) {
                                     ctx.fillStyle = `rgba(255, 100, 0, ${this.life / 2.5})`;
-                                    ctx.shadowColor = '#ff4500'; ctx.shadowBlur = 15;
+                                    
                                     ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
-                                    ctx.shadowBlur = 0;
+                                    
                                 }
                             });
                         }
@@ -1660,8 +1660,8 @@ class CerberusBoss extends BaseBoss {
         bodyGrad.addColorStop(0.4, isRage ? '#dc143c' : '#8b0000');
         bodyGrad.addColorStop(1, isRage ? '#8b0000' : '#400000');
         ctx.fillStyle = bodyGrad;
-        ctx.shadowColor = isRage ? '#ff4500' : '#8b0000';
-        ctx.shadowBlur = isRage ? 35 : 15;
+        
+        
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -1669,7 +1669,7 @@ class CerberusBoss extends BaseBoss {
         // 熔岩裂纹
         ctx.strokeStyle = isRage ? '#ffaa00' : '#ff6600';
         ctx.lineWidth = 2;
-        ctx.shadowBlur = 10;
+        
         for (let i = 0; i < 5; i++) {
             const crackAngle = i * 1.2 + 0.3;
             ctx.beginPath();
@@ -1677,7 +1677,7 @@ class CerberusBoss extends BaseBoss {
             ctx.lineTo(this.x + Math.cos(crackAngle) * (this.radius - 5), this.y + Math.sin(crackAngle) * (this.radius - 5));
             ctx.stroke();
         }
-        ctx.shadowBlur = 0;
+        
         
         // ===== 四条腿 =====
         const legPositions = [
@@ -1714,8 +1714,8 @@ class CerberusBoss extends BaseBoss {
         ctx.stroke();
         // 蛇头火焰
         ctx.fillStyle = '#00aa00';
-        ctx.shadowColor = '#00ff00';
-        ctx.shadowBlur = 15;
+        
+        
         ctx.beginPath();
         ctx.arc(this.x + 70, this.y + this.radius + 5, 10, 0, Math.PI * 2);
         ctx.fill();
@@ -1725,7 +1725,7 @@ class CerberusBoss extends BaseBoss {
         ctx.arc(this.x + 68, this.y + this.radius + 3, 3, 0, Math.PI * 2);
         ctx.arc(this.x + 72, this.y + this.radius + 3, 3, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
 
         // ===== 三个狼头 =====
         const headData = [
@@ -1789,13 +1789,13 @@ class CerberusBoss extends BaseBoss {
             // 眼睛（邪恶发光）
             const eyeGlow = isRage ? '#00ff00' : '#ffcc00';
             ctx.fillStyle = eyeGlow;
-            ctx.shadowColor = eyeGlow;
-            ctx.shadowBlur = 15;
+            
+            
             ctx.beginPath();
             ctx.ellipse(hx - 8, hy - 2, 6, 4, head.angle, 0, Math.PI * 2);
             ctx.ellipse(hx + 8, hy - 2, 6, 4, head.angle, 0, Math.PI * 2);
             ctx.fill();
-            ctx.shadowBlur = 0;
+            
             // 竖瞳
             ctx.fillStyle = '#000';
             ctx.beginPath();
@@ -1827,14 +1827,14 @@ class CerberusBoss extends BaseBoss {
         if (isRage) {
             ctx.strokeStyle = `rgba(255, 50, 0, ${0.7 + Math.sin(time * 6) * 0.3})`;
             ctx.lineWidth = 5;
-            ctx.shadowColor = '#ff4500';
-            ctx.shadowBlur = 20;
+            
+            
             ctx.setLineDash([15, 8]);
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius + 30, 0, Math.PI * 2);
             ctx.stroke();
             ctx.setLineDash([]);
-            ctx.shadowBlur = 0;
+            
         }
 
         if (this.state === 'TELEGRAPH') this.drawSkillIndicator(ctx);
@@ -1927,7 +1927,7 @@ class ZeusBoss extends BaseBoss {
                             x: this.x, y: this.y, vx: Math.cos(angle + (i - 2) * 0.15) * 600, vy: Math.sin(angle + (i - 2) * 0.15) * 600,
                             radius: 8, damage: 20, owner: 'enemy',
                             update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
-                            draw(ctx) { ctx.fillStyle = '#ffff00'; ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 20; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0; }
+                            draw(ctx) { ctx.fillStyle = '#ffff00';  ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();  }
                         });
                     }, i * 80);
                 }
@@ -1949,7 +1949,7 @@ class ZeusBoss extends BaseBoss {
                         x: this.x, y: this.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350,
                         radius: 10, damage: 15, owner: 'enemy',
                         update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
-                        draw(ctx) { ctx.fillStyle = '#00ffff'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0; }
+                        draw(ctx) { ctx.fillStyle = '#00ffff';  ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();  }
                     });
                 }
                 break;
@@ -1962,7 +1962,7 @@ class ZeusBoss extends BaseBoss {
                         this.combatSystem.spawnProjectile({
                             x: sx, y: sy - 300, targetY: sy, radius: 25, damage: 15, owner: 'enemy', life: 0.3, maxLife: 0.3,
                             update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                            draw(ctx) { ctx.strokeStyle = `rgba(255,255,0,${this.life/this.maxLife})`; ctx.lineWidth = 5; ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 20; ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x, this.targetY); ctx.stroke(); ctx.shadowBlur = 0; }
+                            draw(ctx) { ctx.strokeStyle = `rgba(255,255,0,${this.life/this.maxLife})`; ctx.lineWidth = 5;  ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x, this.targetY); ctx.stroke();  }
                         });
                     }, i * 120);
                 }
@@ -2007,7 +2007,7 @@ class ZeusBoss extends BaseBoss {
                                 x: this.x, y: this.y, vx: Math.cos(a) * (250 + w * 40), vy: Math.sin(a) * (250 + w * 40),
                                 radius: 10, damage: 18, owner: 'enemy',
                                 update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; },
-                                draw(ctx) { ctx.fillStyle = '#ffd700'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0; }
+                                draw(ctx) { ctx.fillStyle = '#ffd700';  ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();  }
                             });
                         }
                     }, w * 200);
@@ -2030,9 +2030,9 @@ class ZeusBoss extends BaseBoss {
                                 if (this.life <= 0) this.markedForDeletion = true;
                             },
                             draw(ctx) {
-                                ctx.fillStyle = '#00ffff'; ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 20;
+                                ctx.fillStyle = '#00ffff'; 
                                 ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
-                                ctx.shadowBlur = 0;
+                                
                             }
                         });
                     }, i * 150);
@@ -2052,9 +2052,9 @@ class ZeusBoss extends BaseBoss {
                                 draw(ctx) {
                                     const alpha = this.life / this.maxLife;
                                     ctx.strokeStyle = `rgba(255, 255, 0, ${alpha})`; ctx.lineWidth = 6;
-                                    ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 30;
+                                    
                                     ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x + (Math.random() - 0.5) * 20, this.targetY); ctx.stroke();
-                                    ctx.shadowBlur = 0;
+                                    
                                 }
                             });
                         }
@@ -2083,8 +2083,8 @@ class ZeusBoss extends BaseBoss {
                         // 电弧圆环
                         ctx.strokeStyle = `rgba(255, 255, 0, ${alpha})`;
                         ctx.lineWidth = 5;
-                        ctx.shadowColor = '#00ffff';
-                        ctx.shadowBlur = 25;
+                        
+                        
                         ctx.setLineDash([15, 8]);
                         ctx.beginPath();
                         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -2100,7 +2100,7 @@ class ZeusBoss extends BaseBoss {
                             ctx.lineTo(this.x + Math.cos(a) * (this.radius - 20), this.y + Math.sin(a) * (this.radius - 20));
                             ctx.stroke();
                         }
-                        ctx.shadowBlur = 0;
+                        
                     }
                 });
                 // 牢笼内持续释放雷电
@@ -2141,8 +2141,8 @@ class ZeusBoss extends BaseBoss {
                         draw(ctx) {
                             const alpha = this.life / this.maxLife;
                             ctx.fillStyle = `rgba(255, 255, 0, ${alpha})`;
-                            ctx.shadowColor = '#ffffff';
-                            ctx.shadowBlur = 50;
+                            
+                            
                             ctx.fillRect(this.x - 40, this.y, 80, this.targetY - this.y + 500);
                             // 雷柱内闪电
                             ctx.strokeStyle = '#ffffff';
@@ -2153,7 +2153,7 @@ class ZeusBoss extends BaseBoss {
                                 ctx.lineTo(this.x + (Math.random() - 0.5) * 60, this.targetY);
                                 ctx.stroke();
                             }
-                            ctx.shadowBlur = 0;
+                            
                         }
                     });
                     // 冲击波
@@ -2187,9 +2187,9 @@ class ZeusBoss extends BaseBoss {
                             update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                             draw(ctx) {
                                 ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-                                ctx.fillStyle = '#ffff00'; ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 15;
+                                ctx.fillStyle = '#ffff00'; 
                                 ctx.beginPath(); ctx.moveTo(25, 0); ctx.lineTo(-15, -6); ctx.lineTo(-15, 6); ctx.closePath(); ctx.fill();
-                                ctx.shadowBlur = 0; ctx.restore();
+                                 ctx.restore();
                             }
                         });
                     }, i * 100);
@@ -2235,11 +2235,11 @@ class ZeusBoss extends BaseBoss {
                                 draw(ctx) {
                                     const alpha = this.life / this.maxLife;
                                     ctx.strokeStyle = `rgba(255, 255, 0, ${alpha})`; ctx.lineWidth = 8;
-                                    ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 30;
+                                    
                                     ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x + (Math.random() - 0.5) * 30, this.targetY); ctx.stroke();
                                     ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
                                     ctx.beginPath(); ctx.arc(this.x, this.targetY, this.radius * alpha, 0, Math.PI * 2); ctx.fill();
-                                    ctx.shadowBlur = 0;
+                                    
                                 }
                             });
                         }
@@ -2287,8 +2287,8 @@ class ZeusBoss extends BaseBoss {
         
         // ===== 奥林匹斯云座 =====
         ctx.fillStyle = isRage ? 'rgba(180, 180, 220, 0.7)' : 'rgba(200, 210, 230, 0.6)';
-        ctx.shadowColor = isRage ? '#ffff88' : '#aaccff';
-        ctx.shadowBlur = 15;
+        
+        
         for (let c = 0; c < 3; c++) {
             const cloudX = this.x + (c - 1) * 30;
             const cloudY = this.y + 45 + Math.sin(time * 2 + c) * 3;
@@ -2296,7 +2296,7 @@ class ZeusBoss extends BaseBoss {
             ctx.ellipse(cloudX, cloudY, 35 - c * 5, 15, 0, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.shadowBlur = 0;
+        
         
         // ===== 神圣长袍身躯 =====
         // 袍子
@@ -2319,12 +2319,12 @@ class ZeusBoss extends BaseBoss {
         bodyGrad.addColorStop(0.5, isRage ? '#ffd700' : '#daa520');
         bodyGrad.addColorStop(1, isRage ? '#ff8c00' : '#4169e1');
         ctx.fillStyle = bodyGrad;
-        ctx.shadowColor = isRage ? '#ffff00' : '#4169e1';
-        ctx.shadowBlur = isRage ? 40 : 20;
+        
+        
         ctx.beginPath();
         ctx.ellipse(this.x, this.y - 5, this.radius * 0.85, this.radius * 0.75, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 肌肉手臂 =====
         ctx.fillStyle = isRage ? '#ffd700' : '#deb887';
@@ -2340,8 +2340,8 @@ class ZeusBoss extends BaseBoss {
         // ===== 雷电之矛（左手）=====
         ctx.strokeStyle = '#ffff00';
         ctx.lineWidth = 5;
-        ctx.shadowColor = '#00ffff';
-        ctx.shadowBlur = 20;
+        
+        
         ctx.beginPath();
         ctx.moveTo(this.x - 65, this.y - 30);
         ctx.lineTo(this.x - 55, this.y + 40);
@@ -2356,7 +2356,7 @@ class ZeusBoss extends BaseBoss {
         ctx.lineTo(this.x - 72, this.y - 42);
         ctx.closePath();
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 神圣权杖（右手）=====
         ctx.strokeStyle = '#8b4513';
@@ -2367,12 +2367,12 @@ class ZeusBoss extends BaseBoss {
         ctx.stroke();
         // 权杖顶端宝石
         ctx.fillStyle = isRage ? '#00ffff' : '#4169e1';
-        ctx.shadowColor = isRage ? '#00ffff' : '#4169e1';
-        ctx.shadowBlur = 15;
+        
+        
         ctx.beginPath();
         ctx.arc(this.x + 55, this.y - 32, 10 + Math.sin(time * 4) * 2, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 神王头部 =====
         // 头发和胡须
@@ -2419,8 +2419,8 @@ class ZeusBoss extends BaseBoss {
         
         // ===== 威严眼睛（雷电之眼）=====
         ctx.fillStyle = isRage ? '#00ffff' : '#4169e1';
-        ctx.shadowColor = isRage ? '#00ffff' : '#4169e1';
-        ctx.shadowBlur = isRage ? 20 : 10;
+        
+        
         ctx.beginPath();
         ctx.ellipse(this.x - 12, this.y - 22, 8, 6, 0, 0, Math.PI * 2);
         ctx.ellipse(this.x + 12, this.y - 22, 8, 6, 0, 0, Math.PI * 2);
@@ -2441,12 +2441,12 @@ class ZeusBoss extends BaseBoss {
         ctx.lineTo(this.x + 12, this.y - 18);
         ctx.closePath();
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== 奥林匹斯王冠 =====
         ctx.fillStyle = '#ffd700';
-        ctx.shadowColor = '#ffff00';
-        ctx.shadowBlur = 15;
+        
+        
         // 王冠底座
         ctx.beginPath();
         ctx.ellipse(this.x, this.y - 48, 32, 8, 0, Math.PI, 0);
@@ -2470,7 +2470,7 @@ class ZeusBoss extends BaseBoss {
                 ctx.fillStyle = '#ffd700';
             }
         }
-        ctx.shadowBlur = 0;
+        
         
         // ===== Phase 2 雷神威能光环 =====
         if (isRage) {
@@ -2490,8 +2490,8 @@ class ZeusBoss extends BaseBoss {
                 const boltAngle = Math.random() * Math.PI * 2;
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 2;
-                ctx.shadowColor = '#00ffff';
-                ctx.shadowBlur = 15;
+                
+                
                 ctx.beginPath();
                 ctx.moveTo(this.x + Math.cos(boltAngle) * this.radius, this.y + Math.sin(boltAngle) * this.radius);
                 let bx = this.x + Math.cos(boltAngle) * this.radius;
@@ -2502,7 +2502,7 @@ class ZeusBoss extends BaseBoss {
                     ctx.lineTo(bx, by);
                 }
                 ctx.stroke();
-                ctx.shadowBlur = 0;
+                
             }
         }
 
@@ -2634,8 +2634,8 @@ class PaladinBoss extends BaseBoss {
             ctx.translate(x, y);
             ctx.rotate(rotation);
             ctx.fillStyle = isCrit ? '#ffd700' : color;
-            ctx.shadowColor = isCrit ? '#ffff00' : '#ffffff';
-            ctx.shadowBlur = isCrit ? 25 : 15;
+            
+            
             ctx.beginPath();
             ctx.moveTo(isCrit ? 30 : 25, 0);
             ctx.lineTo(-15, isCrit ? -10 : -8);
@@ -2649,7 +2649,7 @@ class PaladinBoss extends BaseBoss {
                 ctx.lineWidth = 2;
                 ctx.stroke();
             }
-            ctx.shadowBlur = 0;
+            
             ctx.restore();
         };
         
@@ -2737,10 +2737,10 @@ class PaladinBoss extends BaseBoss {
                             update(dt) { this.y += this.vy * dt; if (this.y >= this.targetY) this.markedForDeletion = true; },
                             draw(ctx) {
                                 ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-                                ctx.fillStyle = this.isCrit ? '#ffd700' : '#c0c0c0'; ctx.shadowColor = this.isCrit ? '#ffff00' : '#ffffff'; ctx.shadowBlur = this.isCrit ? 30 : 20;
+                                ctx.fillStyle = this.isCrit ? '#ffd700' : '#c0c0c0';  
                                 ctx.fillRect(-4, -25, 8, 50);
                                 ctx.fillStyle = '#8b4513'; ctx.fillRect(-6, 20, 12, 10);
-                                ctx.shadowBlur = 0; ctx.restore();
+                                 ctx.restore();
                             }
                         });
                     }, i * 120);
@@ -2757,8 +2757,8 @@ class PaladinBoss extends BaseBoss {
                         update(dt) { this.angle += dt * 2.5; this.x = this.centerX + Math.cos(this.angle) * 90; this.y = this.centerY + Math.sin(this.angle) * 90; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                         draw(ctx) {
                             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle + Math.PI/2);
-                            ctx.fillStyle = '#c0c0c0'; ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 10;
-                            ctx.fillRect(-3, -18, 6, 36); ctx.shadowBlur = 0; ctx.restore();
+                            ctx.fillStyle = '#c0c0c0'; 
+                            ctx.fillRect(-3, -18, 6, 36);  ctx.restore();
                         }
                     });
                 }
@@ -2773,10 +2773,10 @@ class PaladinBoss extends BaseBoss {
                     update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                     draw(ctx) {
                         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-                        ctx.fillStyle = this.isCrit ? '#ffffff' : '#ffd700'; ctx.shadowColor = this.isCrit ? '#ffff00' : '#ffffff'; ctx.shadowBlur = this.isCrit ? 45 : 30;
+                        ctx.fillStyle = this.isCrit ? '#ffffff' : '#ffd700';  
                         const scale = this.isCrit ? 1.2 : 1;
                         ctx.beginPath(); ctx.moveTo(50*scale, 0); ctx.lineTo(-30*scale, -20*scale); ctx.lineTo(-20*scale, 0); ctx.lineTo(-30*scale, 20*scale); ctx.closePath(); ctx.fill();
-                        ctx.shadowBlur = 0; ctx.restore();
+                         ctx.restore();
                     }
                 });
                 break;
@@ -2857,8 +2857,8 @@ class PaladinBoss extends BaseBoss {
                                     update(dt) { this.y += this.vy * dt; if (this.y >= this.targetY) this.markedForDeletion = true; },
                                     draw(ctx) {
                                         ctx.save(); ctx.translate(this.x, this.y);
-                                        ctx.fillStyle = '#ffd700'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15;
-                                        ctx.fillRect(-3, -20, 6, 40); ctx.shadowBlur = 0; ctx.restore();
+                                        ctx.fillStyle = '#ffd700'; 
+                                        ctx.fillRect(-3, -20, 6, 40);  ctx.restore();
                                     }
                                 });
                             }, j * 80);
@@ -2880,9 +2880,9 @@ class PaladinBoss extends BaseBoss {
                             update(dt) { this.x += this.vx * dt; this.y += this.vy * dt; this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                             draw(ctx) {
                                 ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-                                ctx.fillStyle = this.isCrit ? '#ffd700' : '#c0c0c0'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 20;
+                                ctx.fillStyle = this.isCrit ? '#ffd700' : '#c0c0c0'; 
                                 ctx.beginPath(); ctx.moveTo(35, 0); ctx.lineTo(-10, -12); ctx.lineTo(-10, 12); ctx.closePath(); ctx.fill();
-                                ctx.shadowBlur = 0; ctx.restore();
+                                 ctx.restore();
                             }
                         });
                     }, i * 80);
@@ -2929,9 +2929,9 @@ class PaladinBoss extends BaseBoss {
                         grad.addColorStop(0, 'rgba(255, 215, 0, 0.3)');
                         grad.addColorStop(0.5, this.isCrit ? '#ffffff' : '#ffd700');
                         grad.addColorStop(1, 'rgba(255, 255, 255, 0.8)');
-                        ctx.fillStyle = grad; ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 30;
+                        ctx.fillStyle = grad; 
                         ctx.beginPath(); ctx.moveTo(50, 0); ctx.lineTo(-20, -15); ctx.lineTo(-10, 0); ctx.lineTo(-20, 15); ctx.closePath(); ctx.fill();
-                        ctx.shadowBlur = 0; ctx.restore();
+                         ctx.restore();
                     }
                 });
                 break;
@@ -3112,11 +3112,11 @@ class PaladinBoss extends BaseBoss {
                         const time = Date.now() / 1000;
                         ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + Math.sin(time * 8) * 0.3})`;
                         ctx.lineWidth = 6;
-                        ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 20;
+                        
                         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
                         ctx.fillStyle = 'rgba(255, 255, 200, 0.15)';
                         ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
-                        ctx.shadowBlur = 0;
+                        
                     }
                 });
                 break;
@@ -3133,11 +3133,11 @@ class PaladinBoss extends BaseBoss {
                             draw(ctx) {
                                 const alpha = this.life / this.maxLife;
                                 ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`; ctx.lineWidth = 8;
-                                ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 25;
+                                
                                 ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.targetX, this.targetY); ctx.stroke();
                                 ctx.fillStyle = `rgba(255, 255, 200, ${alpha * 0.6})`;
                                 ctx.beginPath(); ctx.arc(this.targetX, this.targetY, this.radius * alpha, 0, Math.PI * 2); ctx.fill();
-                                ctx.shadowBlur = 0;
+                                
                             }
                         });
                     }, i * 100);
@@ -3162,9 +3162,9 @@ class PaladinBoss extends BaseBoss {
                             ctx.arc(t.x, t.y, 30, 0, Math.PI * 2); ctx.fill();
                         });
                         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation);
-                        ctx.fillStyle = '#ffd700'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 30;
+                        ctx.fillStyle = '#ffd700'; 
                         ctx.beginPath(); ctx.moveTo(60, 0); ctx.lineTo(-30, -25); ctx.lineTo(-30, 25); ctx.closePath(); ctx.fill();
-                        ctx.shadowBlur = 0; ctx.restore();
+                         ctx.restore();
                     }
                 });
                 break;
@@ -3202,7 +3202,7 @@ class PaladinBoss extends BaseBoss {
                             x: this.x, y: this.y, radius: 0, maxRadius: 350, damage: 20, owner: 'enemy', life: 0.6, maxLife: 0.6,
                             update(dt) { this.radius = this.maxRadius * (1 - this.life / this.maxLife); this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
                             draw(ctx) { ctx.strokeStyle = `rgba(255, 215, 0, ${this.life / this.maxLife})`; ctx.lineWidth = 10;
-                                ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 20; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); ctx.shadowBlur = 0; }
+                                 ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();  }
                         });
                     }, ring * 400);
                 }
@@ -3213,9 +3213,9 @@ class PaladinBoss extends BaseBoss {
                         this.combatSystem.spawnProjectile({
                             x: rx, y: ry - 300, targetY: ry, radius: 15, damage: 15, owner: 'enemy', life: 0.35, maxLife: 0.35,
                             update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
-                            draw(ctx) { ctx.strokeStyle = `rgba(255, 215, 0, ${this.life / this.maxLife})`; ctx.lineWidth = 6; ctx.shadowColor = '#fff'; ctx.shadowBlur = 15;
+                            draw(ctx) { ctx.strokeStyle = `rgba(255, 215, 0, ${this.life / this.maxLife})`; ctx.lineWidth = 6; 
                                 ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x, this.targetY); ctx.stroke();
-                                ctx.fillStyle = `rgba(255, 255, 200, ${this.life / this.maxLife * 0.6})`; ctx.beginPath(); ctx.arc(this.x, this.targetY, 20, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; }
+                                ctx.fillStyle = `rgba(255, 255, 200, ${this.life / this.maxLife * 0.6})`; ctx.beginPath(); ctx.arc(this.x, this.targetY, 20, 0, Math.PI * 2); ctx.fill();  }
                         });
                     }, i * 80);
                 }
@@ -3234,9 +3234,9 @@ class PaladinBoss extends BaseBoss {
                         draw(ctx) {
                             const alpha = this.life / this.maxLife;
                             ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.swordAngle + Math.PI / 2);
-                            ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`; ctx.shadowColor = '#fff'; ctx.shadowBlur = 15;
+                            ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`; 
                             ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(6, 15); ctx.lineTo(-6, 15); ctx.closePath(); ctx.fill();
-                            ctx.shadowBlur = 0; ctx.restore();
+                             ctx.restore();
                         }
                     });
                 }
@@ -3307,12 +3307,12 @@ class PaladinBoss extends BaseBoss {
         armorGrad.addColorStop(0.7, isRage ? '#909090' : '#707070');
         armorGrad.addColorStop(1, isRage ? '#606060' : '#404040');
         ctx.fillStyle = armorGrad;
-        ctx.shadowColor = isRage ? '#ffd700' : '#fff';
-        ctx.shadowBlur = isRage ? 25 : 10;
+        
+        
         ctx.beginPath();
         ctx.ellipse(this.x, this.y, this.radius * 0.85, this.radius * 0.75, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // 铠甲纹饰 - 龙纹
         ctx.strokeStyle = '#ffd700';
@@ -3355,13 +3355,13 @@ class PaladinBoss extends BaseBoss {
         
         // 发光眼睛（透过面罩）
         ctx.fillStyle = isRage ? '#ff4444' : '#4488ff';
-        ctx.shadowColor = isRage ? '#ff0000' : '#0066ff';
-        ctx.shadowBlur = 15;
+        
+        
         ctx.beginPath();
         ctx.ellipse(this.x - 8, this.y - 38, 4, 3, 0, 0, Math.PI * 2);
         ctx.ellipse(this.x + 8, this.y - 38, 4, 3, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
+        
         
         // ===== Excalibur 圣剑 =====
         ctx.save();
@@ -3369,8 +3369,8 @@ class PaladinBoss extends BaseBoss {
         ctx.rotate(-0.5 + this.swordAngle);
         
         // 剑身发光效果
-        ctx.shadowColor = isRage ? '#ffd700' : '#88ccff';
-        ctx.shadowBlur = isRage ? 35 : 20;
+        
+        
         
         // 剑身 - Excalibur特效
         const excaliburGrad = ctx.createLinearGradient(0, -80, 0, 20);
@@ -3431,7 +3431,7 @@ class PaladinBoss extends BaseBoss {
         ctx.arc(0, 50, 8, 0, Math.PI * 2);
         ctx.fill();
         
-        ctx.shadowBlur = 0;
+        
         ctx.restore();
         
         // ===== 盾牌（左手）=====
