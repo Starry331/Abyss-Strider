@@ -1622,10 +1622,9 @@ export class BerserkArtemisBoss {
             case 'LUNAR_ESCAPE':
                 // 月神逃脱 - 远距离位移技能 (20%概率)
                 if (Math.random() > 0.2) {
-                    // 不释放，选择其他技能
-                    let skills = this.phase === 3 ? this.phase3Skills : (this.phase === 2 ? this.phase2Skills : this.skills);
-                    skills = skills.filter(s => s !== 'LUNAR_ESCAPE');
-                    this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
+                    // 不释放，选择其他简单技能（避免递归）
+                    const simpleSkills = ['MOON_SHOT', 'HUNTER_DASH', 'SILVER_RAIN', 'LUNAR_STRIKE'];
+                    this.currentSkill = simpleSkills[Math.floor(Math.random() * simpleSkills.length)];
                     this.executeAttack();
                     return;
                 }
@@ -1644,7 +1643,7 @@ export class BerserkArtemisBoss {
         const dx = this.x - this.player.x;
         const dy = this.y - this.player.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const escapeDist = 400; // 远距离位移
+        const escapeDist = 500; // 远距离位移
         let targetX = this.x + (dx / dist) * escapeDist;
         let targetY = this.y + (dy / dist) * escapeDist;
         
@@ -1744,20 +1743,20 @@ export class BerserkArtemisBoss {
                 });
             }
             
-            // 如果是强制触发，立即释放两次技能，然后进入正常冷却
+            // 如果是强制触发，立即释放两次简单技能，然后进入正常冷却
             if (isForced) {
-                let skills = this.phase === 3 ? this.phase3Skills : (this.phase === 2 ? this.phase2Skills : this.skills);
-                skills = skills.filter(s => s !== 'LUNAR_ESCAPE' && s !== 'LUNAR_EXECUTION' && s !== 'STAR_MOON_DOOM');
+                // 使用简单技能避免连锁触发
+                const simpleSkills = ['MOON_SHOT', 'HUNTER_DASH', 'SILVER_RAIN', 'LUNAR_STRIKE', 'LUNAR_RAIN'];
                 
                 // 第一次技能
                 setTimeout(() => {
-                    this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
+                    this.currentSkill = simpleSkills[Math.floor(Math.random() * simpleSkills.length)];
                     this.executeAttack();
                 }, 150);
                 
                 // 第二次技能
                 setTimeout(() => {
-                    this.currentSkill = skills[Math.floor(Math.random() * skills.length)];
+                    this.currentSkill = simpleSkills[Math.floor(Math.random() * simpleSkills.length)];
                     this.executeAttack();
                     // 进入正常冷却
                     this.timer = 0;
