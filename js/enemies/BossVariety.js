@@ -615,41 +615,27 @@ class MonkeyBoss extends BaseBoss {
         const pulse = 1 + Math.sin(time * 3) * 0.08;
         const isRage = this.phase === 2;
         
-        // Phase 2 狂暴背景光环
+        // Phase 2 狂暴背景光环 (简化)
         if (isRage) {
-            const rageGlow = ctx.createRadialGradient(this.x, this.y, this.radius, this.x, this.y, this.radius * 2);
-            rageGlow.addColorStop(0, 'rgba(255, 69, 0, 0.4)');
-            rageGlow.addColorStop(1, 'transparent');
-            ctx.fillStyle = rageGlow;
+            ctx.fillStyle = 'rgba(255, 69, 0, 0.25)';
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y, this.radius * 1.8, 0, Math.PI * 2);
             ctx.fill();
             
-            // 狂暴火焰粒子
-            for (let i = 0; i < 8; i++) {
-                const fa = time * 3 + i * 0.8;
+            // 狂暴火焰粒子 (减少数量)
+            for (let i = 0; i < 5; i++) {
+                const fa = time * 3 + i * 1.2;
                 const fx = this.x + Math.cos(fa) * (this.radius + 10);
                 const fy = this.y + Math.sin(fa) * (this.radius + 10) - Math.abs(Math.sin(time * 5 + i)) * 15;
-                ctx.fillStyle = `rgba(255, ${100 + Math.sin(time * 8 + i) * 50}, 0, 0.7)`;
+                ctx.fillStyle = 'rgba(255, 120, 0, 0.7)';
                 ctx.beginPath();
-                ctx.arc(fx, fy, 5 + Math.sin(time * 6 + i) * 2, 0, Math.PI * 2);
+                ctx.arc(fx, fy, 5, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
         
-        // 身体渐变 - 狂暴时变红
-        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
-        if (isRage) {
-            gradient.addColorStop(0, '#ff6347');
-            gradient.addColorStop(0.5, '#cd4f39');
-            gradient.addColorStop(1, '#8b2500');
-        } else {
-            gradient.addColorStop(0, '#cd853f');
-            gradient.addColorStop(0.5, '#8b4513');
-            gradient.addColorStop(1, '#654321');
-        }
-        
-        ctx.fillStyle = gradient;
+        // 身体纯色 (移除渐变)
+        ctx.fillStyle = isRage ? '#cd4f39' : '#8b4513';
         
         
         ctx.beginPath();
@@ -739,197 +725,313 @@ class MonkeyBoss extends BaseBoss {
     }
 
     drawSkillIndicator(ctx) {
+        if (!this.currentSkill) return;
+        
         const angle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
         const time = Date.now() / 1000;
-        const pulseAlpha = 0.4 + Math.sin(time * 8) * 0.2;
+        const pulse = 0.5 + Math.sin(time * 6) * 0.3;
+        const targetX = this.player.x;
+        const targetY = this.player.y;
+        
+        ctx.save();
         
         switch (this.currentSkill) {
-            case 'QUICK_DASH':
-                // 冲刺预警 - 箭头+轨迹
-                this.drawDashIndicator(ctx, this.dashTarget.x, this.dashTarget.y, '255, 165, 0');
-                // 额外箭头指示方向
-                const dashDist = 200;
+            case 'QUICK_DASH': {
+                // 冲刺预警 - 直线轨迹+箭头
+                const dashLen = 200;
+                const endX = this.x + Math.cos(angle) * dashLen;
+                const endY = this.y + Math.sin(angle) * dashLen;
+                
+                // 冲刺轨迹
+                ctx.strokeStyle = `rgba(255, 165, 0, ${pulse})`;
+                ctx.lineWidth = 20;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                
+                // 轨迹边框
+                ctx.strokeStyle = `rgba(255, 100, 0, ${pulse + 0.2})`;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 方向箭头
                 for (let i = 1; i <= 3; i++) {
-                    const ax = this.x + Math.cos(angle) * (dashDist / 3 * i);
-                    const ay = this.y + Math.sin(angle) * (dashDist / 3 * i);
-                    ctx.fillStyle = `rgba(255, 165, 0, ${pulseAlpha * (1 - i * 0.2)})`;
+                    const px = this.x + Math.cos(angle) * (dashLen / 4 * i);
+                    const py = this.y + Math.sin(angle) * (dashLen / 4 * i);
+                    ctx.fillStyle = `rgba(255, 200, 0, ${pulse + 0.3})`;
                     ctx.beginPath();
-                    ctx.moveTo(ax + Math.cos(angle) * 15, ay + Math.sin(angle) * 15);
-                    ctx.lineTo(ax + Math.cos(angle + 2.5) * 10, ay + Math.sin(angle + 2.5) * 10);
-                    ctx.lineTo(ax + Math.cos(angle - 2.5) * 10, ay + Math.sin(angle - 2.5) * 10);
+                    ctx.moveTo(px + Math.cos(angle) * 15, py + Math.sin(angle) * 15);
+                    ctx.lineTo(px + Math.cos(angle + 2.6) * 12, py + Math.sin(angle + 2.6) * 12);
+                    ctx.lineTo(px + Math.cos(angle - 2.6) * 12, py + Math.sin(angle - 2.6) * 12);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                // 警告文字
+                ctx.fillStyle = `rgba(255, 100, 0, ${pulse + 0.4})`;
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('冲刺!', (this.x + endX) / 2, (this.y + endY) / 2 - 20);
+                break;
+            }
+                
+            case 'BANANA_THROW': {
+                // 扇形投掷预警
+                const range = 250;
+                const spread = 0.4;
+                
+                ctx.fillStyle = `rgba(255, 255, 0, ${pulse * 0.3})`;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.arc(this.x, this.y, range, angle - spread, angle + spread);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.strokeStyle = `rgba(255, 200, 0, ${pulse + 0.3})`;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([10, 5]);
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.arc(this.x, this.y, range, angle - spread, angle + spread);
+                ctx.closePath();
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 方向箭头
+                ctx.fillStyle = `rgba(255, 255, 0, ${pulse + 0.4})`;
+                const arrowDist = range * 0.6;
+                ctx.beginPath();
+                ctx.moveTo(this.x + Math.cos(angle) * (arrowDist + 20), this.y + Math.sin(angle) * (arrowDist + 20));
+                ctx.lineTo(this.x + Math.cos(angle + 0.3) * arrowDist, this.y + Math.sin(angle + 0.3) * arrowDist);
+                ctx.lineTo(this.x + Math.cos(angle - 0.3) * arrowDist, this.y + Math.sin(angle - 0.3) * arrowDist);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+                
+            case 'TAIL_WHIP': {
+                // 近身AOE预警
+                const radius = 80;
+                
+                ctx.fillStyle = `rgba(139, 69, 19, ${pulse * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = `rgba(200, 100, 50, ${pulse + 0.3})`;
+                ctx.lineWidth = 4;
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 旋转弧线
+                ctx.strokeStyle = `rgba(255, 150, 50, ${pulse + 0.4})`;
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, radius * 0.7, time * 4, time * 4 + Math.PI * 1.5);
+                ctx.stroke();
+                
+                ctx.fillStyle = `rgba(255, 100, 0, ${pulse + 0.4})`;
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('横扫!', this.x, this.y - radius - 10);
+                break;
+            }
+                
+            case 'JUNGLE_LEAP': {
+                // 落点AOE预警
+                const radius = 100;
+                
+                ctx.fillStyle = `rgba(255, 100, 0, ${pulse * 0.4})`;
+                ctx.beginPath();
+                ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = `rgba(255, 69, 0, ${pulse + 0.4})`;
+                ctx.lineWidth = 4;
+                ctx.setLineDash([10, 5]);
+                ctx.beginPath();
+                ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 弧线轨迹
+                const midX = (this.x + targetX) / 2;
+                const midY = Math.min(this.y, targetY) - 100;
+                ctx.strokeStyle = `rgba(255, 140, 0, ${pulse + 0.2})`;
+                ctx.lineWidth = 4;
+                ctx.setLineDash([12, 6]);
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.quadraticCurveTo(midX, midY, targetX, targetY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 落点箭头
+                ctx.fillStyle = `rgba(255, 69, 0, ${pulse + 0.5})`;
+                ctx.beginPath();
+                ctx.moveTo(targetX, targetY - 25);
+                ctx.lineTo(targetX - 18, targetY - 50);
+                ctx.lineTo(targetX + 18, targetY - 50);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = `rgba(255, 69, 0, ${pulse + 0.4})`;
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('落地!', targetX, targetY - 55);
+                break;
+            }
+                
+            case 'FRENZY': {
+                // 全方向预警
+                const radius = 150;
+                
+                ctx.fillStyle = `rgba(255, 69, 0, ${pulse * 0.25})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = `rgba(255, 50, 0, ${pulse + 0.3})`;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 6方向箭头
+                for (let i = 0; i < 6; i++) {
+                    const a = (Math.PI * 2 / 6) * i;
+                    ctx.strokeStyle = `rgba(255, 100, 0, ${pulse + 0.2})`;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + Math.cos(a) * 30, this.y + Math.sin(a) * 30);
+                    ctx.lineTo(this.x + Math.cos(a) * (radius - 20), this.y + Math.sin(a) * (radius - 20));
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = `rgba(255, 150, 0, ${pulse + 0.4})`;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + Math.cos(a) * radius, this.y + Math.sin(a) * radius);
+                    ctx.lineTo(this.x + Math.cos(a + 0.25) * (radius - 25), this.y + Math.sin(a + 0.25) * (radius - 25));
+                    ctx.lineTo(this.x + Math.cos(a - 0.25) * (radius - 25), this.y + Math.sin(a - 0.25) * (radius - 25));
                     ctx.closePath();
                     ctx.fill();
                 }
                 break;
+            }
                 
-            case 'BANANA_THROW':
-                // 扇形投掷预警 - 使用扇形指示器
-                this.drawConeIndicator(ctx, angle, 0.4, 250, '255, 255, 0');
-                // 香蕉图标
-                ctx.fillStyle = `rgba(255, 255, 0, ${pulseAlpha + 0.3})`;
-                ctx.font = 'bold 20px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('🍌', this.x + Math.cos(angle) * 80, this.y + Math.sin(angle) * 80);
-                break;
+            case 'VINE_TRAP': {
+                // 玩家周围陷阱预警
+                const radius = 100;
                 
-            case 'TAIL_WHIP':
-                // 尾巴横扫预警 - 近身AOE
-                this.drawAOEIndicator(ctx, this.x, this.y, 80, '139, 69, 19');
-                // 旋转箭头表示横扫
-                ctx.strokeStyle = `rgba(139, 69, 19, ${pulseAlpha + 0.3})`;
-                ctx.lineWidth = 4;
+                ctx.fillStyle = `rgba(34, 139, 34, ${pulse * 0.3})`;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 60, time * 3, time * 3 + Math.PI * 1.5);
-                ctx.stroke();
-                // 箭头尖端
-                const tailAngle = time * 3 + Math.PI * 1.5;
-                ctx.fillStyle = `rgba(139, 69, 19, ${pulseAlpha + 0.3})`;
-                ctx.beginPath();
-                ctx.moveTo(this.x + Math.cos(tailAngle) * 70, this.y + Math.sin(tailAngle) * 70);
-                ctx.lineTo(this.x + Math.cos(tailAngle - 0.3) * 55, this.y + Math.sin(tailAngle - 0.3) * 55);
-                ctx.lineTo(this.x + Math.cos(tailAngle + 0.3) * 55, this.y + Math.sin(tailAngle + 0.3) * 55);
-                ctx.closePath();
+                ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
                 ctx.fill();
-                break;
                 
-            case 'JUNGLE_LEAP':
-                // 跳跃预警 - 起跳点+落点
-                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 100, '139, 69, 19');
-                // 跳跃弧线
-                ctx.strokeStyle = `rgba(255, 140, 0, ${pulseAlpha + 0.3})`;
+                ctx.strokeStyle = `rgba(0, 180, 0, ${pulse + 0.3})`;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath();
+                ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                ctx.fillStyle = `rgba(0, 150, 0, ${pulse + 0.4})`;
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('陷阱!', targetX, targetY - radius - 10);
+                break;
+            }
+                
+            case 'COCONUT_RAIN': {
+                // 落物预警
+                const radius = 130;
+                
+                ctx.fillStyle = `rgba(139, 90, 43, ${pulse * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = `rgba(180, 100, 50, ${pulse + 0.3})`;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath();
+                ctx.arc(targetX, targetY, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 下落箭头
+                for (let i = -1; i <= 1; i++) {
+                    const ax = targetX + i * 50;
+                    const ay = targetY - radius - 30 - Math.sin(time * 6 + i) * 15;
+                    ctx.fillStyle = `rgba(139, 69, 19, ${pulse + 0.4})`;
+                    ctx.beginPath();
+                    ctx.moveTo(ax, ay + 25);
+                    ctx.lineTo(ax - 10, ay);
+                    ctx.lineTo(ax + 10, ay);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                ctx.fillStyle = `rgba(180, 100, 50, ${pulse + 0.4})`;
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('落物!', targetX, targetY - radius - 60);
+                break;
+            }
+                
+            case 'PRIMAL_RAGE': {
+                // 狂暴冲刺预警
+                const dist = Math.sqrt((targetX - this.x) ** 2 + (targetY - this.y) ** 2);
+                
+                // 冲刺轨迹
+                ctx.strokeStyle = `rgba(255, 0, 0, ${pulse + 0.2})`;
+                ctx.lineWidth = 25;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(targetX, targetY);
+                ctx.stroke();
+                
+                ctx.strokeStyle = `rgba(255, 100, 0, ${pulse + 0.4})`;
                 ctx.lineWidth = 4;
                 ctx.setLineDash([10, 5]);
                 ctx.beginPath();
                 ctx.moveTo(this.x, this.y);
-                const midX = (this.x + this.player.x) / 2;
-                const midY = Math.min(this.y, this.player.y) - 100;
-                ctx.quadraticCurveTo(midX, midY, this.player.x, this.player.y);
+                ctx.lineTo(targetX, targetY);
                 ctx.stroke();
                 ctx.setLineDash([]);
-                // 沿弧线的多个箭头
-                for (let t = 0.3; t <= 0.9; t += 0.3) {
-                    const t2 = t * t;
-                    const mt = 1 - t;
-                    const mt2 = mt * mt;
-                    const arrowX = mt2 * this.x + 2 * mt * t * midX + t2 * this.player.x;
-                    const arrowY = mt2 * this.y + 2 * mt * t * midY + t2 * this.player.y;
-                    // 计算切线方向
-                    const dx = 2 * mt * (midX - this.x) + 2 * t * (this.player.x - midX);
-                    const dy = 2 * mt * (midY - this.y) + 2 * t * (this.player.y - midY);
-                    const arrowAngle = Math.atan2(dy, dx);
-                    ctx.fillStyle = `rgba(255, 140, 0, ${pulseAlpha + 0.4 - t * 0.2})`;
-                    ctx.beginPath();
-                    ctx.moveTo(arrowX + Math.cos(arrowAngle) * 12, arrowY + Math.sin(arrowAngle) * 12);
-                    ctx.lineTo(arrowX + Math.cos(arrowAngle + 2.5) * 10, arrowY + Math.sin(arrowAngle + 2.5) * 10);
-                    ctx.lineTo(arrowX + Math.cos(arrowAngle - 2.5) * 10, arrowY + Math.sin(arrowAngle - 2.5) * 10);
-                    ctx.closePath();
-                    ctx.fill();
-                }
-                // 落地大箭头
-                ctx.fillStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.5})`;
-                ctx.beginPath();
-                ctx.moveTo(this.player.x, this.player.y - 30);
-                ctx.lineTo(this.player.x - 15, this.player.y - 50);
-                ctx.lineTo(this.player.x + 15, this.player.y - 50);
-                ctx.closePath();
-                ctx.fill();
-                // 落地警告文字
-                ctx.fillStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.3})`;
-                ctx.font = 'bold 18px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('落地!', this.player.x, this.player.y - 55);
-                break;
                 
-            case 'FRENZY':
-                // 狂暴全方向预警 - 放射线+圆环
-                this.drawAOEIndicator(ctx, this.x, this.y, 150, '255, 69, 0', false);
-                for (let i = 0; i < 6; i++) {
-                    const a = (Math.PI * 2 / 6) * i;
-                    // 方向线
-                    ctx.strokeStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.2})`;
-                    ctx.lineWidth = 4;
+                // 冲击波圈
+                for (let r = 0; r < 3; r++) {
+                    ctx.strokeStyle = `rgba(255, 69, 0, ${pulse - r * 0.15})`;
+                    ctx.lineWidth = 3;
                     ctx.beginPath();
-                    ctx.moveTo(this.x, this.y);
-                    ctx.lineTo(this.x + Math.cos(a) * 150, this.y + Math.sin(a) * 150);
-                    ctx.stroke();
-                    // 箭头
-                    ctx.fillStyle = `rgba(255, 69, 0, ${pulseAlpha + 0.3})`;
-                    ctx.beginPath();
-                    ctx.moveTo(this.x + Math.cos(a) * 160, this.y + Math.sin(a) * 160);
-                    ctx.lineTo(this.x + Math.cos(a + 0.3) * 140, this.y + Math.sin(a + 0.3) * 140);
-                    ctx.lineTo(this.x + Math.cos(a - 0.3) * 140, this.y + Math.sin(a - 0.3) * 140);
-                    ctx.closePath();
-                    ctx.fill();
-                }
-                break;
-                
-            case 'VINE_TRAP':
-                // 藤蔓陷阱预警 - 玩家周围多个区域
-                this.drawAOEIndicator(ctx, this.player.x, this.player.y, 100, '34, 139, 34');
-                // 藤蔓图案
-                ctx.strokeStyle = `rgba(0, 100, 0, ${pulseAlpha + 0.2})`;
-                ctx.lineWidth = 3;
-                for (let i = 0; i < 6; i++) {
-                    const va = (Math.PI * 2 / 6) * i + time * 0.5;
-                    ctx.beginPath();
-                    ctx.moveTo(this.player.x, this.player.y);
-                    ctx.quadraticCurveTo(
-                        this.player.x + Math.cos(va) * 50, 
-                        this.player.y + Math.sin(va) * 50 - 20,
-                        this.player.x + Math.cos(va) * 80, 
-                        this.player.y + Math.sin(va) * 80
-                    );
+                    ctx.arc(targetX, targetY, 60 + r * 25, 0, Math.PI * 2);
                     ctx.stroke();
                 }
-                ctx.fillStyle = `rgba(34, 139, 34, ${pulseAlpha})`;
+                
+                // 警告
+                ctx.fillStyle = `rgba(255, 0, 0, ${pulse + 0.5})`;
                 ctx.font = 'bold 20px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('🌿', this.player.x, this.player.y - 70);
+                ctx.fillText('狂暴!', this.x, this.y - this.radius - 20);
                 break;
-                
-            case 'COCONUT_RAIN':
-                // 椰子雨预警 - 落物指示
-                this.drawFallIndicator(ctx, this.player.x, this.player.y, 130, '139, 69, 19');
-                // 多个落点
-                for (let i = 0; i < 3; i++) {
-                    const ox = (i - 1) * 60;
-                    ctx.strokeStyle = `rgba(139, 69, 19, ${pulseAlpha * 0.6})`;
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([5, 5]);
-                    ctx.beginPath();
-                    ctx.arc(this.player.x + ox, this.player.y, 25, 0, Math.PI * 2);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                }
-                // 椰子图标
-                ctx.fillStyle = `rgba(139, 69, 19, ${pulseAlpha + 0.3})`;
-                ctx.font = 'bold 22px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('🥥', this.player.x, this.player.y - 100);
-                break;
-                
-            case 'PRIMAL_RAGE':
-                // 原始狂怒预警 - 强烈警告
-                this.drawDashIndicator(ctx, this.player.x, this.player.y, '255, 0, 0');
-                // 多层冲击波预警
-                for (let ring = 0; ring < 3; ring++) {
-                    ctx.strokeStyle = `rgba(255, 69, 0, ${(pulseAlpha - ring * 0.1)})`;
-                    ctx.lineWidth = 4 - ring;
-                    ctx.setLineDash([8, 4]);
-                    ctx.beginPath();
-                    ctx.arc(this.player.x, this.player.y, 80 + ring * 30, 0, Math.PI * 2);
-                    ctx.stroke();
-                }
-                ctx.setLineDash([]);
-                // 危险警告
-                ctx.fillStyle = `rgba(255, 0, 0, ${pulseAlpha + 0.4})`;
-                ctx.font = 'bold 32px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('⚠️', this.x, this.y - this.radius - 25);
-                ctx.font = 'bold 16px Arial';
-                ctx.fillText('狂暴！', this.x, this.y - this.radius - 5);
-                break;
+            }
         }
+        
+        ctx.restore();
     }
 }
 
@@ -1748,54 +1850,43 @@ class CerberusBoss extends BaseBoss {
         const time = Date.now() / 1000;
         const isRage = this.phase === 2;
         
-        // ===== 地狱火焰背景光环 =====
-        const glowSize = isRage ? 2.5 : 1.8;
-        const rageGlow = ctx.createRadialGradient(this.x, this.y, this.radius * 0.5, this.x, this.y, this.radius * glowSize);
-        rageGlow.addColorStop(0, isRage ? 'rgba(255, 100, 0, 0.6)' : 'rgba(139, 0, 0, 0.3)');
-        rageGlow.addColorStop(0.5, isRage ? 'rgba(255, 50, 0, 0.3)' : 'rgba(100, 0, 0, 0.15)');
-        rageGlow.addColorStop(1, 'transparent');
-        ctx.fillStyle = rageGlow;
+        // ===== 地狱火焰背景光环 (简化) =====
+        ctx.fillStyle = isRage ? 'rgba(255, 80, 0, 0.35)' : 'rgba(139, 0, 0, 0.2)';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * glowSize, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.radius * 1.8, 0, Math.PI * 2);
         ctx.fill();
         
-        // ===== 地狱锁链（绕身体旋转）=====
+        // ===== 地狱锁链 (简化) =====
         ctx.strokeStyle = isRage ? '#ff6600' : '#555';
         ctx.lineWidth = 4;
         for (let c = 0; c < 3; c++) {
             const chainAngle = time * 1.5 + c * (Math.PI * 2 / 3);
-            const chainDist = this.radius + 10;
             ctx.beginPath();
-            for (let i = 0; i < 8; i++) {
-                const ca = chainAngle + i * 0.25;
-                const cx = this.x + Math.cos(ca) * (chainDist + Math.sin(time * 3 + i) * 5);
-                const cy = this.y + Math.sin(ca) * (chainDist + Math.sin(time * 3 + i) * 5);
+            for (let i = 0; i < 6; i++) {
+                const ca = chainAngle + i * 0.3;
+                const cx = this.x + Math.cos(ca) * (this.radius + 10);
+                const cy = this.y + Math.sin(ca) * (this.radius + 10);
                 if (i === 0) ctx.moveTo(cx, cy);
                 else ctx.lineTo(cx, cy);
             }
             ctx.stroke();
         }
         
-        // ===== 熔岩地面效果 =====
+        // ===== 熔岩地面效果 (减少) =====
         if (isRage) {
-            for (let i = 0; i < 8; i++) {
-                const lavaAngle = time * 0.5 + i * 0.8;
-                const lavaDist = this.radius * 1.3 + Math.sin(time * 2 + i) * 10;
-                const lx = this.x + Math.cos(lavaAngle) * lavaDist;
-                const ly = this.y + Math.sin(lavaAngle) * lavaDist;
-                ctx.fillStyle = `rgba(255, ${80 + Math.sin(time * 4 + i) * 40}, 0, ${0.6 + Math.sin(time * 6 + i) * 0.3})`;
+            ctx.fillStyle = 'rgba(255, 100, 0, 0.6)';
+            for (let i = 0; i < 5; i++) {
+                const lavaAngle = time * 0.5 + i * 1.2;
+                const lx = this.x + Math.cos(lavaAngle) * this.radius * 1.3;
+                const ly = this.y + Math.sin(lavaAngle) * this.radius * 1.3;
                 ctx.beginPath();
-                ctx.arc(lx, ly, 8 + Math.sin(time * 5 + i) * 3, 0, Math.PI * 2);
+                ctx.arc(lx, ly, 8, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
         
-        // ===== 主体身躯（带熔岩裂纹）=====
-        const bodyGrad = ctx.createRadialGradient(this.x - 15, this.y - 15, 0, this.x, this.y, this.radius);
-        bodyGrad.addColorStop(0, isRage ? '#ff6347' : '#a52a2a');
-        bodyGrad.addColorStop(0.4, isRage ? '#dc143c' : '#8b0000');
-        bodyGrad.addColorStop(1, isRage ? '#8b0000' : '#400000');
-        ctx.fillStyle = bodyGrad;
+        // ===== 主体身躯 (纯色) =====
+        ctx.fillStyle = isRage ? '#dc143c' : '#8b0000';
         
         
         ctx.beginPath();
@@ -1902,11 +1993,8 @@ class CerberusBoss extends BaseBoss {
                 ctx.fill();
             }
             
-            // 头部
-            const headGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, 24);
-            headGrad.addColorStop(0, isRage ? '#ff6347' : '#a52a2a');
-            headGrad.addColorStop(1, isRage ? '#8b0000' : '#500000');
-            ctx.fillStyle = headGrad;
+            // 头部 (纯色)
+            ctx.fillStyle = isRage ? '#dc143c' : '#8b0000';
             ctx.beginPath();
             ctx.ellipse(hx, hy, 24, 18, head.angle, 0, Math.PI * 2);
             ctx.fill();
@@ -2391,34 +2479,26 @@ class ZeusBoss extends BaseBoss {
         const time = Date.now() / 1000;
         const isRage = this.phase === 2;
         
-        // ===== 雷暴背景光环 =====
-        const glowSize = isRage ? 2.8 : 2.0;
-        const stormGlow = ctx.createRadialGradient(this.x, this.y, this.radius * 0.3, this.x, this.y, this.radius * glowSize);
-        stormGlow.addColorStop(0, isRage ? 'rgba(255, 255, 100, 0.5)' : 'rgba(100, 150, 255, 0.3)');
-        stormGlow.addColorStop(0.5, isRage ? 'rgba(0, 200, 255, 0.25)' : 'rgba(65, 105, 225, 0.15)');
-        stormGlow.addColorStop(1, 'transparent');
-        ctx.fillStyle = stormGlow;
+        // ===== 雷暴背景光环 (简化) =====
+        ctx.fillStyle = isRage ? 'rgba(200, 200, 100, 0.3)' : 'rgba(100, 150, 255, 0.2)';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * glowSize, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
         ctx.fill();
         
-        // ===== 旋转雷电环 =====
+        // ===== 旋转雷电环 (减少) =====
         ctx.strokeStyle = isRage ? '#00ffff' : '#6495ed';
         ctx.lineWidth = 3;
-        for (let ring = 0; ring < 2; ring++) {
-            const ringDist = this.radius + 15 + ring * 20;
-            for (let i = 0; i < 8; i++) {
-                const boltAngle = time * (2 + ring) + i * (Math.PI / 4) + ring * 0.4;
-                const boltX = this.x + Math.cos(boltAngle) * ringDist;
-                const boltY = this.y + Math.sin(boltAngle) * ringDist;
-                // 闪电符号
-                ctx.beginPath();
-                ctx.moveTo(boltX - 4, boltY - 8);
-                ctx.lineTo(boltX + 2, boltY - 2);
-                ctx.lineTo(boltX - 2, boltY + 2);
-                ctx.lineTo(boltX + 4, boltY + 8);
-                ctx.stroke();
-            }
+        const ringDist = this.radius + 20;
+        for (let i = 0; i < 6; i++) {
+            const boltAngle = time * 2 + i * (Math.PI / 3);
+            const boltX = this.x + Math.cos(boltAngle) * ringDist;
+            const boltY = this.y + Math.sin(boltAngle) * ringDist;
+            ctx.beginPath();
+            ctx.moveTo(boltX - 4, boltY - 8);
+            ctx.lineTo(boltX + 2, boltY - 2);
+            ctx.lineTo(boltX - 2, boltY + 2);
+            ctx.lineTo(boltX + 4, boltY + 8);
+            ctx.stroke();
         }
         
         // ===== 奥林匹斯云座 =====
@@ -2449,12 +2529,8 @@ class ZeusBoss extends BaseBoss {
         ctx.lineWidth = 3;
         ctx.stroke();
         
-        // 躯干
-        const bodyGrad = ctx.createRadialGradient(this.x, this.y - 10, 0, this.x, this.y, this.radius);
-        bodyGrad.addColorStop(0, isRage ? '#fff8dc' : '#f5f5dc');
-        bodyGrad.addColorStop(0.5, isRage ? '#ffd700' : '#daa520');
-        bodyGrad.addColorStop(1, isRage ? '#ff8c00' : '#4169e1');
-        ctx.fillStyle = bodyGrad;
+        // 躯干 (纯色)
+        ctx.fillStyle = isRage ? '#ffd700' : '#daa520';
         
         
         ctx.beginPath();
@@ -2544,11 +2620,8 @@ class ZeusBoss extends BaseBoss {
             ctx.stroke();
         }
         
-        // 脸部
-        const faceGrad = ctx.createRadialGradient(this.x, this.y - 25, 0, this.x, this.y - 20, 30);
-        faceGrad.addColorStop(0, '#ffeedd');
-        faceGrad.addColorStop(1, isRage ? '#daa520' : '#d2b48c');
-        ctx.fillStyle = faceGrad;
+        // 脸部 (纯色)
+        ctx.fillStyle = isRage ? '#ffeedd' : '#f5deb3';
         ctx.beginPath();
         ctx.ellipse(this.x, this.y - 20, 28, 24, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -3402,15 +3475,10 @@ class PaladinBoss extends BaseBoss {
         const isRage = this.phase === 2;
         this.swordAngle = Math.sin(time * 3) * 0.2;
         
-        // ===== 王者气场光环 =====
-        const glowSize = isRage ? 2.8 : 2.0;
-        const kingsAura = ctx.createRadialGradient(this.x, this.y, this.radius * 0.2, this.x, this.y, this.radius * glowSize);
-        kingsAura.addColorStop(0, isRage ? 'rgba(255, 215, 0, 0.5)' : 'rgba(200, 200, 220, 0.25)');
-        kingsAura.addColorStop(0.5, isRage ? 'rgba(255, 180, 0, 0.2)' : 'rgba(150, 150, 180, 0.1)');
-        kingsAura.addColorStop(1, 'transparent');
-        ctx.fillStyle = kingsAura;
+        // ===== 王者气场光环 (简化) =====
+        ctx.fillStyle = isRage ? 'rgba(255, 200, 0, 0.3)' : 'rgba(180, 180, 200, 0.2)';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * glowSize, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
         ctx.fill();
         
         // ===== 残影轨迹 =====
@@ -3436,13 +3504,8 @@ class PaladinBoss extends BaseBoss {
         ctx.lineWidth = 2;
         ctx.stroke();
         
-        // ===== 骑士铠甲身躯 =====
-        const armorGrad = ctx.createRadialGradient(this.x - 10, this.y - 10, 0, this.x, this.y, this.radius);
-        armorGrad.addColorStop(0, '#e8e8e8');
-        armorGrad.addColorStop(0.3, isRage ? '#c0c0c0' : '#a8a8a8');
-        armorGrad.addColorStop(0.7, isRage ? '#909090' : '#707070');
-        armorGrad.addColorStop(1, isRage ? '#606060' : '#404040');
-        ctx.fillStyle = armorGrad;
+        // ===== 骑士铠甲身躯 (纯色) =====
+        ctx.fillStyle = isRage ? '#b0b0b0' : '#808080';
         
         
         ctx.beginPath();
@@ -3460,12 +3523,8 @@ class PaladinBoss extends BaseBoss {
         ctx.quadraticCurveTo(this.x - 10, this.y, this.x - 15, this.y - 20);
         ctx.stroke();
         
-        // ===== 王者头盔 =====
-        const helmetGrad = ctx.createRadialGradient(this.x, this.y - 40, 0, this.x, this.y - 35, 30);
-        helmetGrad.addColorStop(0, '#d0d0d0');
-        helmetGrad.addColorStop(0.5, '#808080');
-        helmetGrad.addColorStop(1, '#404040');
-        ctx.fillStyle = helmetGrad;
+        // ===== 王者头盔 (纯色) =====
+        ctx.fillStyle = '#909090';
         ctx.beginPath();
         ctx.ellipse(this.x, this.y - 38, 25, 22, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -3508,13 +3567,8 @@ class PaladinBoss extends BaseBoss {
         
         
         
-        // 剑身 - Excalibur特效
-        const excaliburGrad = ctx.createLinearGradient(0, -80, 0, 20);
-        excaliburGrad.addColorStop(0, '#ffffff');
-        excaliburGrad.addColorStop(0.3, isRage ? '#ffd700' : '#88ccff');
-        excaliburGrad.addColorStop(0.6, isRage ? '#ffaa00' : '#4488ff');
-        excaliburGrad.addColorStop(1, '#ffffff');
-        ctx.fillStyle = excaliburGrad;
+        // 剑身 - Excalibur (纯色)
+        ctx.fillStyle = isRage ? '#ffd700' : '#88ccff';
         ctx.beginPath();
         ctx.moveTo(0, -85);  // 剑尖
         ctx.lineTo(8, -60);
@@ -3574,12 +3628,8 @@ class PaladinBoss extends BaseBoss {
         ctx.save();
         ctx.translate(this.x - 50, this.y);
         ctx.rotate(-0.3);
-        // 盾牌主体
-        const shieldGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 35);
-        shieldGrad.addColorStop(0, '#c0c0c0');
-        shieldGrad.addColorStop(0.5, '#808080');
-        shieldGrad.addColorStop(1, '#404040');
-        ctx.fillStyle = shieldGrad;
+        // 盾牌主体 (纯色)
+        ctx.fillStyle = '#909090';
         ctx.beginPath();
         ctx.moveTo(0, -35);
         ctx.lineTo(25, -15);
