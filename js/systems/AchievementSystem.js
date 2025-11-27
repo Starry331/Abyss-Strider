@@ -4,6 +4,7 @@
 export class AchievementSystem {
     constructor() {
         this.achievements = [
+            // ===== 铜杯成就 =====
             {
                 id: 'first_blood',
                 name: '初战告捷',
@@ -20,6 +21,31 @@ export class AchievementSystem {
                 rarity: 'bronze',
                 unlocked: false
             },
+            {
+                id: 'hundred_kills',
+                name: '百敌斩',
+                desc: '击败100个敌人',
+                condition: '累计击杀100只敌人',
+                rarity: 'bronze',
+                unlocked: false
+            },
+            {
+                id: 'level_2',
+                name: '深渊探索者',
+                desc: '到达第2层',
+                condition: '通过第1关',
+                rarity: 'bronze',
+                unlocked: false
+            },
+            {
+                id: 'first_build',
+                name: '构筑起点',
+                desc: '获得第一个构筑',
+                condition: '获得任意构筑',
+                rarity: 'bronze',
+                unlocked: false
+            },
+            // ===== 银杯成就 =====
             {
                 id: 'boss_slayer',
                 name: '屠龙勇士',
@@ -45,11 +71,117 @@ export class AchievementSystem {
                 unlocked: false
             },
             {
+                id: 'thousand_kills',
+                name: '千敌斩',
+                desc: '击败1000个敌人',
+                condition: '累计击杀1000只敌人',
+                rarity: 'silver',
+                unlocked: false
+            },
+            {
+                id: 'elite_slayer',
+                name: '精英杀手',
+                desc: '击败10只精英怪',
+                condition: '累计击杀10只精英怪',
+                rarity: 'silver',
+                unlocked: false
+            },
+            {
+                id: 'boss_hunter',
+                name: 'Boss猎人',
+                desc: '击败5个Boss',
+                condition: '累计击败5个Boss',
+                rarity: 'silver',
+                unlocked: false
+            },
+            {
+                id: 'level_3',
+                name: '勇闯炼狱',
+                desc: '到达第3层',
+                condition: '通过第2关',
+                rarity: 'silver',
+                unlocked: false
+            },
+            {
+                id: 'level_4',
+                name: '熔岩行者',
+                desc: '到达第4层',
+                condition: '通过第3关',
+                rarity: 'silver',
+                unlocked: false
+            },
+            // ===== 金杯成就 =====
+            {
+                id: 'mutated_hunter',
+                name: '异化猎人',
+                desc: '击败一个异化Boss',
+                condition: '击败任意异化Boss',
+                rarity: 'gold',
+                unlocked: false
+            },
+            {
+                id: 'level_5',
+                name: '神殿守望者',
+                desc: '到达第5层',
+                condition: '通过第4关',
+                rarity: 'gold',
+                unlocked: false
+            },
+            {
+                id: 'build_master',
+                name: '构筑大师',
+                desc: '获得25个构筑强化',
+                condition: '累计获得25个构筑',
+                rarity: 'gold',
+                unlocked: false
+            },
+            {
+                id: 'elite_destroyer',
+                name: '精英毁灭者',
+                desc: '击败50只精英怪',
+                condition: '累计击杀50只精英怪',
+                rarity: 'gold',
+                unlocked: false
+            },
+            {
+                id: 'boss_master',
+                name: 'Boss征服者',
+                desc: '击败15个Boss',
+                condition: '累计击败15个Boss',
+                rarity: 'gold',
+                unlocked: false
+            },
+            {
                 id: 'master',
                 name: '大师之征',
                 desc: '击败最终Boss，通关深渊行者',
                 condition: '击败第5层Boss',
                 rarity: 'gold',
+                unlocked: false
+            },
+            // ===== 白金成就 =====
+            {
+                id: 'perfect_clear',
+                name: '完美通关',
+                desc: '全程无伤通关一个关卡',
+                condition: '无伤通过任意关卡',
+                rarity: 'platinum',
+                unlocked: false
+            },
+            {
+                id: 'mutated_master',
+                name: '异化征服者',
+                desc: '击败5个异化Boss',
+                condition: '累计击败5个异化Boss',
+                rarity: 'platinum',
+                unlocked: false
+            },
+            {
+                id: 'legend',
+                name: '深渊传奇',
+                desc: '解锁所有其他成就',
+                condition: '解锁全部成就',
+                rarity: 'platinum',
                 unlocked: false
             }
         ];
@@ -58,8 +190,11 @@ export class AchievementSystem {
             enemiesKilled: 0,
             elitesKilled: 0,
             bossesKilled: 0,
+            mutatedBossesKilled: 0,
             buildsCollected: 0,
-            nearDeathSurvived: false
+            nearDeathSurvived: false,
+            highestLevel: 1,
+            perfectClears: 0
         };
         
         this.load();
@@ -153,6 +288,7 @@ export class AchievementSystem {
             case 'bronze': return '🥉';
             case 'silver': return '🥈';
             case 'gold': return '🏆';
+            case 'platinum': return '💎';
             default: return '🏆';
         }
     }
@@ -162,35 +298,45 @@ export class AchievementSystem {
             case 'bronze': return '#cd7f32';
             case 'silver': return '#c0c0c0';
             case 'gold': return '#ffd700';
+            case 'platinum': return '#e5e4e2';
             default: return '#ffd700';
         }
     }
     
     // 检查成就条件
     checkAchievements() {
-        // 初战告捷
-        if (this.stats.enemiesKilled >= 1) {
-            this.unlock('first_blood');
-        }
+        // ===== 铜杯 =====
+        if (this.stats.enemiesKilled >= 1) this.unlock('first_blood');
+        if (this.stats.elitesKilled >= 1) this.unlock('elite_hunter');
+        if (this.stats.enemiesKilled >= 100) this.unlock('hundred_kills');
+        if (this.stats.highestLevel >= 2) this.unlock('level_2');
+        if (this.stats.buildsCollected >= 1) this.unlock('first_build');
         
-        // 精英猎手
-        if (this.stats.elitesKilled >= 1) {
-            this.unlock('elite_hunter');
-        }
+        // ===== 银杯 =====
+        if (this.stats.bossesKilled >= 1) this.unlock('boss_slayer');
+        if (this.stats.buildsCollected >= 10) this.unlock('build_collector');
+        if (this.stats.nearDeathSurvived) this.unlock('survivor');
+        if (this.stats.enemiesKilled >= 1000) this.unlock('thousand_kills');
+        if (this.stats.elitesKilled >= 10) this.unlock('elite_slayer');
+        if (this.stats.bossesKilled >= 5) this.unlock('boss_hunter');
+        if (this.stats.highestLevel >= 3) this.unlock('level_3');
+        if (this.stats.highestLevel >= 4) this.unlock('level_4');
         
-        // 屠龙勇士
-        if (this.stats.bossesKilled >= 1) {
-            this.unlock('boss_slayer');
-        }
+        // ===== 金杯 =====
+        if (this.stats.mutatedBossesKilled >= 1) this.unlock('mutated_hunter');
+        if (this.stats.highestLevel >= 5) this.unlock('level_5');
+        if (this.stats.buildsCollected >= 25) this.unlock('build_master');
+        if (this.stats.elitesKilled >= 50) this.unlock('elite_destroyer');
+        if (this.stats.bossesKilled >= 15) this.unlock('boss_master');
         
-        // 构筑收藏家
-        if (this.stats.buildsCollected >= 10) {
-            this.unlock('build_collector');
-        }
+        // ===== 白金 =====
+        if (this.stats.perfectClears >= 1) this.unlock('perfect_clear');
+        if (this.stats.mutatedBossesKilled >= 5) this.unlock('mutated_master');
         
-        // 幸存者
-        if (this.stats.nearDeathSurvived) {
-            this.unlock('survivor');
+        // 深渊传奇 - 检查是否解锁了除legend外的所有成就
+        const otherAchievements = this.achievements.filter(a => a.id !== 'legend');
+        if (otherAchievements.every(a => a.unlocked)) {
+            this.unlock('legend');
         }
     }
     
@@ -207,8 +353,11 @@ export class AchievementSystem {
         this.save();
     }
     
-    recordBossKill() {
+    recordBossKill(isMutated = false) {
         this.stats.bossesKilled++;
+        if (isMutated) {
+            this.stats.mutatedBossesKilled++;
+        }
         this.checkAchievements();
         this.save();
     }
@@ -221,6 +370,20 @@ export class AchievementSystem {
     
     recordNearDeathSurvival() {
         this.stats.nearDeathSurvived = true;
+        this.checkAchievements();
+        this.save();
+    }
+    
+    recordLevelReached(level) {
+        if (level > this.stats.highestLevel) {
+            this.stats.highestLevel = level;
+            this.checkAchievements();
+            this.save();
+        }
+    }
+    
+    recordPerfectClear() {
+        this.stats.perfectClears++;
         this.checkAchievements();
         this.save();
     }
