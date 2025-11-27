@@ -25,7 +25,7 @@ export class CombatSystem {
         // Update projectiles
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const p = this.projectiles[i];
-            p.update(deltaTime);
+            if (p.update) p.update(deltaTime);
             if (p.markedForDeletion) {
                 this.projectiles.splice(i, 1);
             }
