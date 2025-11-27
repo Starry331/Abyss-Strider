@@ -230,8 +230,8 @@ export class BossRushScene {
             return;
         }
         this.player = new this.Player(canvas.width / 2, canvas.height / 2, this.inputManager);
-        this.player.maxHp = 250; // Boss战更高初始血量
-        this.player.hp = 250;
+        this.player.maxHp = 100; // 基础血量
+        this.player.hp = 100;
         this.player.invincibleTime = 0; // 重置无敌时间
         this.hasUsedRevive = false; // 重置复活机会（只有一次）
         
@@ -306,7 +306,7 @@ export class BossRushScene {
         }
         
         // 更新Boss血条UI
-        this.uiManager.updateBossHP(this.activeBoss.hp, this.activeBoss.maxHp, this.activeBoss.name);
+        this.updateBossHPUI();
         
         // 播放对应Boss专属BGM
         if (this.audioManager) {
@@ -1064,7 +1064,7 @@ export class BossRushScene {
                 this.onBossDefeated();
             } else {
                 // 更新Boss血条
-                this.uiManager.updateBossHP(this.activeBoss.hp, this.activeBoss.maxHp, this.activeBoss.name);
+                this.updateBossHPUI();
             }
         }
         
@@ -1322,6 +1322,48 @@ export class BossRushScene {
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'right';
         ctx.fillText(text, ctx.canvas.width - 20, 30);
+    }
+    
+    // 更新Boss血条UI
+    updateBossHPUI() {
+        if (!this.activeBoss) return;
+        
+        const container = document.getElementById('boss-hp-container');
+        if (!container) {
+            // 创建Boss血条容器
+            const hpContainer = document.createElement('div');
+            hpContainer.id = 'boss-hp-container';
+            hpContainer.style.cssText = `
+                position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+                width: 300px; text-align: center; z-index: 100;
+            `;
+            hpContainer.innerHTML = `
+                <div id="boss-name" style="color: #ff4444; font-size: 18px; font-weight: bold; margin-bottom: 5px;"></div>
+                <div style="background: #333; border-radius: 5px; height: 20px; border: 2px solid #666;">
+                    <div id="boss-hp-bar" style="background: linear-gradient(to right, #ff4444, #ff6666); height: 100%; border-radius: 3px; transition: width 0.2s;"></div>
+                </div>
+                <div id="boss-hp-text" style="color: #fff; font-size: 12px; margin-top: 3px;"></div>
+            `;
+            document.body.appendChild(hpContainer);
+        }
+        
+        const nameEl = document.getElementById('boss-name');
+        const barEl = document.getElementById('boss-hp-bar');
+        const textEl = document.getElementById('boss-hp-text');
+        
+        if (nameEl) nameEl.textContent = this.activeBoss.name;
+        if (barEl) barEl.style.width = `${(this.activeBoss.hp / this.activeBoss.maxHp) * 100}%`;
+        if (textEl) textEl.textContent = `${Math.ceil(this.activeBoss.hp)} / ${this.activeBoss.maxHp}`;
+        
+        // 显示容器
+        const cont = document.getElementById('boss-hp-container');
+        if (cont) cont.style.display = 'block';
+    }
+    
+    // 隐藏Boss血条
+    hideBossHPUI() {
+        const container = document.getElementById('boss-hp-container');
+        if (container) container.style.display = 'none';
     }
     
     // 绘制拾取物
