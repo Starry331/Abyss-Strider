@@ -245,6 +245,85 @@ export class BossRushScene {
                         p.maxShield = 120;
                     }}
                 ]
+            },
+            
+            // ===== 新增神祇 =====
+            aphrodite: {
+                name: '阿佛洛狄忒', title: 'Aphrodite', icon: '💕', rarity: 'red',
+                desc: '爱与美之神，魅惑众生',
+                color: '#ff6699', bgColor: '#3a1a2a',
+                effects: [
+                    { name: '魅惑之力', desc: '攻击+45%，吸血+4%', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.45;
+                        ws.weapons.forEach(w => w.lifesteal = (w.lifesteal || 0) + 0.04);
+                    }},
+                    { name: '美之祝福', desc: '生命回复1.5%/秒，护盾+50', apply: (p, ws) => { 
+                        p.regenRate = (p.regenRate || 0) + 0.015;
+                        p.shield = Math.min((p.shield || 0) + 50, 120);
+                    }},
+                    { name: '爱之羁绊', desc: '复活一次，攻击+30%', apply: (p, ws) => { 
+                        p.resurrectCount = (p.resurrectCount || 0) + 1;
+                        p.damageBonus = (p.damageBonus || 1) * 1.3;
+                    }}
+                ]
+            },
+            hermes: {
+                name: '赫尔墨斯', title: 'Hermes', icon: '👟', rarity: 'rare',
+                desc: '神使，速度与旅行之神',
+                color: '#44aaff', bgColor: '#1a2a3a',
+                effects: [
+                    { name: '神速', desc: '攻速+40%', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => w.cooldown *= 0.6);
+                    }},
+                    { name: '疾风步', desc: '移速+25%，闪避+10%', apply: (p, ws) => { 
+                        p.speed = (p.speed || 200) * 1.25;
+                        p.dodgeChance = (p.dodgeChance || 0) + 0.1;
+                    }},
+                    { name: '信使之翼', desc: '攻速+25%，投射物速度+50%', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => w.cooldown *= 0.75);
+                        ws.projectileSpeedMult = (ws.projectileSpeedMult || 1) * 1.5;
+                    }}
+                ]
+            },
+            ares: {
+                name: '阿瑞斯', title: 'Ares', icon: '⚔️', rarity: 'epic',
+                desc: '战神，暴力与战争化身',
+                color: '#9944ff', bgColor: '#2a1a3a',
+                effects: [
+                    { name: '战争狂怒', desc: '攻击+70%，受伤+15%', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.7;
+                        p.damageReduction = (p.damageReduction || 0) - 0.15;
+                    }},
+                    { name: '嗜血本能', desc: '暴击+20%，暴伤+80%', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => {
+                            w.critChance = (w.critChance || 0.2) + 0.2;
+                            w.critMultiplier = (w.critMultiplier || 2) + 0.8;
+                        });
+                    }},
+                    { name: '不屈战魂', desc: '攻击+50%，减伤+25%', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.5;
+                        p.damageReduction = (p.damageReduction || 0) + 0.25;
+                    }}
+                ]
+            },
+            menoetius: {
+                name: '墨诺提俄斯', title: 'Menoetius', icon: '💢', rarity: 'rare',
+                desc: '暴怒与鲁莽之神',
+                color: '#4488ff', bgColor: '#1a2a3a',
+                effects: [
+                    { name: '狂暴之力', desc: '攻击+55%，攻速+20%', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.55;
+                        ws.weapons.forEach(w => w.cooldown *= 0.8);
+                    }},
+                    { name: '鲁莽冲锋', desc: '攻击+40%，范围+30%', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.4;
+                        ws.weapons.forEach(w => w.range *= 1.3);
+                    }},
+                    { name: '怒火焚身', desc: '攻击+80%，持续伤害+15', apply: (p, ws) => { 
+                        p.damageBonus = (p.damageBonus || 1) * 1.8;
+                        ws.weapons.forEach(w => w.dot = (w.dot || 0) + 15);
+                    }}
+                ]
             }
         };
     }
