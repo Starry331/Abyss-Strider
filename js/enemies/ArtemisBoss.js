@@ -25,7 +25,7 @@ export class BerserkArtemisBoss {
         this.damage = 100; // 增强伤害
         
         // 战斗属性
-        this.telegraphDuration = 0.55; // 预警时间
+        this.telegraphDuration = 1.0; // 预警时间（提前1秒显示预警）
         this.attackCooldown = 0.75; // 一阶段攻击间隔
         this.state = 'IDLE';
         this.timer = 0;
@@ -211,11 +211,12 @@ export class BerserkArtemisBoss {
         if (this.hp <= this.maxHp * 0.3 && this.phase < 3) {
             this.phase = 3;
             this.attackCooldown = 0.70;
-            this.telegraphDuration = 0.42;
+            this.telegraphDuration = 0.8; // 三阶段预警略短
             console.log('☠️ 阿尔忒弥斯进入绝境阶段！解锁秒杀技能！');
         } else if (this.hp <= this.maxHp * 0.6 && this.phase === 1) {
             this.phase = 2;
             this.attackCooldown = 0.70;
+            this.telegraphDuration = 0.9; // 二阶段预警
             console.log('☠️ 阿尔忒弥斯进入狂暴阶段！解锁强力技能！');
         }
         
@@ -298,24 +299,100 @@ export class BerserkArtemisBoss {
     }
     
     prepareSkill() {
+        const duration = this.telegraphDuration;
+        const bossRef = this;
+        
         switch (this.currentSkill) {
             case 'HUNTER_DASH':
+            case 'CRESCENT_SLASH':
                 this.dashTarget = { x: this.player.x, y: this.player.y };
+                // 冲刺预警：箭头指向目标
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, damage: 0, lifetime: duration,
+                    targetX: this.dashTarget.x, targetY: this.dashTarget.y, boss: bossRef,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const alpha = Math.min(1, this.life * 2);
+                        ctx.strokeStyle = `rgba(255,100,100,${alpha})`; ctx.lineWidth = 4; ctx.setLineDash([10, 5]);
+                        ctx.beginPath(); ctx.moveTo(this.boss.x, this.boss.y); ctx.lineTo(this.targetX, this.targetY); ctx.stroke();
+                        // 箭头
+                        const angle = Math.atan2(this.targetY - this.boss.y, this.targetX - this.boss.x);
+                        ctx.fillStyle = `rgba(255,100,100,${alpha})`;
+                        ctx.beginPath();
+                        ctx.moveTo(this.targetX, this.targetY);
+                        ctx.lineTo(this.targetX - 20 * Math.cos(angle - 0.4), this.targetY - 20 * Math.sin(angle - 0.4));
+                        ctx.lineTo(this.targetX - 20 * Math.cos(angle + 0.4), this.targetY - 20 * Math.sin(angle + 0.4));
+                        ctx.closePath(); ctx.fill();
+                        ctx.setLineDash([]);
+                    }
+                });
                 break;
             case 'SILVER_RAIN':
             case 'MOONLIGHT_BARRAGE':
                 this.arrowRainCenter = { x: this.player.x, y: this.player.y };
+                // 范围预警：圆形区域
+                const rainRadius = this.currentSkill === 'MOONLIGHT_BARRAGE' ? 200 : 150;
+                this.spawnProjectile({
+                    x: this.arrowRainCenter.x, y: this.arrowRainCenter.y, vx: 0, vy: 0, radius: rainRadius, damage: 0, lifetime: duration,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const alpha = Math.min(1, this.life * 2);
+                        const pulse = Math.sin(Date.now() / 100) * 0.2 + 0.8;
+                        ctx.strokeStyle = `rgba(255,200,100,${alpha * pulse})`; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                        ctx.fillStyle = `rgba(255,200,100,${alpha * 0.15})`;
+                        ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                    }
+                });
                 break;
+            case 'TRIPLE_ARROW':
             case 'MOON_SHOT':
             case 'LUNAR_STRIKE':
                 this.moonBeamAngle = Math.atan2(this.player.y - this.y, this.player.x - this.x);
+                // 射线预警：指向玩家的线
+                const beamLen = 600;
+                this.spawnProjectile({
+                    x: this.x, y: this.y, vx: 0, vy: 0, radius: 0, damage: 0, lifetime: duration,
+                    angle: this.moonBeamAngle, len: beamLen, boss: bossRef,
+                    update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                    draw(ctx) {
+                        const alpha = Math.min(1, this.life * 2);
+                        ctx.strokeStyle = `rgba(200,150,255,${alpha})`; ctx.lineWidth = 6;
+                        ctx.beginPath();
+                        ctx.moveTo(this.boss.x, this.boss.y);
+                        ctx.lineTo(this.boss.x + Math.cos(this.angle) * this.len, this.boss.y + Math.sin(this.angle) * this.len);
+                        ctx.stroke();
+                        // 箭头
+                        const endX = this.boss.x + Math.cos(this.angle) * 100;
+                        const endY = this.boss.y + Math.sin(this.angle) * 100;
+                        ctx.fillStyle = `rgba(200,150,255,${alpha})`;
+                        ctx.beginPath();
+                        ctx.moveTo(endX, endY);
+                        ctx.lineTo(endX - 15 * Math.cos(this.angle - 0.5), endY - 15 * Math.sin(this.angle - 0.5));
+                        ctx.lineTo(endX - 15 * Math.cos(this.angle + 0.5), endY - 15 * Math.sin(this.angle + 0.5));
+                        ctx.closePath(); ctx.fill();
+                    }
+                });
                 break;
             case 'BEAST_TRAP':
                 this.trapPositions = [];
                 for (let i = 0; i < 5; i++) {
-                    this.trapPositions.push({
+                    const pos = {
                         x: this.player.x + (Math.random() - 0.5) * 300,
                         y: this.player.y + (Math.random() - 0.5) * 300
+                    };
+                    this.trapPositions.push(pos);
+                    // 陷阱预警
+                    this.spawnProjectile({
+                        x: pos.x, y: pos.y, vx: 0, vy: 0, radius: 30, damage: 0, lifetime: duration,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            const alpha = Math.min(1, this.life * 2);
+                            ctx.strokeStyle = `rgba(255,150,50,${alpha})`; ctx.lineWidth = 2;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                            ctx.fillStyle = `rgba(255,150,50,${alpha * 0.2})`;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+                        }
                     });
                 }
                 break;
@@ -324,15 +401,28 @@ export class BerserkArtemisBoss {
                 this.huntTargets = [];
                 for (let i = 0; i < 4; i++) {
                     const angle = (Math.PI * 2 / 4) * i;
-                    this.huntTargets.push({
+                    const pos = {
                         x: this.player.x + Math.cos(angle) * 150,
                         y: this.player.y + Math.sin(angle) * 150
+                    };
+                    this.huntTargets.push(pos);
+                    // 包围预警
+                    this.spawnProjectile({
+                        x: pos.x, y: pos.y, vx: 0, vy: 0, radius: 25, damage: 0, lifetime: duration,
+                        targetX: this.player.x, targetY: this.player.y,
+                        update(dt) { this.life -= dt; if (this.life <= 0) this.markedForDeletion = true; },
+                        draw(ctx) {
+                            const alpha = Math.min(1, this.life * 2);
+                            // 圆圈
+                            ctx.strokeStyle = `rgba(150,200,255,${alpha})`; ctx.lineWidth = 2;
+                            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke();
+                            // 指向中心的箭头
+                            ctx.strokeStyle = `rgba(150,200,255,${alpha * 0.5})`; ctx.setLineDash([5, 5]);
+                            ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.targetX, this.targetY); ctx.stroke();
+                            ctx.setLineDash([]);
+                        }
                     });
                 }
-                break;
-            case 'CRESCENT_SLASH':
-                // 近身技预警
-                this.dashTarget = { x: this.player.x, y: this.player.y };
                 break;
             case 'LUNAR_EXECUTION':
                 // 秒杀技预警：延长预警时间

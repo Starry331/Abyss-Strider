@@ -194,6 +194,57 @@ export class BossRushScene {
                         });
                     }}
                 ]
+            },
+            chronos: {
+                name: '科洛诺斯', title: 'Chronos', icon: '⏳', rarity: 'red',
+                desc: '时间之神，永恒主宰',
+                color: '#ff4444', bgColor: '#3a1a1a',
+                effects: [
+                    { name: '时间吞噬', desc: '攻击吸血+3%', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => w.lifesteal = (w.lifesteal || 0) + 0.03);
+                    }},
+                    { name: '永恒之血', desc: '攻击吸血+5%', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => w.lifesteal = (w.lifesteal || 0) + 0.05);
+                    }},
+                    { name: '时光逆流', desc: '攻击吸血+5%', apply: (p, ws) => { 
+                        ws.weapons.forEach(w => w.lifesteal = (w.lifesteal || 0) + 0.05);
+                    }}
+                ]
+            },
+            aether: {
+                name: '以太', title: 'Aether', icon: '✨', rarity: 'gold',
+                desc: '天空之光，纯净本源',
+                color: '#ffdd44', bgColor: '#3a3a1a',
+                effects: [
+                    { name: '天界精华', desc: '生命上限+150', apply: (p, ws) => { 
+                        p.maxHp += 150; p.hp = Math.min(p.hp + 150, p.maxHp);
+                    }},
+                    { name: '光明庇护', desc: '生命上限+150', apply: (p, ws) => { 
+                        p.maxHp += 150; p.hp = Math.min(p.hp + 150, p.maxHp);
+                    }},
+                    { name: '永恒之光', desc: '生命上限+100', apply: (p, ws) => { 
+                        p.maxHp += 100; p.hp = Math.min(p.hp + 100, p.maxHp);
+                    }}
+                ]
+            },
+            dionysus: {
+                name: '狄俄尼索斯', title: 'Dionysus', icon: '🍇', rarity: 'gold',
+                desc: '酒神，狂欢之主',
+                color: '#aa44ff', bgColor: '#2a1a3a',
+                effects: [
+                    { name: '狂欢护盾', desc: '护盾自动回复0.5/秒', apply: (p, ws) => { 
+                        p.shieldRegen = (p.shieldRegen || 0) + 0.5;
+                        p.maxShield = 150;
+                    }},
+                    { name: '酒神之力', desc: '护盾自动回复2/秒', apply: (p, ws) => { 
+                        p.shieldRegen = (p.shieldRegen || 0) + 2;
+                        p.maxShield = 150;
+                    }},
+                    { name: '永醉不灭', desc: '护盾自动回复1/秒', apply: (p, ws) => { 
+                        p.shieldRegen = (p.shieldRegen || 0) + 1;
+                        p.maxShield = 150;
+                    }}
+                ]
             }
         };
     }
@@ -245,7 +296,7 @@ export class BossRushScene {
         this.player.hp = 100;
         console.log('玩家已创建, HP:', this.player.hp, '/', this.player.maxHp);
         this.player.invincibleTime = 0; // 重置无敌时间
-        this.hasUsedRevive = false; // 重置复活机会（只有一次）
+        this.player.resurrectCount = 0; // 复活次数由众神赐福提供
         
         // 重置战斗系统
         this.combatSystem.projectiles = [];
@@ -919,6 +970,12 @@ export class BossRushScene {
             this.player.hp = Math.min(this.player.hp + healAmount, this.player.maxHp);
         }
         
+        // 护盾自动回复（狄俄尼索斯）
+        if (this.player.shieldRegen && this.player.shieldRegen > 0) {
+            const maxShield = this.player.maxShield || 150;
+            this.player.shield = Math.min((this.player.shield || 0) + this.player.shieldRegen * deltaTime, maxShield);
+        }
+        
         // ===== 血包和限时buff系统 =====
         this.pickupSpawnTimer += deltaTime;
         if (this.pickupSpawnTimer >= this.pickupSpawnInterval && this.activeBoss) {
@@ -1170,16 +1227,18 @@ export class BossRushScene {
         
         // 检查玩家死亡
         if (this.player.hp <= 0 && !this.isResurrecting) {
-            // 第一次血量耗尽时触发复活（只能触发一次）
-            if (!this.hasUsedRevive) {
-                this.hasUsedRevive = true; // 标记已使用
+            // 检查是否有复活次数（众神赐福提供）
+            const resurrectCount = this.player.resurrectCount || 0;
+            if (resurrectCount > 0) {
+                this.player.resurrectCount -= 1; // 消耗一次复活
                 this.player.hp = this.player.maxHp; // 满血复活
                 this.player.shield = (this.player.shield || 0) + 100; // +100护盾
                 this.player.invincibleTime = 1.0; // 1秒无敌时间
                 this.isResurrecting = true;
                 
                 // 显示复活特效
-                this.showRewardNotification('💀 复活！ +100护盾 💀', () => {
+                const remaining = this.player.resurrectCount;
+                this.showRewardNotification(`💀 复活！剩余${remaining}次 💀`, () => {
                     this.isResurrecting = false;
                 });
                 
