@@ -253,7 +253,7 @@ const gameScene = {
         uiManager.updateLevel(this.levelManager.getCurrentLevelData().name);
         uiManager.updateScore(this.levelManager.score);
         uiManager.updateHealth(this.player.hp, this.player.maxHp);
-        uiManager.updateShield(this.player.shield || 0, 100);
+        uiManager.updateShield(this.player.shield || 0, 120);
         uiManager.clearAllBuffs();
         document.getElementById('hud').classList.remove('hidden');
 
@@ -712,7 +712,7 @@ const gameScene = {
 
         // UI Updates
         uiManager.updateHealth(this.player.hp, this.player.maxHp);
-        uiManager.updateShield(this.player.shield || 0, 100);
+        uiManager.updateShield(this.player.shield || 0, 120);
         uiManager.updateBuffTimers();
 
         // Update screen shake

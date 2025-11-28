@@ -234,15 +234,15 @@ export class BossRushScene {
                 effects: [
                     { name: '狂欢护盾', desc: '护盾自动回复0.5/秒', apply: (p, ws) => { 
                         p.shieldRegen = (p.shieldRegen || 0) + 0.5;
-                        p.maxShield = 150;
+                        p.maxShield = 120;
                     }},
                     { name: '酒神之力', desc: '护盾自动回复2/秒', apply: (p, ws) => { 
                         p.shieldRegen = (p.shieldRegen || 0) + 2;
-                        p.maxShield = 150;
+                        p.maxShield = 120;
                     }},
                     { name: '永醉不灭', desc: '护盾自动回复1/秒', apply: (p, ws) => { 
                         p.shieldRegen = (p.shieldRegen || 0) + 1;
-                        p.maxShield = 150;
+                        p.maxShield = 120;
                     }}
                 ]
             }
@@ -972,8 +972,12 @@ export class BossRushScene {
         
         // 护盾自动回复（狄俄尼索斯）
         if (this.player.shieldRegen && this.player.shieldRegen > 0) {
-            const maxShield = this.player.maxShield || 150;
-            this.player.shield = Math.min((this.player.shield || 0) + this.player.shieldRegen * deltaTime, maxShield);
+            this.player.shield = Math.min((this.player.shield || 0) + this.player.shieldRegen * deltaTime, 120);
+        }
+        
+        // 护盾上限固定为120
+        if (this.player.shield > 120) {
+            this.player.shield = 120;
         }
         
         // ===== 血包和限时buff系统 =====
@@ -1224,6 +1228,7 @@ export class BossRushScene {
         
         // 更新UI
         this.uiManager.updateHealth(this.player.hp, this.player.maxHp);
+        this.uiManager.updateShield(this.player.shield || 0, 120);
         
         // 检查玩家死亡
         if (this.player.hp <= 0 && !this.isResurrecting) {
@@ -1232,7 +1237,7 @@ export class BossRushScene {
             if (resurrectCount > 0) {
                 this.player.resurrectCount -= 1; // 消耗一次复活
                 this.player.hp = this.player.maxHp; // 满血复活
-                this.player.shield = (this.player.shield || 0) + 100; // +100护盾
+                this.player.shield = Math.min((this.player.shield || 0) + 100, 120); // +100护盾(上限120)
                 this.player.invincibleTime = 1.0; // 1秒无敌时间
                 this.isResurrecting = true;
                 

@@ -26,15 +26,13 @@ export class UIManager {
         if (this.healthText) this.healthText.innerText = `HP: ${Math.ceil(hp)}/${Math.ceil(maxHp)}`;
     }
     
-    updateShield(shield, maxShield = 100) {
-        if (shield > 0) {
-            if (this.shieldContainer) this.shieldContainer.classList.remove('hidden');
-            const percent = Math.max(0, Math.min(100, (shield / maxShield) * 100));
-            if (this.shieldBar) this.shieldBar.style.width = `${percent}%`;
-            if (this.shieldText) this.shieldText.innerText = `护盾: ${Math.ceil(shield)}`;
-        } else {
-            if (this.shieldContainer) this.shieldContainer.classList.add('hidden');
-        }
+    updateShield(shield, maxShield = 120) {
+        // 护盾条常驻显示
+        if (this.shieldContainer) this.shieldContainer.classList.remove('hidden');
+        const currentShield = Math.max(0, Math.min(shield || 0, maxShield));
+        const percent = (currentShield / maxShield) * 100;
+        if (this.shieldBar) this.shieldBar.style.width = `${percent}%`;
+        if (this.shieldText) this.shieldText.innerText = `护盾: ${Math.floor(currentShield)}/${maxShield}`;
     }
 
     updateScore(score) {
