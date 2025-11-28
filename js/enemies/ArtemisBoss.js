@@ -26,7 +26,7 @@ export class BerserkArtemisBoss {
         
         // 战斗属性
         this.telegraphDuration = 0.55; // 预警时间
-        this.attackCooldown = 0.6; // 一阶段攻击间隔
+        this.attackCooldown = 0.65; // 一阶段攻击间隔
         this.state = 'IDLE';
         this.timer = 0;
         this.currentSkill = null;
@@ -210,12 +210,12 @@ export class BerserkArtemisBoss {
         // 三相位切换: 0.6→0.55→0.48秒
         if (this.hp <= this.maxHp * 0.3 && this.phase < 3) {
             this.phase = 3;
-            this.attackCooldown = 0.48;
+            this.attackCooldown = 0.60;
             this.telegraphDuration = 0.42;
             console.log('☠️ 阿尔忒弥斯进入绝境阶段！解锁秒杀技能！');
         } else if (this.hp <= this.maxHp * 0.6 && this.phase === 1) {
             this.phase = 2;
-            this.attackCooldown = 0.55;
+            this.attackCooldown = 0.65;
             console.log('☠️ 阿尔忒弥斯进入狂暴阶段！解锁强力技能！');
         }
         
